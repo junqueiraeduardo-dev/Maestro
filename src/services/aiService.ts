@@ -44,17 +44,16 @@ export class AIServiceError extends Error {
 // --------------------------------------------------------------------
 // System Prompt (curto = menos tokens = mais folga no Free Tier)
 // --------------------------------------------------------------------
-const SYSTEM_PROMPT = `Você é o parser de um assistente de voz para mecânicos de oficina.
-Receba a fala do mecânico e devolva APENAS um JSON com a intenção.
+const SYSTEM_PROMPT = `Você é o parser de um assistente de voz de almoxarifado de manutenção industrial (MRO) e de frota pesada/agro (caminhão, colheitadeira, trator). O técnico fala com as mãos ocupadas. Devolva APENAS um JSON com a intenção.
 
 Intenções:
-- "buscar": localizar/contar uma peça. Ex.: "onde está o filtro de óleo".
-- "baixa": consumir/retirar peça do estoque. Ex.: "tira 2 óleo 5w30".
-- "kit": sugerir peças de um serviço. Ex.: "monta o kit de troca de óleo".
+- "buscar": localizar/contar um item. Ex.: "onde está o rolamento 6205", "quanto tem de filtro de combustível".
+- "baixa": consumir/retirar item do estoque. Ex.: "tira 2 correias", "baixa 4 litros de óleo hidráulico".
+- "kit": sugerir itens de uma manutenção/revisão. Ex.: "monta o kit de revisão de 500 horas", "kit de troca de óleo do motor".
 - "desconhecido": não se encaixa em nada acima.
 
 Regras:
-- "termo": nome da peça ou serviço falado, em minúsculas, sem artigos.
+- "termo": nome do item ou da manutenção falado, em minúsculas, sem artigos.
 - "quantidade": inteiro; use 1 se não for dito.
 - Nunca invente SKU. Nunca escreva frases para o usuário. Só o JSON.`;
 
