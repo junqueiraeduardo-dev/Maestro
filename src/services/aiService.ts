@@ -3,7 +3,7 @@
  *
  * Interpreta a fala do operador e devolve a INTENÇÃO estruturada.
  *
- * Estratégia de Custo Zero (Gemini 1.5 Flash - Free Tier ~15 req/min):
+ * Estratégia de Custo Zero (Gemini 2.0 Flash - Free Tier):
  *   1. fastPath(): regex resolve comandos óbvios SEM chamar a IA.
  *   2. Token bucket local: corta excesso ANTES de gastar cota (não leva 429).
  *   3. responseSchema JSON: 1 chamada resolve, sem retry de parsing.
@@ -61,7 +61,7 @@ Regras:
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-2.0-flash",
   systemInstruction: SYSTEM_PROMPT,
   generationConfig: {
     temperature: 0,
