@@ -98,7 +98,6 @@ function temCota(): boolean {
   return true;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // ------------------------- Fast-path (sem IA) -----------------------
 function normalizar(qtd: string | undefined): number {
@@ -140,38 +139,32 @@ export async function interpretarComando(texto: string): Promise<IntentResult> {
   const atalho = fastPath(limpo);
   if (atalho) return atalho;
 
-  // 2) Cota local antes de tocar a API.
-  if (!temCota()) throw new RateLimitError();
+  // 2) Cota local: se estourou, NÃO trava o operador -> degrada para busca.
+  if (!temCota()) {
+    console.warn("[gemini] cota local atingida; degradando para busca");
+    return { intencao: "buscar", termo: limpo, quantidade: 1 };
+  }
 
-  // 3) Chamada ao Gemini com backoff só para 429.
-  let tentativa = 0;
-  while (true) {
-    try {
-      const res = await model.generateContent(limpo);
-      const parsed = JSON.parse(res.response.text()) as Partial<IntentResult>;
+  // 3) UMA chamada ao Gemini. Sem retry: em free tier, retentar num 429
+  //    só queima mais cota (a janela de RPM não reabre em 1-2s).
+  try {
+    const res = await model.generateContent(limpo);
+    const parsed = JSON.parse(res.response.text()) as Partial<IntentResult>;
 
-      const intencao = (parsed.intencao ?? "desconhecido") as Intencao;
-      return {
-        intencao: ["buscar", "baixa", "kit"].includes(intencao)
-          ? intencao
-          : "desconhecido",
-        termo: (parsed.termo ?? "").toString().toLowerCase().trim(),
-        quantidade: normalizar(String(parsed.quantidade ?? 1)),
-      };
-    } catch (err: any) {
-      const msg = String(err?.status ?? err?.message ?? err);
-      const is429 = msg.includes("429");
-
-      if (is429 && tentativa < 2) {
-        await sleep(1000 * 2 ** tentativa); // 1s, 2s
-        tentativa += 1;
-        continue;
-      }
-      // JSON inválido ou outro erro -> não trava o fluxo de voz.
-      if (err instanceof SyntaxError) {
-        return { intencao: "desconhecido", termo: limpo, quantidade: 1 };
-      }
-      throw new AIServiceError(`Falha ao consultar o Gemini: ${msg}`);
-    }
+    const intencao = (parsed.intencao ?? "desconhecido") as Intencao;
+    return {
+      intencao: ["buscar", "baixa", "kit"].includes(intencao)
+        ? intencao
+        : "desconhecido",
+      termo: (parsed.termo ?? "").toString().toLowerCase().trim(),
+      quantidade: normalizar(String(parsed.quantidade ?? 1)),
+    };
+  } catch (err: any) {
+    // 429 (quota), rede, 5xx ou JSON inválido: o assistente NÃO pode travar.
+    // Degrada para "buscar" (operação READ-ONLY, segura: nunca dá baixa errada)
+    // usando a fala crua como termo. O log registra o motivo real para diagnóstico.
+    const msg = String(err?.message ?? err?.status ?? err);
+    console.warn("[gemini] indisponível, degradando para busca:", msg);
+    return { intencao: "buscar", termo: limpo, quantidade: 1 };
   }
 }
