@@ -13,6 +13,8 @@
  */
 import { Router, Request, Response } from "express";
 import { supabase } from "../config/supabase";
+import { requireAdmin } from "../auth";
+import { logAtiv } from "../audit";
 
 export const catalogRouter = Router();
 
@@ -56,6 +58,18 @@ function intIn(v: unknown, def: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
+/** URL http/https válida (ou null). Bloqueia javascript:, data:, etc. */
+function url(v: unknown): string | null {
+  const t = String(v ?? "").trim().slice(0, 400);
+  if (!t) return null;
+  try {
+    const u = new URL(t);
+    return u.protocol === "http:" || u.protocol === "https:" ? t : null;
+  } catch {
+    return null;
+  }
+}
+
 // =====================================================================
 // EQUIPAMENTOS
 // =====================================================================
@@ -94,6 +108,7 @@ catalogRouter.post("/equipamentos", async (req: Request, res: Response) => {
       .select("codigo,nome,modelo,ano,placa,tipo,status")
       .single();
     if (error) throw error;
+    logAtiv(req, "cadastrou equipamento", codigo);
     res.status(201).json({
       equip: {
         id: data.codigo,
@@ -141,6 +156,7 @@ catalogRouter.patch("/equipamentos/:codigo", async (req: Request, res: Response)
       .maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ erro: "Equipamento não encontrado." });
+    logAtiv(req, "editou equipamento", codigo);
     res.json({ ok: true });
   } catch (err: any) {
     console.error("[catalog] equip patch:", err?.message ?? err);
@@ -156,14 +172,29 @@ catalogRouter.get("/pecas", async (req: Request, res: Response) => {
     const q = term(req.query.q);
     let query = supabase
       .from("estoque_pecas")
-      .select("sku,nome,quantidade,localizacao_fisica,categoria,segmento")
+      .select("sku,nome,quantidade,localizacao_fisica,categoria,segmento,tutorial_url")
       .order("nome")
-      .limit(30);
+      .limit(40);
     if (q) {
-      // q já sanitizado: sem vírgula/parêntese/ponto -> seguro no .or()
-      query = query.or(
-        `nome.ilike.%${q}%,sku.ilike.%${q}%,sinonimos.ilike.%${q}%`
-      );
+      // Busca "frouxa": quebra em palavras e casa QUALQUER uma em
+      // nome/sku/sinônimos/categoria. Assim "kit de troca de oleo" acha
+      // peças que contenham "kit" OU "troca" OU "oleo". q já sanitizado
+      // (sem vírgula/parêntese/ponto) -> seguro no .or().
+      const stop = new Set(["de", "da", "do", "e", "o", "a", "para", "com"]);
+      const toks = q
+        .split(" ")
+        .filter((t) => t.length >= 2 && !stop.has(t))
+        .slice(0, 6);
+      const alvo = toks.length ? toks : [q];
+      const ors = alvo
+        .flatMap((t) => [
+          `nome.ilike.%${t}%`,
+          `sku.ilike.%${t}%`,
+          `sinonimos.ilike.%${t}%`,
+          `categoria.ilike.%${t}%`,
+        ])
+        .join(",");
+      query = query.or(ors);
     }
     const { data, error } = await query;
     if (error) throw error;
@@ -175,6 +206,7 @@ catalogRouter.get("/pecas", async (req: Request, res: Response) => {
         loc: p.localizacao_fisica,
         cat: p.categoria,
         seg: p.segmento,
+        tutorial: p.tutorial_url || null,
       })),
     });
   } catch (err: any) {
@@ -211,9 +243,11 @@ catalogRouter.post("/pecas", async (req: Request, res: Response) => {
       localizacao_fisica: s(req.body?.localizacao_fisica, 60),
       sinonimos: s(req.body?.sinonimos, 240) || "",
       categoria: s(req.body?.categoria, 60),
+      tutorial_url: url(req.body?.tutorial_url),
       segmento,
     });
     if (error) throw error;
+    logAtiv(req, "cadastrou peça", sku);
     res.status(201).json({ ok: true, sku });
   } catch (err: any) {
     console.error("[catalog] peca create:", err?.message ?? err);
@@ -233,6 +267,7 @@ catalogRouter.patch("/pecas/:sku", async (req: Request, res: Response) => {
     if ("sinonimos" in req.body)
       patch.sinonimos = s(req.body.sinonimos, 240) || "";
     if ("categoria" in req.body) patch.categoria = s(req.body.categoria, 60);
+    if ("tutorial_url" in req.body) patch.tutorial_url = url(req.body.tutorial_url);
     if ("segmento" in req.body)
       patch.segmento = SEGMENTOS.includes(req.body.segmento)
         ? req.body.segmento
@@ -250,9 +285,50 @@ catalogRouter.patch("/pecas/:sku", async (req: Request, res: Response) => {
       .maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ erro: "Peça não encontrada." });
+    logAtiv(req, "editou peça", sku);
     res.json({ ok: true });
   } catch (err: any) {
     console.error("[catalog] peca patch:", err?.message ?? err);
     res.status(500).json({ erro: "Falha ao atualizar peça." });
+  }
+});
+
+catalogRouter.delete("/pecas/:sku", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const sku = code(req.params.sku);
+    if (!sku) return res.status(400).json({ erro: "SKU inválido." });
+    const { data, error } = await supabase
+      .from("estoque_pecas")
+      .delete()
+      .eq("sku", sku)
+      .select("sku")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ erro: "Peça não encontrada." });
+    logAtiv(req, "excluiu peça", sku);
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error("[catalog] peca delete:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao excluir peça." });
+  }
+});
+
+catalogRouter.delete("/equipamentos/:codigo", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const codigo = code(req.params.codigo);
+    if (!codigo) return res.status(400).json({ erro: "Código inválido." });
+    const { data, error } = await supabase
+      .from("equipamentos")
+      .delete()
+      .eq("codigo", codigo)
+      .select("codigo")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ erro: "Equipamento não encontrado." });
+    logAtiv(req, "excluiu equipamento", codigo);
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error("[catalog] equip delete:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao excluir equipamento." });
   }
 });

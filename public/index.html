@@ -22,6 +22,10 @@
     body { font-family: 'Inter', system-ui, sans-serif; color: #F1F5F9; }
     #root { height: 100%; width: 100%; }
     ::-webkit-scrollbar { width: 0; height: 0; }
+    /* sem setas (spinner) nos campos numéricos — o valor é digitado direto */
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     button { font-family: inherit; }
     input { font-family: inherit; }
     /* tela de carregamento enquanto o Babel compila os .jsx no cliente */

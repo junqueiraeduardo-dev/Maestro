@@ -37,7 +37,31 @@ supabase/02_rpc.sql       RPCs: buscar_peca (fuzzy) e dar_baixa_estoque (atômic
 supabase/03_seed_mro_frota.sql  Coluna `segmento` no estoque (sem dados)
 supabase/04_os_equipamentos.sql equipamentos, ordens_servico, os_pecas, os_comentarios
 supabase/05_reset_dados.sql     Esvazia tudo (rodar 1x antes de entregar ao cliente)
+supabase/06_tutorial_inspecao.sql tutorial_url em peças + tabela inspecoes
+supabase/07_planos.sql          tabela trials (teste grátis por e-mail)
+supabase/08_auditoria.sql       tabela atividade (log "quem fez o quê")
+supabase/09_assinaturas.sql     assinaturas pagas (e-mail, HASH da chave, validade)
+src/auth.ts                     Premium/Trial + papéis pai x filho + chave de assinatura
+src/audit.ts                    Log de atividade por ator (header X-Ator)
+src/pay.ts                      Mercado Pago Checkout Pro + webhook + chave por e-mail
 ```
+
+### Pagamento (segurança máxima)
+
+Cartão/Pix são digitados **no checkout hospedado do Mercado Pago** (PCI deles);
+o servidor **nunca** recebe nº de cartão/CVV. Fluxo: `/api/pay/checkout` cria a
+preferência (preço definido no servidor) → cliente paga no MP → MP chama
+`/api/pay/webhook` (rejeitado se a **assinatura HMAC** não bater) → geramos uma
+chave aleatória, guardamos só o **sha256** dela, e enviamos a chave **por e-mail**
+ao assinante. Login "Já sou Premium" valida a chave (por hash) e o token expira
+na data de renovação. Sem `MP_WEBHOOK_SECRET` o webhook é recusado (fail-closed).
+Env necessários: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `APP_URL`,
+`RESEND_API_KEY`, `MAIL_FROM` (só no ambiente — nunca no repositório).
+
+Papéis: `ACCESS_PASSWORD` = filhos (uso diário). `ACCESS_PASSWORD_ADMIN`
+(opcional) = pai/admin: só ele vê a **Gestão** (quem fez o quê) e pode
+**excluir** peça/equipamento/OS. Sem admin definido, quem tem
+`ACCESS_PASSWORD` é o dono (acesso total).
 
 > **Sem dados de exemplo.** As tabelas começam vazias — o cliente cadastra
 > peças (Almoxarifado +/voz), equipamentos (Equipamentos +) e abre OS pela UI.
@@ -54,8 +78,10 @@ supabase/05_reset_dados.sql     Esvazia tudo (rodar 1x antes de entregar ao clie
 ## Como rodar
 
 1. **Supabase:** crie um projeto → SQL Editor → rode na ordem `01_schema.sql`,
-   `02_rpc.sql`, `03_seed_mro_frota.sql`, `04_os_equipamentos.sql`. Para zerar
-   uma base que já tem dados de teste, rode também `05_reset_dados.sql`.
+   `02_rpc.sql`, `03_seed_mro_frota.sql`, `04_os_equipamentos.sql`,
+   `06_tutorial_inspecao.sql`, `07_planos.sql`, `08_auditoria.sql`,
+   `09_assinaturas.sql`. Para zerar uma base com dados de teste, rode
+   também `05_reset_dados.sql`.
 2. **App:** copie `.env.example` → `.env`, preencha as chaves **incluindo
    `ACCESS_PASSWORD`** (sem ela o app nega tudo — fail-closed), `npm install`.
    - Dev: `npm run dev` · Produção: `npm run build && npm start`.

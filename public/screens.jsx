@@ -39,69 +39,200 @@ function useFlash() {
 // =========================================================================
 // SCREEN 1 — HOME
 // =========================================================================
+function lerPerfil() {
+  try {
+    return {
+      nome: localStorage.getItem('maestro_nome') || '',
+      email: localStorage.getItem('maestro_email') || '',
+      perfil: localStorage.getItem('maestro_perfil') || '',
+    };
+  } catch (_) { return { nome: '', email: '', perfil: '' }; }
+}
+
+// Exemplos de cadastro adaptados à profissão escolhida no login
+function exemplosPerfil() {
+  const { perfil } = lerPerfil();
+  const M = {
+    'Produtor rural': {
+      sku: 'FIL-TRATOR', nome: 'Filtro de óleo do trator',
+      loc: 'Galpão A', cat: 'Trator',
+      voz: ['"onde está o filtro de combustível"', '"tira 2 óleo 15w40"', '"kit de revisão do trator"'],
+      eqCod: 'TRT-01', eqNome: 'Trator John Deere 6110', eqTipo: 'Trator',
+    },
+    'Empresário': {
+      sku: 'ROL-6205', nome: 'Rolamento 6205',
+      loc: 'Gaveta R1', cat: 'Rolamentos',
+      voz: ['"onde está o rolamento 6205"', '"tira 3 correia A-42"', '"kit de manutenção"'],
+      eqCod: 'CMP-02', eqNome: 'Compressor Atlas GA22', eqTipo: 'Compressor',
+    },
+    'Dono de loja / oficina': {
+      sku: 'PAST-FRE', nome: 'Pastilha de freio dianteira',
+      loc: 'Prateleira 3', cat: 'Freios',
+      voz: ['"onde está a pastilha de freio"', '"tira 1 jogo de lona"', '"kit de revisão"'],
+      eqCod: 'ELV-01', eqNome: 'Elevador automotivo', eqTipo: 'Elevador',
+    },
+    'Mecânico / Operador': {
+      sku: 'COR-A42', nome: 'Correia A-42',
+      loc: 'Painel C2', cat: 'Transmissão',
+      voz: ['"onde está a correia A-42"', '"tira 2 retentor"', '"kit de troca de óleo"'],
+      eqCod: 'EMP-04', eqNome: 'Empilhadeira Hyster H50', eqTipo: 'Empilhadeira',
+    },
+    'Gestor de manutenção': {
+      sku: 'MAN-R2-12', nome: 'Mangueira hidráulica 1/2"',
+      loc: 'Carretel H1', cat: 'Hidráulica',
+      voz: ['"onde está a mangueira hidráulica"', '"tira 1 filtro coalescente"', '"kit de revisão 500 horas"'],
+      eqCod: 'GER-01', eqNome: 'Gerador Stemac 250kVA', eqTipo: 'Gerador',
+    },
+  };
+  return M[perfil] || {
+    sku: 'PC-001', nome: 'Nome do item',
+    loc: 'Prateleira A1', cat: 'Categoria',
+    voz: ['"onde está o filtro de óleo"', '"tira 2 óleo 5w30"', '"kit de troca de óleo"'],
+    eqCod: 'EQ-01', eqNome: 'Nome do equipamento', eqTipo: 'Tipo',
+  };
+}
+
+// Widget temático conforme a profissão escolhida no login
+function widgetPerfil(perfil) {
+  const W = {
+    'Produtor rural': { icon: 'sprout', titulo: 'Campo & Frota', frase: 'Tratores, colheitadeiras e insumos sob controle.' },
+    'Empresário': { icon: 'briefcase', titulo: 'Visão do negócio', frase: 'Custos, ordens e estoque num lugar só.' },
+    'Dono de loja / oficina': { icon: 'car', titulo: 'Sua oficina', frase: 'Peças e serviços organizados e rápidos.' },
+    'Mecânico / Operador': { icon: 'wrench', titulo: 'Mão na massa', frase: 'Ache peças e registre serviços por voz.' },
+    'Gestor de manutenção': { icon: 'clipboard', titulo: 'Manutenção', frase: 'Indicadores e ordens sempre em dia.' },
+  };
+  return W[perfil] || { icon: 'settings', titulo: perfil || 'Bem-vindo', frase: 'Seu estoque e manutenção por voz.' };
+}
+
 function HomeScreen({ nav, openMic, onLogout }) {
+  const { nome: nomeReal, email, perfil } = lerPerfil();
+  const nome = nomeReal ? nomeReal.split(' ')[0] : (email ? email.split('@')[0] : 'bem-vindo');
+  const iniciais = ((nomeReal || email || 'MA').trim().slice(0, 2)).toUpperCase();
+  const exVoz = exemplosPerfil().voz;
+  const hoje = new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'short', day: '2-digit', month: '2-digit',
+  }).format(new Date());
+
+  const [st, setSt] = useState(null);   // estatísticas reais
+  const [notif, setNotif] = useState(false);
+  const [umenu, setUmenu] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      API.osList().catch(() => ({ os: [] })),
+      API.equipList().catch(() => ({ equipamentos: [] })),
+      API.pecaSearch('').catch(() => ({ pecas: [] })),
+      API.inspecoesHoje().catch(() => ({ inspecoes: [] })),
+    ]).then(([a, b, c, d]) => {
+      const os = a.os || [], eq = b.equipamentos || [], pc = c.pecas || [], ins = d.inspecoes || [];
+      const inspIds = new Set(ins.map(i => i.equipId));
+      setSt({
+        pecas: pc.length,
+        baixas: pc.filter(p => p.qtd < 6),
+        osAb: os.filter(o => o.status === 'aberta').length,
+        equip: eq.length,
+        parados: eq.filter(e => e.status === 'parado'),
+        pend: eq.filter(e => !inspIds.has(e.id)).length,
+      });
+    });
+  }, []);
+
+  const temAlerta = st && (st.osAb > 0 || st.parados.length > 0 || st.baixas.length > 0);
+  const txt = (n, sing, plur) => `${n} ${n === 1 ? sing : plur}`;
+
   return (
     <div data-screen-label="01 Home" style={{ paddingBottom: 110 }}>
-      {/* Header row */}
       <div style={{
         padding: '18px 16px 8px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <Logo size={30} word/>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button style={{
+          <button onClick={() => setNotif(true)} style={{
             position: 'relative', width: 40, height: 40, borderRadius: 10,
             background: M.surface, border: `1px solid ${M.border}`,
             color: M.text, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <Icon name="bell" size={20}/>
-            <span style={{
-              position: 'absolute', top: 8, right: 9,
-              width: 8, height: 8, borderRadius: '50%',
-              background: M.red, border: `2px solid ${M.surface}`,
-            }}/>
+            {temAlerta && (
+              <span style={{
+                position: 'absolute', top: 8, right: 9,
+                width: 8, height: 8, borderRadius: '50%',
+                background: M.red, border: `2px solid ${M.surface}`,
+              }}/>
+            )}
           </button>
           <button
-            onClick={() => { if (onLogout && confirm('Sair da conta?')) onLogout(); }}
-            title="Sair"
+            onClick={() => setUmenu(true)}
+            title="Conta"
             style={{
               width: 40, height: 40, borderRadius: '50%',
               background: 'linear-gradient(135deg, #475569, #1E293B)',
               color: M.text, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 700, fontSize: 14, border: `1px solid ${M.border}`,
+              fontWeight: 700, fontSize: 13, border: `1px solid ${M.border}`,
               cursor: 'pointer',
-            }}>CS</button>
+            }}>{iniciais}</button>
         </div>
       </div>
 
-      {/* Greeting */}
-      <div style={{ padding: '8px 16px 20px' }}>
+      <div style={{ padding: '8px 16px 16px' }}>
         <h1 style={{
           margin: 0, fontSize: 22, fontWeight: 700, color: M.text,
           lineHeight: 1.25, letterSpacing: -0.3,
-        }}>Olá, Carlos</h1>
+        }}>Olá, {nome}</h1>
         <div style={{ fontSize: 13, color: M.textDim, marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>Seg · 19/05</span>
-          <span style={{ opacity: 0.4 }}>·</span>
-          <Icon name="pin" size={13}/>
-          <span>Oficina Central</span>
+          <span style={{ textTransform: 'capitalize' }}>{hoje}</span>
+          {perfil && <><span style={{ opacity: 0.4 }}>·</span><span>{perfil}</span></>}
+          {window.API.role() === 'pai' && (
+            <><span style={{ opacity: 0.4 }}>·</span>
+            <span style={{ color: M.amber, fontWeight: 700 }}>admin</span></>
+          )}
         </div>
       </div>
 
-      {/* Module grid */}
-      <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <ModuleCard icon="box" title="Almoxarifado" badge={{ text: '47 itens', tone: 'neutral' }}
-          onClick={() => nav.go('parts')} />
-        <ModuleCard icon="wrench" title="Ordens de Serviço" badge={{ text: '3 abertas', tone: 'amber' }}
-          onClick={() => nav.go('os')} />
-        <ModuleCard icon="truck" title="Equipamentos" badge={{ text: '12 ativos', tone: 'neutral' }}
-          onClick={() => nav.go('equip')} />
-        <ModuleCard icon="list-checks" title="Inspeção do Dia" badge={{ text: '2 pendentes', tone: 'red' }}
-          onClick={() => {}} />
+      {/* Widget temático por perfil */}
+      <div style={{ padding: '0 16px 16px' }}>
+        {(() => {
+          const w = widgetPerfil(perfil);
+          return (
+            <div style={{
+              background: `linear-gradient(135deg, #3B2A0E, ${M.surface2})`,
+              border: `1px solid ${M.border}`, borderRadius: 16,
+              padding: 18, display: 'flex', alignItems: 'center', gap: 16,
+            }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: 14, flexShrink: 0,
+                background: M.bg, border: `1px solid ${M.amber}55`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: M.amber,
+              }}>
+                <Icon name={w.icon} size={32}/>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: M.text }}>{w.titulo}</div>
+                <div style={{ fontSize: 12.5, color: M.textDim, marginTop: 4, lineHeight: 1.4 }}>{w.frase}</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Wide Dashboard card */}
+      <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <ModuleCard icon="box" title="Almoxarifado"
+          badge={{ text: st ? txt(st.pecas, 'peça', 'peças') : '…', tone: 'neutral' }}
+          onClick={() => nav.go('parts')} />
+        <ModuleCard icon="wrench" title="Ordens de Serviço"
+          badge={{ text: st ? txt(st.osAb, 'aberta', 'abertas') : '…', tone: st && st.osAb ? 'amber' : 'neutral' }}
+          onClick={() => nav.go('os')} />
+        <ModuleCard icon="truck" title="Equipamentos"
+          badge={{ text: st ? txt(st.equip, 'ativo', 'ativos') : '…', tone: 'neutral' }}
+          onClick={() => nav.go('equip')} />
+        <ModuleCard icon="list-checks" title="Inspeção do Dia"
+          badge={{ text: st ? txt(st.pend, 'pendente', 'pendentes') : '…', tone: st && st.pend ? 'red' : 'neutral' }}
+          onClick={() => nav.push('inspecao')} />
+      </div>
+
       <div style={{ padding: '12px 16px 0' }}>
         <Card onClick={() => nav.go('dash')} padding={18}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -117,7 +248,7 @@ function HomeScreen({ nav, openMic, onLogout }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: M.text }}>Dashboard</div>
               <div style={{ fontSize: 12, color: M.textDim, marginTop: 4 }}>
-                Custo, OS por semana e alertas críticos
+                Resumo de ordens, frota e alertas
               </div>
             </div>
             <Icon name="chevron-r" size={20} color={M.textDim}/>
@@ -125,7 +256,33 @@ function HomeScreen({ nav, openMic, onLogout }) {
         </Card>
       </div>
 
-      {/* Quick voice hint */}
+      {window.API.role() === 'pai' && (
+        <div style={{ padding: '12px 16px 0' }}>
+          <Card onClick={() => nav.push('gestao')} padding={18}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 12,
+                background: 'linear-gradient(135deg, #2B1318, #1B222C)',
+                border: `1px solid ${M.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: M.amber,
+              }}>
+                <Icon name="user" size={28}/>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: M.text }}>
+                  Gestão <span style={{ fontSize: 11, color: M.amber }}>· admin</span>
+                </div>
+                <div style={{ fontSize: 12, color: M.textDim, marginTop: 4 }}>
+                  Quem usou e o que cada um fez
+                </div>
+              </div>
+              <Icon name="chevron-r" size={20} color={M.textDim}/>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div style={{ padding: '20px 16px 0' }}>
         <Card padding={14} style={{ background: M.surface2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -136,11 +293,247 @@ function HomeScreen({ nav, openMic, onLogout }) {
           </div>
           <div style={{ fontSize: 13, color: M.textDim, lineHeight: 1.55 }}>
             Toque no microfone e fale.<br/>
-            <span style={{ color: M.text }}>"abre OS-1042"</span> · <span style={{ color: M.text }}>"onde está o rolamento 6205"</span>
+            <span style={{ color: M.text }}>{exVoz[0]}</span> · <span style={{ color: M.text }}>{exVoz[1]}</span>
           </div>
         </Card>
       </div>
+
+      {notif && <NotificationsSheet st={st} nav={nav} onClose={() => setNotif(false)}/>}
+      {umenu && <UserMenuSheet onClose={() => setUmenu(false)} onLogout={onLogout}/>}
     </div>
+  );
+}
+
+function NotificationsSheet({ st, nav, onClose }) {
+  const itens = [];
+  if (st) {
+    st.parados.forEach(e => itens.push({
+      cor: M.red, ic: 'alert', t: `${e.nome} parado`,
+      d: `${e.id} · equipamento parado`, go: () => { onClose(); nav.push('equip-detail', { id: e.id }); },
+    }));
+    if (st.osAb > 0) itens.push({
+      cor: M.amber, ic: 'wrench', t: `${st.osAb} OS aberta(s)`,
+      d: 'Ordens de serviço aguardando', go: () => { onClose(); nav.go('os'); },
+    });
+    st.baixas.forEach(p => itens.push({
+      cor: M.amber, ic: 'box', t: `Estoque baixo: ${p.nome}`,
+      d: `${p.sku} · ${p.qtd} em estoque`, go: () => { onClose(); nav.go('parts'); },
+    }));
+  }
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+        zIndex: 90, backdropFilter: 'blur(2px)',
+      }}/>
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 95,
+        background: M.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        borderTop: `1px solid ${M.border}`, maxHeight: '80%', overflowY: 'auto',
+        boxShadow: '0 -20px 40px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <span style={{ width: 40, height: 4, borderRadius: 2, background: M.borderHi }}/>
+        </div>
+        <div style={{ padding: '8px 20px 28px' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: M.text, marginBottom: 16 }}>Notificações</div>
+          {!st ? (
+            <div style={{ fontSize: 13, color: M.textDim }}>Carregando…</div>
+          ) : itens.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10,
+              fontSize: 14, color: M.green, padding: '12px 0' }}>
+              <Icon name="check" size={20}/> Tudo certo, sem alertas.
+            </div>
+          ) : (
+            <AnimatedList gap={10}>
+              {itens.map((a, i) => (
+                <button key={i} onClick={a.go} style={{
+                  width: '100%', textAlign: 'left', cursor: 'pointer',
+                  background: M.surface2, border: `1px solid ${M.border}`,
+                  borderRadius: 12, padding: 14,
+                  display: 'flex', gap: 12, alignItems: 'center',
+                }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: M.bg, color: a.cor,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}><Icon name={a.ic} size={18}/></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: M.text }}>{a.t}</div>
+                    <div style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>{a.d}</div>
+                  </div>
+                  <Icon name="chevron-r" size={16} color={M.textDim}/>
+                </button>
+              ))}
+            </AnimatedList>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Menu da conta (avatar): ver perfil · gerenciar assinaturas · sair
+function UserMenuSheet({ onClose, onLogout }) {
+  const [view, setView] = useState('menu');
+  const [pagando, setPagando] = useState(false);
+  const [erroPag, setErroPag] = useState(null);
+  const { nome, email, perfil } = lerPerfil();
+  const role = window.API.role();
+  const plano = window.API.plan() || { plan: 'premium' };
+  const papelLabel = role === 'pai' ? 'Administrador (pai)'
+    : role === 'trial' ? 'Teste grátis' : 'Usuário (filho)';
+
+  function pagar(planoId) {
+    setPagando(true); setErroPag(null);
+    window.API.payCheckout(planoId, email)
+      .then(url => { window.location.href = url; })
+      .catch(e => { setErroPag(e.message || 'Falha ao iniciar pagamento.'); setPagando(false); });
+  }
+
+  const linha = (k, v) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12,
+      padding: '12px 0', borderBottom: `1px solid ${M.border}` }}>
+      <span style={{ fontSize: 13, color: M.textDim }}>{k}</span>
+      <span style={{ fontSize: 13.5, color: M.text, fontWeight: 600, textAlign: 'right' }}>{v}</span>
+    </div>
+  );
+  const opt = (icon, titulo, desc, onClick, danger) => (
+    <button onClick={onClick} style={{
+      width: '100%', textAlign: 'left', cursor: 'pointer',
+      background: M.surface2, border: `1px solid ${M.border}`,
+      borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'center',
+    }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 9, flexShrink: 0,
+        background: M.bg, color: danger ? M.red : M.amber,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}><Icon name={icon} size={18}/></div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: danger ? '#FCA5A5' : M.text }}>{titulo}</div>
+        <div style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>{desc}</div>
+      </div>
+      <Icon name="chevron-r" size={16} color={M.textDim}/>
+    </button>
+  );
+
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+        zIndex: 90, backdropFilter: 'blur(2px)',
+      }}/>
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 95,
+        background: M.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        borderTop: `1px solid ${M.border}`, maxHeight: '85%', overflowY: 'auto',
+        boxShadow: '0 -20px 40px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <span style={{ width: 40, height: 4, borderRadius: 2, background: M.borderHi }}/>
+        </div>
+        <div style={{ padding: '8px 20px 28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+            {view !== 'menu' && (
+              <button onClick={() => setView('menu')} style={{
+                background: 'none', border: 'none', color: M.text, cursor: 'pointer',
+                padding: 0, display: 'flex',
+              }}><Icon name="arrow-left" size={20}/></button>
+            )}
+            <div style={{ fontSize: 18, fontWeight: 700, color: M.text }}>
+              {view === 'perfil' ? 'Meu perfil'
+                : view === 'assinaturas' ? 'Assinatura'
+                : 'Conta'}
+            </div>
+          </div>
+
+          {view === 'menu' && (
+            <AnimatedList gap={10}>
+              {opt('user', 'Ver perfil', `${nome || email || '—'}`, () => setView('perfil'))}
+              {opt('chart', 'Gerenciar assinatura',
+                plano.plan === 'trial' ? `Teste grátis · ${plano.dias} dia(s)` : 'Plano Premium',
+                () => setView('assinaturas'))}
+              {opt('arrow-up-r', 'Sair da conta', 'Encerrar sessão neste aparelho',
+                () => { if (confirm('Sair da conta?')) onLogout && onLogout(); }, true)}
+            </AnimatedList>
+          )}
+
+          {view === 'perfil' && (
+            <div>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
+                background: 'linear-gradient(135deg, #475569, #1E293B)',
+                border: `1px solid ${M.border}`, color: M.text,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: 20,
+              }}>{((nome || email || 'MA').trim().slice(0, 2)).toUpperCase()}</div>
+              {linha('Nome', nome || '—')}
+              {linha('E-mail', email || '—')}
+              {linha('Profissão', perfil || '—')}
+              {linha('Papel', papelLabel)}
+              {linha('Plano', plano.plan === 'trial' ? `Teste grátis (${plano.dias}d)` : 'Premium')}
+            </div>
+          )}
+
+          {view === 'assinaturas' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Card padding={16}>
+                <div style={{ fontSize: 12, color: M.textDim, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Plano atual</div>
+                {plano.plan === 'trial' ? (
+                  <>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: M.amber }}>Teste grátis</div>
+                    <div style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+                      Restam <b style={{ color: M.text }}>{plano.dias} dia(s)</b>. Depois, o acesso é bloqueado.
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: M.green }}>Premium ativo</div>
+                    <div style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+                      Acesso total. {role === 'pai' ? 'Você é o administrador.' : 'Usuário da equipe.'}
+                    </div>
+                  </>
+                )}
+              </Card>
+
+              <div style={{ fontSize: 12, color: M.textDim, letterSpacing: 0.4,
+                textTransform: 'uppercase', marginTop: 2 }}>Assinar / renovar</div>
+              <div style={{ fontSize: 12, color: M.textDim, lineHeight: 1.5, marginTop: -4 }}>
+                Pagamento por cartão ou Pix na página segura do Mercado Pago.
+                A chave chega no e-mail <b style={{ color: M.text }}>{email || '—'}</b>.
+              </div>
+
+              {[
+                { id: 'mensal', t: 'Mensal', p: 'R$ 89/mês' },
+                { id: 'anual', t: 'Anual', p: 'R$ 801/ano · −25%' },
+                { id: 'equipe', t: 'Equipe (até 25)', p: 'R$ 80,10/mês' },
+              ].map(o => (
+                <button key={o.id} disabled={pagando} onClick={() => pagar(o.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: M.surface2, border: `1px solid ${M.border}`,
+                    borderRadius: 12, padding: '14px 16px', cursor: pagando ? 'wait' : 'pointer',
+                  }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: M.text }}>{o.t}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, color: M.amber, fontWeight: 700 }}>{o.p}</span>
+                    <Icon name="chevron-r" size={16} color={M.textDim}/>
+                  </span>
+                </button>
+              ))}
+
+              {erroPag && <div style={{ fontSize: 13, color: M.red, textAlign: 'center' }}>{erroPag}</div>}
+              {pagando && <div style={{ fontSize: 12.5, color: M.textDim, textAlign: 'center' }}>Abrindo pagamento seguro…</div>}
+
+              <button onClick={() => { if (onLogout) onLogout(); }} style={{
+                marginTop: 4, background: 'transparent', border: 'none',
+                color: M.textDim, fontSize: 12.5, cursor: 'pointer', padding: 8,
+              }}>Já tenho a chave / trocar conta</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -182,6 +575,7 @@ function ModuleCard({ icon, title, badge, onClick }) {
 // SCREEN 2 — ALMOXARIFADO (parts by voice)
 // =========================================================================
 function PartsScreen({ nav, openMic }) {
+  const ex = exemplosPerfil();
   const [q, setQ] = useState('');
   const [res, setRes] = useState(null);   // null = sem busca; [] = vazio
   const [busy, setBusy] = useState(false);
@@ -237,16 +631,20 @@ function PartsScreen({ nav, openMic }) {
         </div>
 
         {res !== null && (
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ marginTop: 16 }}>
             {busy && <ScreenLoader label="Buscando…"/>}
             {!busy && res.length === 0 && (
               <EmptyState icon="search" title="Nada encontrado"
                 body={`Nenhuma peça contém "${q}".`}
                 action="Cadastrar peça" onAction={() => setSheet('nova')}/>
             )}
-            {!busy && res.map(p => (
-              <PartRow key={p.sku} part={p} onClick={() => setSheet({ edit: p })}/>
-            ))}
+            {!busy && res.length > 0 && (
+              <AnimatedList gap={8}>
+                {res.map(p => (
+                  <PartRow key={p.sku} part={p} onClick={() => setSheet({ edit: p })}/>
+                ))}
+              </AnimatedList>
+            )}
           </div>
         )}
 
@@ -278,9 +676,9 @@ function PartsScreen({ nav, openMic }) {
                 Toque e fale o comando
               </div>
               <div style={{ fontSize: 12, color: M.textDim, marginTop: 12, lineHeight: 1.8, textAlign: 'center', maxWidth: 280 }}>
-                "onde está o rolamento 6205"<br/>
-                "tira 2 correias A-42"<br/>
-                "kit de troca de óleo"
+                {ex.voz[0]}<br/>
+                {ex.voz[1]}<br/>
+                {ex.voz[2]}
               </div>
             </div>
 
@@ -307,7 +705,8 @@ function PartsScreen({ nav, openMic }) {
       {sheet && sheet.edit && (
         <PartForm peca={sheet.edit}
           onClose={() => setSheet(null)}
-          onSaved={() => { setSheet(null); flash('Peça atualizada'); recarregarBusca(); }}/>
+          onSaved={() => { setSheet(null); flash('Peça atualizada'); recarregarBusca(); }}
+          onDeleted={() => { setSheet(null); flash('Peça excluída'); recarregarBusca(); }}/>
       )}
     </div>
   );
@@ -328,8 +727,15 @@ function PartRow({ part, onClick }) {
         }}>{part.sku}</div>
         <div style={{ fontSize: 14, fontWeight: 600, color: M.text, lineHeight: 1.3,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{part.nome}</div>
-        <div style={{ fontSize: 12, color: M.textDim, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="pin" size={12}/> {part.loc || '—'}
+        <div style={{ fontSize: 12, color: M.textDim, marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="pin" size={12}/> {part.loc || '—'}
+          </span>
+          {part.tutorial && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: M.amber }}>
+              <Icon name="play" size={11}/> tutorial
+            </span>
+          )}
         </div>
       </div>
       <div style={{ textAlign: 'right' }}>
@@ -344,13 +750,15 @@ function PartRow({ part, onClick }) {
 }
 
 // Sheet: cadastrar (sem `peca`) ou editar (com `peca`) uma peça do estoque
-function PartForm({ peca, onClose, onSaved }) {
+function PartForm({ peca, onClose, onSaved, onDeleted }) {
   const editando = !!peca;
+  const ex = exemplosPerfil();
   const [sku, setSku] = useState(peca ? peca.sku : '');
   const [nome, setNome] = useState(peca ? peca.nome : '');
   const [qtd, setQtd] = useState(String(peca ? peca.qtd : 0));
   const [loc, setLoc] = useState(peca ? (peca.loc || '') : '');
   const [cat, setCat] = useState(peca ? (peca.cat || '') : '');
+  const [tut, setTut] = useState(peca ? (peca.tutorial || '') : '');
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -368,11 +776,20 @@ function PartForm({ peca, onClose, onSaved }) {
       quantidade: parseInt(qtd, 10) || 0,
       localizacao_fisica: loc.trim(),
       categoria: cat.trim(),
+      tutorial_url: tut.trim(),
     };
     const p = editando
       ? API.pecaUpdate(peca.sku, payload)
       : API.pecaCreate({ ...payload, sku: sku.trim() });
     p.then(onSaved).catch(e => { setErro(e.message || 'Falha ao salvar.'); setBusy(false); });
+  }
+
+  function excluir() {
+    if (!confirm(`Excluir a peça ${peca.sku}? Esta ação não pode ser desfeita.`)) return;
+    setBusy(true); setErro(null);
+    API.pecaDelete(peca.sku)
+      .then(() => onDeleted())
+      .catch(e => { setErro(e.message || 'Falha ao excluir.'); setBusy(false); });
   }
 
   return (
@@ -396,10 +813,10 @@ function PartForm({ peca, onClose, onSaved }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {!editando && (
-              <input style={inputStyle} placeholder="SKU (ex.: ROL-6205)"
+              <input style={inputStyle} placeholder={`SKU (ex.: ${ex.sku})`}
                 value={sku} onChange={e => setSku(e.target.value)}/>
             )}
-            <input style={inputStyle} placeholder="Nome da peça"
+            <input style={inputStyle} placeholder={`Nome da peça (ex.: ${ex.nome})`}
               value={nome} onChange={e => setNome(e.target.value)}/>
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1 }}>
@@ -409,12 +826,28 @@ function PartForm({ peca, onClose, onSaved }) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, color: M.textDim, marginBottom: 6 }}>Local</div>
-                <input style={inputStyle} placeholder="Gaveta R1"
+                <input style={inputStyle} placeholder={ex.loc}
                   value={loc} onChange={e => setLoc(e.target.value)}/>
               </div>
             </div>
-            <input style={inputStyle} placeholder="Categoria (opcional)"
+            <input style={inputStyle} placeholder={`Categoria — ex.: ${ex.cat} (opcional)`}
               value={cat} onChange={e => setCat(e.target.value)}/>
+            <div>
+              <div style={{ fontSize: 12, color: M.textDim, marginBottom: 6 }}>
+                Vídeo tutorial (link YouTube — opcional)
+              </div>
+              <input style={inputStyle} type="url" inputMode="url"
+                placeholder="https://youtu.be/..."
+                value={tut} onChange={e => setTut(e.target.value)}/>
+              {/^https?:\/\//.test(tut.trim()) && (
+                <a href={tut.trim()} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
+                    marginTop: 8, fontSize: 13, color: M.amber, fontWeight: 600,
+                    textDecoration: 'none' }}>
+                  <Icon name="play" size={14}/> Abrir tutorial
+                </a>
+              )}
+            </div>
             {erro && <div style={{ fontSize: 13, color: M.red }}>{erro}</div>}
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
               <Btn variant="ghost" full onClick={onClose}>Cancelar</Btn>
@@ -422,6 +855,18 @@ function PartForm({ peca, onClose, onSaved }) {
                 {busy ? 'Salvando…' : 'Salvar'}
               </Btn>
             </div>
+            {editando && window.API.role() === 'pai' && (
+              <button onClick={excluir} disabled={busy} style={{
+                marginTop: 6, background: 'transparent', border: `1px solid ${M.red}55`,
+                color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+                fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
+              }}>Excluir peça</button>
+            )}
+            {editando && window.API.role() !== 'pai' && (
+              <div style={{ fontSize: 11.5, color: M.textMute, textAlign: 'center', marginTop: 4 }}>
+                Só o administrador pode excluir.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -503,10 +948,12 @@ function OsListScreen({ nav }) {
           action="Tentar de novo" onAction={carregar}/>
       )}
       {lista && (
-        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filtered.map(o => (
-            <OsCard key={o.id} os={o} onClick={() => nav.push('os-detail', { id: o.id })}/>
-          ))}
+        <div style={{ padding: '16px' }}>
+          <AnimatedList gap={10}>
+            {filtered.map(o => (
+              <OsCard key={o.id} os={o} onClick={() => nav.push('os-detail', { id: o.id })}/>
+            ))}
+          </AnimatedList>
           {filtered.length === 0 && (
             <EmptyState icon="wrench" title="Nenhuma OS"
               body="Não há ordens com esse status. Crie uma nova com o botão +."
@@ -731,6 +1178,13 @@ function OsDetailScreen({ nav, params }) {
       .then(() => { flash('OS fechada'); setTimeout(nav.pop, 700); })
       .catch(e => { setErro(e.message); setBusy(false); });
   }
+  function excluirOs() {
+    if (!confirm(`Excluir a ${os.codigo}? Não pode ser desfeito.`)) return;
+    setBusy(true);
+    API.osDelete(os.codigo)
+      .then(() => nav.pop())
+      .catch(e => { setErro(e.message); setBusy(false); });
+  }
   function enviarForm(payload) {
     setBusy(true);
     const p = form === 'peca'
@@ -874,6 +1328,14 @@ function OsDetailScreen({ nav, params }) {
             ))}
           </div>
         </div>
+
+        {window.API.role() === 'pai' && (
+          <button onClick={excluirOs} disabled={busy} style={{
+            background: 'transparent', border: `1px solid ${M.red}55`,
+            color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+            fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
+          }}>Excluir OS</button>
+        )}
       </div>
 
       {flashNode}
@@ -1002,6 +1464,8 @@ function EquipListScreen({ nav }) {
     (type === 'todos' || e.tipo === type) &&
     (q === '' || e.nome.toLowerCase().includes(q.toLowerCase()) ||
       (e.placa || '').toLowerCase().includes(q.toLowerCase()))
+  ).sort((a, b) =>
+    (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
   );
 
   return (
@@ -1078,6 +1542,7 @@ function EquipListScreen({ nav }) {
 
 // Sheet: cadastrar novo equipamento
 function EquipForm({ onClose, onCreated }) {
+  const ex = exemplosPerfil();
   const [codigo, setCodigo] = useState('');
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
@@ -1118,11 +1583,11 @@ function EquipForm({ onClose, onCreated }) {
         <div style={{ padding: '8px 20px 28px' }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: M.text, marginBottom: 18 }}>Novo equipamento</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <input style={inputStyle} placeholder="Código (ex.: CAM-09)"
+            <input style={inputStyle} placeholder={`Código (ex.: ${ex.eqCod})`}
               value={codigo} onChange={e => setCodigo(e.target.value)}/>
-            <input style={inputStyle} placeholder="Nome (ex.: Caminhão Volvo FH)"
+            <input style={inputStyle} placeholder={`Nome (ex.: ${ex.eqNome})`}
               value={nome} onChange={e => setNome(e.target.value)}/>
-            <input style={inputStyle} placeholder="Tipo (ex.: Caminhão, Trator)"
+            <input style={inputStyle} placeholder={`Tipo (ex.: ${ex.eqTipo})`}
               value={tipo} onChange={e => setTipo(e.target.value)}/>
             <div style={{ display: 'flex', gap: 12 }}>
               <input style={{ ...inputStyle, flex: 2 }} placeholder="Modelo"
@@ -1209,6 +1674,14 @@ function EquipDetailScreen({ nav, params }) {
       .then(() => { flash('Status atualizado'); carregar(); })
       .catch(e => setErro(e.message || 'Falha ao atualizar.'))
       .finally(() => setSavingStatus(false));
+  }
+
+  function excluirEquip() {
+    if (!confirm(`Excluir o equipamento ${params.id}? As OS dele ficam sem equipamento. Não pode ser desfeito.`)) return;
+    setSavingStatus(true);
+    API.equipDelete(params.id)
+      .then(() => nav.pop())
+      .catch(e => { setErro(e.message || 'Falha ao excluir.'); setSavingStatus(false); });
   }
 
   if (erro) {
@@ -1357,6 +1830,13 @@ function EquipDetailScreen({ nav, params }) {
 
         {flashNode}
         <Btn variant="primary" icon="plus" full onClick={() => nav.go('os')}>Abrir nova OS</Btn>
+        {window.API.role() === 'pai' && (
+          <button onClick={excluirEquip} disabled={savingStatus} style={{
+            background: 'transparent', border: `1px solid ${M.red}55`,
+            color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+            fontSize: 14, fontWeight: 700, cursor: savingStatus ? 'wait' : 'pointer',
+          }}>Excluir equipamento</button>
+        )}
       </div>
     </div>
   );
@@ -1419,10 +1899,10 @@ function DashScreen({ nav }) {
   const eqManut = c(eq, 'status', 'manutencao');
 
   const kpis = [
-    { label: 'OS abertas', valor: osAb, cor: M.amber },
-    { label: 'Em andamento', valor: osAnd, cor: M.text },
-    { label: 'Equip. parados', valor: eqParado.length, cor: eqParado.length ? M.red : M.green },
-    { label: 'Equipamentos', valor: eq.length, cor: M.text },
+    { label: 'OS abertas', dica: 'ordens de serviço ainda não concluídas', valor: osAb, cor: M.amber },
+    { label: 'Em andamento', dica: 'OS com trabalho em execução', valor: osAnd, cor: M.text },
+    { label: 'Equip. parados', dica: 'máquinas fora de operação', valor: eqParado.length, cor: eqParado.length ? M.red : M.green },
+    { label: 'Equipamentos', dica: 'total cadastrado', valor: eq.length, cor: M.text },
   ];
   const dist = [
     { l: 'Abertas', n: osAb, cor: M.amber },
@@ -1444,6 +1924,9 @@ function DashScreen({ nav }) {
                 fontSize: 26, fontWeight: 700, color: k.cor,
                 fontFamily: "'JetBrains Mono', monospace",
               }}>{k.valor}</div>
+              <div style={{ fontSize: 11, color: M.textMute, marginTop: 6, lineHeight: 1.3 }}>
+                {k.dica}
+              </div>
             </Card>
           ))}
         </div>
@@ -1537,7 +2020,271 @@ function DashScreen({ nav }) {
   );
 }
 
+// =========================================================================
+// SCREEN 8 — INSPEÇÃO DO DIA (checklist pré-operacional)
+// =========================================================================
+const CHECKLIST = [
+  'Nível de óleo / fluidos',
+  'Vazamentos visíveis',
+  'Pneus / esteiras / lagartas',
+  'Freios',
+  'Iluminação e sinalização',
+  'Ruídos anormais',
+];
+
+function InspecaoScreen({ nav }) {
+  const [equips, setEquips] = useState(null);
+  const [feitas, setFeitas] = useState([]);
+  const [erro, setErro] = useState(null);
+  const [alvo, setAlvo] = useState(null); // equipamento sendo inspecionado
+  const [flash, flashNode] = useFlash();
+
+  function carregar() {
+    setErro(null);
+    Promise.all([API.equipList(), API.inspecoesHoje()])
+      .then(([a, b]) => { setEquips(a.equipamentos || []); setFeitas(b.inspecoes || []); })
+      .catch(e => setErro(e.message || 'Falha ao carregar.'));
+  }
+  useEffect(carregar, []);
+
+  const feitasSet = new Set(feitas.map(i => i.equipId));
+
+  return (
+    <div data-screen-label="08 Inspeção" style={{ paddingBottom: 110 }}>
+      <TopBar title="INSPEÇÃO DO DIA" onBack={() => nav.go('home')}/>
+
+      {equips === null && !erro && <ScreenLoader label="Carregando…"/>}
+      {erro && (
+        <EmptyState icon="alert" title="Erro" body={erro}
+          action="Tentar de novo" onAction={carregar}/>
+      )}
+      {equips && (
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ fontSize: 13, color: M.textDim, lineHeight: 1.5 }}>
+            Marque a inspeção pré-operacional de cada equipamento. Pendentes primeiro.
+          </div>
+
+          {equips.length === 0 && (
+            <EmptyState icon="truck" title="Sem equipamentos"
+              body="Cadastre equipamentos para inspecionar."
+              action="Ir para Equipamentos" onAction={() => nav.go('equip')}/>
+          )}
+
+          {equips.slice().sort((a, b) =>
+            (feitasSet.has(a.id) ? 1 : 0) - (feitasSet.has(b.id) ? 1 : 0)
+          ).map(e => {
+            const feita = feitas.find(i => i.equipId === e.id);
+            return (
+              <Card key={e.id} padding={14}
+                accentColor={feita ? (feita.ok ? M.green : M.red) : M.amber}
+                style={{ paddingLeft: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: M.text }}>{e.nome}</div>
+                    <div style={{ fontSize: 12, color: M.textDim, marginTop: 3 }}>
+                      {feita
+                        ? `Inspecionado ${feita.hora} · ${feita.ok ? 'sem problema' : 'com problema'}`
+                        : 'Pendente hoje'}
+                    </div>
+                  </div>
+                  {feita ? (
+                    <Icon name={feita.ok ? 'check' : 'alert'} size={20}
+                      color={feita.ok ? M.green : M.red}/>
+                  ) : (
+                    <Btn variant="primary" size="sm" onClick={() => setAlvo(e)}>Inspecionar</Btn>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {flashNode}
+
+      {alvo && (
+        <ChecklistSheet equip={alvo}
+          onClose={() => setAlvo(null)}
+          onSaved={(ok) => {
+            setAlvo(null);
+            flash(ok ? 'Inspeção OK registrada' : 'Inspeção com problema registrada');
+            carregar();
+          }}/>
+      )}
+    </div>
+  );
+}
+
+function ChecklistSheet({ equip, onClose, onSaved }) {
+  const [resp, setResp] = useState(CHECKLIST.map(item => ({ item, ok: true, obs: '' })));
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState(null);
+
+  function set(i, patch) {
+    setResp(r => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  }
+  function salvar() {
+    setBusy(true); setErro(null);
+    API.inspecaoCreate({ equipId: equip.id, itens: resp, operador: 'Operador' })
+      .then(r => onSaved(r.semProblema !== false))
+      .catch(e => { setErro(e.message || 'Falha ao salvar.'); setBusy(false); });
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+        zIndex: 90, backdropFilter: 'blur(2px)',
+      }}/>
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 95,
+        background: M.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        borderTop: `1px solid ${M.border}`, maxHeight: '90%', overflowY: 'auto',
+        boxShadow: '0 -20px 40px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <span style={{ width: 40, height: 4, borderRadius: 2, background: M.borderHi }}/>
+        </div>
+        <div style={{ padding: '8px 20px 28px' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: M.text }}>{equip.nome}</div>
+          <div style={{ fontSize: 12, color: M.textDim, margin: '4px 0 18px' }}>
+            Inspeção pré-operacional
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {resp.map((x, i) => (
+              <div key={i} style={{
+                background: M.bg, border: `1px solid ${M.border}`,
+                borderRadius: 12, padding: 12,
+              }}>
+                <div style={{ fontSize: 14, color: M.text, fontWeight: 600, marginBottom: 8 }}>{x.item}</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => set(i, { ok: true })} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer',
+                    background: x.ok ? M.green : 'transparent',
+                    color: x.ok ? '#0E1117' : M.textDim,
+                    border: `1px solid ${x.ok ? M.green : M.border}`,
+                    fontWeight: 700, fontSize: 13,
+                  }}>OK</button>
+                  <button onClick={() => set(i, { ok: false })} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer',
+                    background: !x.ok ? M.red : 'transparent',
+                    color: !x.ok ? '#fff' : M.textDim,
+                    border: `1px solid ${!x.ok ? M.red : M.border}`,
+                    fontWeight: 700, fontSize: 13,
+                  }}>Problema</button>
+                </div>
+                {!x.ok && (
+                  <input value={x.obs} onChange={e => set(i, { obs: e.target.value })}
+                    placeholder="O que está errado?"
+                    style={{
+                      width: '100%', marginTop: 8, background: M.surface,
+                      border: `1px solid ${M.border}`, borderRadius: 8,
+                      padding: '10px 12px', color: M.text, fontSize: 14,
+                      fontFamily: 'Inter, sans-serif', outline: 'none',
+                    }}/>
+                )}
+              </div>
+            ))}
+            {erro && <div style={{ fontSize: 13, color: M.red }}>{erro}</div>}
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <Btn variant="ghost" full onClick={onClose}>Cancelar</Btn>
+              <Btn variant="primary" full icon="check" disabled={busy} onClick={salvar}>
+                {busy ? 'Salvando…' : 'Concluir inspeção'}
+              </Btn>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// =========================================================================
+// SCREEN 9 — GESTÃO (somente o "pai"/admin): quem usou e o que fez
+// =========================================================================
+function GestaoScreen({ nav }) {
+  const [lista, setLista] = useState(null);
+  const [erro, setErro] = useState(null);
+
+  function carregar() {
+    setErro(null);
+    API.atividade()
+      .then(r => setLista(r.atividade || []))
+      .catch(e => setErro(e.message || 'Falha ao carregar.'));
+  }
+  useEffect(carregar, []);
+
+  const atores = lista
+    ? Array.from(new Set(lista.map(a => a.ator))).slice(0, 12)
+    : [];
+
+  return (
+    <div data-screen-label="09 Gestão" style={{ paddingBottom: 110 }}>
+      <TopBar title="GESTÃO" mono onBack={nav.pop}/>
+
+      {lista === null && !erro && <ScreenLoader label="Carregando atividade…"/>}
+      {erro && (
+        <EmptyState icon="alert" title="Acesso restrito" body={erro}
+          action="Voltar" onAction={nav.pop}/>
+      )}
+      {lista && (
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Card padding={14}>
+            <div style={{ fontSize: 12, color: M.textDim, letterSpacing: 0.4,
+              textTransform: 'uppercase', marginBottom: 8 }}>Quem está usando</div>
+            {atores.length === 0 ? (
+              <div style={{ fontSize: 13, color: M.textDim }}>Sem atividade ainda.</div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {atores.map(a => (
+                  <span key={a} style={{
+                    background: M.surface2, border: `1px solid ${M.border}`,
+                    borderRadius: 999, padding: '6px 12px', fontSize: 12.5,
+                    color: M.text, fontWeight: 600,
+                  }}>{a}</span>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <div>
+            <SectionHeader>Atividade recente</SectionHeader>
+            {lista.length === 0 ? (
+              <Card padding={16}>
+                <div style={{ fontSize: 13, color: M.textDim }}>
+                  Nada registrado ainda. As ações da equipe aparecem aqui.
+                </div>
+              </Card>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1,
+                background: M.border, borderRadius: 12, overflow: 'hidden',
+                border: `1px solid ${M.border}` }}>
+                {lista.map((a, i) => (
+                  <div key={i} style={{
+                    background: M.surface, padding: '12px 14px',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, color: M.text, fontWeight: 600 }}>
+                        {a.ator} <span style={{ color: M.textDim, fontWeight: 400 }}>{a.acao}</span> <span style={{ color: M.amber, fontFamily: "'JetBrains Mono', monospace" }}>{a.alvo}</span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: M.textDim, marginTop: 2 }}>
+                        {a.quando} · {a.papel}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 Object.assign(window, {
   HomeScreen, PartsScreen, OsListScreen, OsDetailScreen,
-  EquipListScreen, EquipDetailScreen, DashScreen,
+  EquipListScreen, EquipDetailScreen, DashScreen, InspecaoScreen,
+  GestaoScreen,
 });

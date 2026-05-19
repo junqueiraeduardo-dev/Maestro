@@ -62,6 +62,10 @@ function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, sty
     'fuel':        <><path d="M3 21h11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16Z"/><path d="M3 12h11"/><path d="M14 8h2l2 2v8a2 2 0 0 0 4 0v-7l-4-4"/></>,
     'tool':        <><path d="M14.7 6.3a4 4 0 0 0 5 5l-8.4 8.4a2 2 0 0 1-2.8-2.8L17 8.5a4 4 0 0 1-2.3-2.2Z"/></>,
     'settings':    <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
+    'sprout':      <><path d="M12 21v-9"/><path d="M12 12C12 8.5 9.5 6 5.5 6 5.5 9.5 8 12 12 12Z"/><path d="M12 12c0-3 2.2-5 5.5-5 0 3-2.2 5-5.5 5Z"/></>,
+    'briefcase':   <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></>,
+    'car':         <><path d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11"/><rect x="3" y="11" width="18" height="6" rx="1.5"/><circle cx="7.5" cy="17.5" r="1.9"/><circle cx="16.5" cy="17.5" r="1.9"/></>,
+    'clipboard':   <><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3.2A1.2 1.2 0 0 1 10.2 2h3.6A1.2 1.2 0 0 1 15 3.2V4"/><path d="M9 11h6"/><path d="M9 15h6"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -497,7 +501,34 @@ function Logo({ size = 32, animated = false, word = false, wordColor }) {
   );
 }
 
+// =========================================================================
+// AnimatedList — entrada em cascata (fade + slide), inspirada no reactbits.
+// Sem framer-motion (mantém o zero-build): CSS keyframes + stagger.
+// =========================================================================
+function AnimatedList({ children, gap = 10, step = 55 }) {
+  const items = React.Children.toArray(children);
+  return (
+    <>
+      <style>{`
+        @keyframes maestro-al-in {
+          from { opacity: 0; transform: translateY(10px) scale(0.985); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap }}>
+        {items.map((c, i) => (
+          <div key={c.key != null ? c.key : i} style={{
+            animation: 'maestro-al-in .42s cubic-bezier(.22,.9,.3,1.1) both',
+            animationDelay: `${Math.min(i, 12) * step}ms`,
+          }}>{c}</div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 Object.assign(window, {
   M, Icon, StatusDot, Tag, Card, Btn, SectionHeader, TopBar,
-  BottomTabBar, MicFAB, EmptyState, Toast, BottomSheet, Waveform, Logo, TABS,
+  BottomTabBar, MicFAB, EmptyState, Toast, BottomSheet, Waveform, Logo,
+  AnimatedList, TABS,
 });

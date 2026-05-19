@@ -47,7 +47,7 @@ function VoiceSheet({ phase, transcript, resp, onClose }) {
         }}>
           {transcript ? (
             <div style={{ fontSize: 17, color: M.text, lineHeight: 1.4, fontWeight: 500 }}>
-              "{transcript}<span style={{ color: M.amber, marginLeft: 2 }}>|</span>"
+              "{transcript}"
             </div>
           ) : (
             <div style={{ fontSize: 14, color: M.textDim, fontStyle: "italic" }}>
@@ -262,7 +262,7 @@ function ResultHeader({ transcript, icon, label }) {
 // ---------------------------------------------------------------------------
 // MAIN APP
 // ---------------------------------------------------------------------------
-function App({ onLogout }) {
+function App({ onLogout, plano }) {
   const [tab, setTab] = useS("home");
   const [stack, setStack] = useS([]);
   const [toast, setToast] = useS(null);
@@ -393,6 +393,8 @@ function App({ onLogout }) {
   if (top) {
     if (top.screen === "os-detail") body = <OsDetailScreen nav={nav} params={top.params}/>;
     else if (top.screen === "equip-detail") body = <EquipDetailScreen nav={nav} params={top.params}/>;
+    else if (top.screen === "inspecao") body = <InspecaoScreen nav={nav}/>;
+    else if (top.screen === "gestao") body = <GestaoScreen nav={nav}/>;
   } else {
     switch (tab) {
       case "home":  body = <HomeScreen nav={nav} openMic={startListening} onLogout={onLogout}/>; break;
@@ -410,6 +412,19 @@ function App({ onLogout }) {
       background: M.bg, overflow: "hidden",
       paddingTop: "env(safe-area-inset-top)",
     }}>
+      {plano && plano.plan === "trial" && (
+        <div style={{
+          flexShrink: 0, background: "#3B2A0E", color: M.amber,
+          borderBottom: `1px solid ${M.border}`,
+          padding: "8px 14px", fontSize: 12.5, fontWeight: 600,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        }}>
+          <Icon name="clock" size={14}/>
+          Teste grátis · {plano.dias} dia{plano.dias === 1 ? "" : "s"} restante{plano.dias === 1 ? "" : "s"}
+          <span style={{ opacity: 0.5 }}>·</span>
+          <span style={{ color: M.text }}>Premium R$ 89/mês</span>
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: M.bg,
         WebkitOverflowScrolling: "touch" }}>
         {body}
@@ -433,51 +448,199 @@ function App({ onLogout }) {
 // =========================================================================
 // LOGIN — portão de acesso (senha compartilhada)
 // =========================================================================
+const PERFIS = [
+  "Produtor rural",
+  "Empresário",
+  "Dono de loja / oficina",
+  "Mecânico / Operador",
+  "Gestor de manutenção",
+  "Outro",
+];
+
 function Login({ onOk }) {
+  const ls = (k, d) => { try { return localStorage.getItem(k) || d; } catch (_) { return d; } };
+  const [nome, setNome] = useS(() => ls("maestro_nome", ""));
+  const [email, setEmail] = useS(() => ls("maestro_email", ""));
+  const perfilSalvo = ls("maestro_perfil", PERFIS[0]);
+  const [perfil, setPerfil] = useS(() => (PERFIS.includes(perfilSalvo) ? perfilSalvo : "Outro"));
+  const [profCustom, setProfCustom] = useS(() => (PERFIS.includes(perfilSalvo) ? "" : perfilSalvo));
+  const [modo, setModo] = useS("trial"); // 'trial' | 'premium'
   const [senha, setSenha] = useS("");
   const [busy, setBusy] = useS(false);
   const [erro, setErro] = useS(null);
 
-  function entrar(e) {
+  function emailOk() { return /.+@.+\..+/.test(email.trim()); }
+  function perfilFinal() {
+    return perfil === "Outro" ? (profCustom.trim() || "Outro") : perfil;
+  }
+  function validar() {
+    if (!nome.trim()) { setErro("Informe seu nome."); return false; }
+    if (!emailOk()) { setErro("Informe um e-mail válido."); return false; }
+    if (perfil === "Outro" && !profCustom.trim()) { setErro("Escreva sua profissão."); return false; }
+    return true;
+  }
+  function salvarPerfil() {
+    try {
+      localStorage.setItem("maestro_nome", nome.trim());
+      localStorage.setItem("maestro_email", email.trim());
+      localStorage.setItem("maestro_perfil", perfilFinal());
+    } catch (_) {}
+  }
+
+  function entrarPremium(e) {
     if (e) e.preventDefault();
-    if (!senha) return;
+    if (!validar()) return;
+    if (!senha) { setErro("Informe a senha do plano."); return; }
     setBusy(true); setErro(null);
     window.API.login(senha)
-      .then(() => onOk())
+      .then(() => { salvarPerfil(); onOk(); })
       .catch((err) => { setErro(err.message || "Falha no login."); setBusy(false); });
   }
 
+  function iniciarTrial() {
+    if (!validar()) return;
+    setBusy(true); setErro(null);
+    window.API.startTrial(email.trim())
+      .then(() => { salvarPerfil(); onOk(); })
+      .catch((err) => {
+        if (err.expirado) { setModo("premium"); setErro("Seu teste grátis acabou. Assine o Premium."); }
+        else setErro(err.message || "Falha ao iniciar teste.");
+        setBusy(false);
+      });
+  }
+
+  const field = {
+    width: "100%", background: M.surface, border: `1px solid ${M.border}`,
+    borderRadius: 12, padding: "14px 16px", color: M.text,
+    fontSize: 16, fontFamily: "Inter, sans-serif", outline: "none",
+    marginBottom: 12,
+  };
+  const Tab = ({ id, children }) => (
+    <button type="button" onClick={() => { setModo(id); setErro(null); }} style={{
+      flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer",
+      background: modo === id ? M.amber : "transparent",
+      color: modo === id ? "#0E1117" : M.textDim,
+      border: `1px solid ${modo === id ? M.amber : M.border}`,
+      fontWeight: 700, fontSize: 13,
+    }}>{children}</button>
+  );
+
   return (
     <div style={{
-      position: "fixed", inset: 0, background: M.bg,
+      position: "fixed", inset: 0, background: M.bg, overflowY: "auto",
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", padding: 28,
-      paddingTop: "env(safe-area-inset-top)",
+      padding: "40px 24px", paddingTop: "max(40px, env(safe-area-inset-top))",
     }}>
-      <div style={{ marginBottom: 28 }}><Logo size={64} word/></div>
-      <form onSubmit={entrar} style={{ width: "100%", maxWidth: 360 }}>
-        <div style={{
-          fontSize: 13, color: M.textDim, textAlign: "center", marginBottom: 18,
-        }}>Acesso restrito. Informe a senha.</div>
-        <input
-          type="password" value={senha} autoFocus
-          onChange={(e) => setSenha(e.target.value)}
-          placeholder="Senha"
-          style={{
-            width: "100%", background: M.surface,
-            border: `1px solid ${erro ? M.red : M.border}`,
-            borderRadius: 12, padding: "14px 16px", color: M.text,
-            fontSize: 16, fontFamily: "Inter, sans-serif", outline: "none",
-            marginBottom: 14,
-          }}/>
-        {erro && (
-          <div style={{ fontSize: 13, color: M.red, marginBottom: 14, textAlign: "center" }}>{erro}</div>
+      <div style={{ marginBottom: 22 }}><Logo size={56} word/></div>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <input type="text" value={nome} autoFocus
+          onChange={(e) => setNome(e.target.value)} placeholder="Seu nome"
+          style={field}/>
+        <input type="email" value={email} inputMode="email"
+          onChange={(e) => setEmail(e.target.value)} placeholder="Seu e-mail"
+          style={field}/>
+        <div style={{ fontSize: 12, color: M.textDim, margin: "2px 2px 6px" }}>Eu sou</div>
+        <select value={perfil} onChange={(e) => setPerfil(e.target.value)}
+          style={{ ...field, appearance: "none" }}>
+          {PERFIS.map((p) => (
+            <option key={p} value={p} style={{ background: M.surface }}>{p}</option>
+          ))}
+        </select>
+        {perfil === "Outro" && (
+          <input type="text" value={profCustom}
+            onChange={(e) => setProfCustom(e.target.value)}
+            placeholder="Escreva sua profissão"
+            style={field}/>
         )}
-        <Btn variant="primary" full icon="check" disabled={busy}
-          onClick={entrar}>{busy ? "Entrando…" : "Entrar"}</Btn>
-      </form>
-      <div style={{ marginTop: 26, fontSize: 11, color: M.textMute, letterSpacing: 1 }}>
+
+        <div style={{ display: "flex", gap: 8, margin: "6px 0 16px" }}>
+          <Tab id="trial">Teste grátis</Tab>
+          <Tab id="premium">Já sou Premium</Tab>
+        </div>
+
+        {modo === "premium" ? (
+          <form onSubmit={entrarPremium}>
+            <input type="password" value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Senha do plano Premium"
+              style={{ ...field, borderColor: erro ? M.red : M.border }}/>
+            {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
+            <Btn variant="primary" full icon="check" disabled={busy}
+              onClick={entrarPremium}>{busy ? "Entrando…" : "Entrar"}</Btn>
+            <div style={{ fontSize: 11.5, color: M.textMute, textAlign: "center", marginTop: 12 }}>
+              A senha é fornecida na contratação do Premium.
+            </div>
+          </form>
+        ) : (
+          <>
+            {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
+            <Btn variant="primary" full icon="check" disabled={busy}
+              onClick={iniciarTrial}>{busy ? "Liberando…" : `Começar teste grátis (${7} dias)`}</Btn>
+            <div style={{ fontSize: 11.5, color: M.textMute, textAlign: "center", marginTop: 12 }}>
+              Sem cartão. 1 teste por e-mail.
+            </div>
+          </>
+        )}
+
+        {/* Planos */}
+        <div style={{ marginTop: 26, display: "flex", flexDirection: "column", gap: 12 }}>
+          <PlanoCard
+            nome="Free · Teste grátis" preco="R$ 0" periodo="por 7 dias"
+            cor={M.textDim}
+            itens={["Acesso completo a tudo", "Sem cartão de crédito", "Bloqueia após 7 dias"]}/>
+          <PlanoCard
+            nome="Premium Mensal" preco="R$ 89" periodo="/mês"
+            cor={M.amber} destaque
+            itens={[
+              "Tudo ilimitado: peças, equipamentos, OS, inspeções",
+              "Assistente de voz com IA",
+              "Até 25 usuários com a senha do plano",
+              "Tutoriais em vídeo + suporte prioritário",
+            ]}/>
+          <PlanoCard
+            nome="Premium Anual" preco="R$ 801" periodo="/ano · −25%"
+            cor={M.green} destaque
+            itens={[
+              "Tudo do Premium Mensal",
+              "Economia de 25% (≈ R$ 66,75/mês)",
+              "3 meses grátis no ano",
+            ]}/>
+          <div style={{
+            fontSize: 11.5, color: M.textMute, textAlign: "center",
+            lineHeight: 1.6, padding: "2px 6px",
+          }}>
+            Equipe com até 25 usuários: <span style={{ color: M.amber }}>10% de
+            desconto adicional</span> sobre o plano escolhido.
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: 24, fontSize: 11, color: M.textMute, letterSpacing: 1 }}>
         MAESTRO · CMMS POR VOZ
+      </div>
+    </div>
+  );
+}
+
+function PlanoCard({ nome, preco, periodo, itens, cor, destaque }) {
+  return (
+    <div style={{
+      background: M.surface, borderRadius: 14,
+      border: `1px solid ${destaque ? M.amber : M.border}`,
+      padding: 16,
+    }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: cor }}>{nome}</span>
+        <span style={{ fontSize: 18, fontWeight: 800, color: M.text }}>
+          {preco}<span style={{ fontSize: 11, color: M.textDim, fontWeight: 500 }}> {periodo}</span>
+        </span>
+      </div>
+      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+        {itens.map((t, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, color: M.textDim }}>
+            <Icon name="check" size={14} color={destaque ? M.amber : M.textDim}/>
+            <span>{t}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -486,7 +649,7 @@ function Login({ onOk }) {
 function Root() {
   const [authed, setAuthed] = useS(window.API.isAuthed());
   if (!authed) return <Login onOk={() => setAuthed(true)}/>;
-  return <App onLogout={() => window.API.logout()}/>;
+  return <App onLogout={() => window.API.logout()} plano={window.API.plan()}/>;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);

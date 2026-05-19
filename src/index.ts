@@ -10,7 +10,8 @@ import cors from "cors";
 import { voiceRouter } from "./routes/voiceRoutes";
 import { osRouter } from "./routes/osRoutes";
 import { catalogRouter } from "./routes/catalogRoutes";
-import { loginHandler, requireAuth } from "./auth";
+import { loginHandler, trialHandler, requireAuth } from "./auth";
+import { payPlanos, payCheckout, payWebhook } from "./pay";
 
 const app = express();
 
@@ -20,8 +21,13 @@ app.use(express.json({ limit: "16kb" })); // payload de voz é minúsculo
 // Health check (útil p/ "manter acordado" o free tier que dorme)
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Login é público (precisa ser alcançável sem token)
+// Login, teste grátis e pagamento são públicos (sem token).
+// O webhook precisa ser público p/ o Mercado Pago chamar (é assinado).
 app.post("/api/login", loginHandler);
+app.post("/api/trial", trialHandler);
+app.get("/api/pay/planos", payPlanos);
+app.post("/api/pay/checkout", payCheckout);
+app.post("/api/pay/webhook", payWebhook);
 
 // Portão: tudo abaixo de /api exige token válido
 app.use("/api", requireAuth);

@@ -16,6 +16,8 @@
  */
 import { Router, Request, Response } from "express";
 import { supabase } from "../config/supabase";
+import { requireAdmin } from "../auth";
+import { logAtiv } from "../audit";
 
 export const osRouter = Router();
 
@@ -307,6 +309,7 @@ osRouter.post("/os", async (req: Request, res: Response) => {
         .update({ status: "manutencao" })
         .eq("id", eq.id);
 
+    logAtiv(req, "abriu OS", codigo);
     res.status(201).json({ os: mapOs(data) });
   } catch (err: any) {
     console.error("[os] criar:", err?.message ?? err);
@@ -325,6 +328,7 @@ osRouter.post("/os/:codigo/fechar", async (req: Request, res: Response) => {
       .maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ erro: "OS não encontrada." });
+    logAtiv(req, "fechou OS", codigo);
     res.json({ ok: true, os: mapOs(data) });
   } catch (err: any) {
     console.error("[os] fechar:", err?.message ?? err);
@@ -348,6 +352,7 @@ osRouter.post("/os/:codigo/comentarios", async (req: Request, res: Response) => 
       .from("os_comentarios")
       .insert({ os_id: os.id, autor, texto });
     if (error) throw error;
+    logAtiv(req, "comentou na OS", codigo);
     res.status(201).json({ ok: true });
   } catch (err: any) {
     console.error("[os] comentario:", err?.message ?? err);
@@ -372,9 +377,128 @@ osRouter.post("/os/:codigo/pecas", async (req: Request, res: Response) => {
       .from("os_pecas")
       .insert({ os_id: os.id, sku, nome, quantidade: qtd });
     if (error) throw error;
+    logAtiv(req, "registrou peça na OS", codigo);
     res.status(201).json({ ok: true });
   } catch (err: any) {
     console.error("[os] peca:", err?.message ?? err);
     res.status(500).json({ erro: "Falha ao registrar peça." });
+  }
+});
+
+osRouter.delete("/os/:codigo", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { codigo } = req.params;
+    const { data, error } = await supabase
+      .from("ordens_servico")
+      .delete()
+      .eq("codigo", String(codigo).slice(0, 32))
+      .select("codigo")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ erro: "OS não encontrada." });
+    logAtiv(req, "excluiu OS", codigo);
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error("[os] delete:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao excluir OS." });
+  }
+});
+
+// =====================================================================
+// INSPEÇÃO DO DIA (checklist pré-operacional)
+// =====================================================================
+osRouter.get("/inspecoes", async (_req: Request, res: Response) => {
+  try {
+    const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(
+      new Date()
+    ); // YYYY-MM-DD
+    const { data, error } = await supabase
+      .from("inspecoes")
+      .select("id,operador,ok,itens,created_at,equipamentos(codigo,nome)")
+      .gte("created_at", `${hoje}T00:00:00-03:00`)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({
+      inspecoes: (data || []).map((i: any) => ({
+        id: i.id,
+        equip: i.equipamentos?.nome || "—",
+        equipId: i.equipamentos?.codigo || "",
+        operador: i.operador || "—",
+        ok: i.ok,
+        itens: i.itens || [],
+        hora: new Intl.DateTimeFormat("pt-BR", {
+          hour: "2-digit", minute: "2-digit", timeZone: TZ,
+        }).format(new Date(i.created_at)),
+      })),
+    });
+  } catch (err: any) {
+    console.error("[insp] lista:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao carregar inspeções." });
+  }
+});
+
+osRouter.post("/inspecoes", async (req: Request, res: Response) => {
+  try {
+    const equipId = String(req.body?.equipId ?? "").trim().slice(0, 32);
+    const operador = String(req.body?.operador ?? "Operador").trim().slice(0, 80) || "Operador";
+    const itensIn = Array.isArray(req.body?.itens) ? req.body.itens : [];
+    if (!equipId || itensIn.length === 0)
+      return res.status(400).json({ erro: "Equipamento e checklist são obrigatórios." });
+
+    const itens = itensIn.slice(0, 30).map((x: any) => ({
+      item: String(x?.item ?? "").slice(0, 120),
+      ok: x?.ok !== false,
+      obs: String(x?.obs ?? "").slice(0, 240),
+    }));
+    const tudoOk = itens.every((x: any) => x.ok);
+
+    const { data: eq } = await supabase
+      .from("equipamentos")
+      .select("id")
+      .eq("codigo", equipId)
+      .maybeSingle();
+    if (!eq) return res.status(400).json({ erro: "Equipamento inválido." });
+
+    const { error } = await supabase.from("inspecoes").insert({
+      equipamento_id: eq.id,
+      operador,
+      itens,
+      ok: tudoOk,
+    });
+    if (error) throw error;
+    logAtiv(req, "fez inspeção", equipId);
+    res.status(201).json({ ok: true, semProblema: tudoOk });
+  } catch (err: any) {
+    console.error("[insp] criar:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao salvar inspeção." });
+  }
+});
+
+// =====================================================================
+// ATIVIDADE — quem fez o quê (somente o "pai"/admin)
+// =====================================================================
+osRouter.get("/atividade", requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("atividade")
+      .select("ator,papel,acao,alvo,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    res.json({
+      atividade: (data || []).map((a: any) => ({
+        ator: a.ator || "—",
+        papel: a.papel || "?",
+        acao: a.acao,
+        alvo: a.alvo || "",
+        quando: new Intl.DateTimeFormat("pt-BR", {
+          day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+          timeZone: TZ,
+        }).format(new Date(a.created_at)),
+      })),
+    });
+  } catch (err: any) {
+    console.error("[atividade]:", err?.message ?? err);
+    res.status(500).json({ erro: "Falha ao carregar atividade." });
   }
 });
