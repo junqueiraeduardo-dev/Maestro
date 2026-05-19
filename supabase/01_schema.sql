@@ -68,10 +68,5 @@ create trigger trg_estoque_updated
 alter table public.estoque_pecas      enable row level security;
 alter table public.historico_servicos enable row level security;
 
--- Dados de exemplo para teste local
-insert into public.estoque_pecas (nome, sku, quantidade, localizacao_fisica, sinonimos, categoria)
-values
-    ('Filtro de Óleo Tecfil PSL56',  'FIL-001', 12, 'Prateleira B3', 'oleo,lubrificante,filtro', 'troca-de-oleo'),
-    ('Óleo Motor 5W30 Sintético 1L', 'OLE-530',  8, 'Prateleira B2', '5w30,oleo motor,sintetico', 'troca-de-oleo'),
-    ('Filtro de Ar Esportivo',       'FIL-AR2',  5, 'Prateleira C1', 'ar,admissao', 'filtros')
-on conflict (sku) do nothing;
+-- Sem dados de exemplo: o estoque começa vazio. O cliente cadastra as
+-- peças dele pela tela "Almoxarifado" (+) ou por voz.

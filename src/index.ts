@@ -8,6 +8,9 @@ import path from "path";
 import express from "express";
 import cors from "cors";
 import { voiceRouter } from "./routes/voiceRoutes";
+import { osRouter } from "./routes/osRoutes";
+import { catalogRouter } from "./routes/catalogRoutes";
+import { loginHandler, requireAuth } from "./auth";
 
 const app = express();
 
@@ -17,8 +20,16 @@ app.use(express.json({ limit: "16kb" })); // payload de voz é minúsculo
 // Health check (útil p/ "manter acordado" o free tier que dorme)
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// API
+// Login é público (precisa ser alcançável sem token)
+app.post("/api/login", loginHandler);
+
+// Portão: tudo abaixo de /api exige token válido
+app.use("/api", requireAuth);
+
+// API (protegida)
 app.use("/api", voiceRouter);
+app.use("/api", osRouter);
+app.use("/api", catalogRouter);
 
 // Frontend estático (público) - será criado no próximo passo
 app.use(express.static(path.join(__dirname, "..", "public")));
@@ -43,5 +54,5 @@ app.use(
 
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
-  console.log(`VoiceParts AI rodando em http://localhost:${port}`);
+  console.log(`Maestro rodando em http://localhost:${port}`);
 });

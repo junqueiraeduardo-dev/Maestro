@@ -39,18 +39,31 @@ const FALA = {
   naoEntendi: "Não entendi o comando, repita por favor.",
 };
 
+// `dados` carrega o resultado estruturado para a UI desenhar os cards
+// (SKU, qtd, local / itens do kit). É opcional: se a IA degradar ou nada
+// for encontrado, vem null e o frontend cai no texto `fala`.
 async function executar(
   intent: IntentResult
-): Promise<{ fala: string; intencao: string }> {
+): Promise<{ fala: string; intencao: string; dados: any }> {
   const { intencao, termo, quantidade } = intent;
 
   switch (intencao) {
     case "buscar": {
       const { data, error } = await supabase.rpc("buscar_peca", { termo });
       if (error) throw error;
-      return data?.length
-        ? { fala: FALA.buscaOk(data[0]), intencao }
-        : { fala: FALA.buscaVazia(termo), intencao };
+      const p = data?.[0];
+      return p
+        ? {
+            fala: FALA.buscaOk(p),
+            intencao,
+            dados: {
+              sku: p.sku,
+              nome: p.nome,
+              quantidade: p.quantidade,
+              localizacao_fisica: p.localizacao_fisica,
+            },
+          }
+        : { fala: FALA.buscaVazia(termo), intencao, dados: null };
     }
 
     case "baixa": {
@@ -60,7 +73,7 @@ async function executar(
       });
       if (e1) throw e1;
       if (!achados?.length)
-        return { fala: FALA.baixaNaoAchou(termo), intencao };
+        return { fala: FALA.baixaNaoAchou(termo), intencao, dados: null };
 
       const { data, error: e2 } = await supabase.rpc("dar_baixa_estoque", {
         p_sku: achados[0].sku,
@@ -69,24 +82,42 @@ async function executar(
       if (e2) throw e2;
 
       const r = data?.[0];
-      if (r?.status === "OK") return { fala: FALA.baixaOk(r), intencao };
+      if (r?.status === "OK")
+        return {
+          fala: FALA.baixaOk(r),
+          intencao,
+          dados: {
+            sku: achados[0].sku,
+            nome: r.nome,
+            restante: r.restante,
+            baixados: quantidade,
+          },
+        };
       if (r?.status === "SALDO_INSUFICIENTE")
-        return { fala: FALA.baixaSemSaldo(r), intencao };
-      return { fala: FALA.baixaNaoAchou(termo), intencao };
+        return {
+          fala: FALA.baixaSemSaldo(r),
+          intencao,
+          dados: { sku: achados[0].sku, nome: r.nome, restante: r.restante },
+        };
+      return { fala: FALA.baixaNaoAchou(termo), intencao, dados: null };
     }
 
     case "kit": {
       const { data, error } = await supabase
         .from("estoque_pecas")
-        .select("nome")
+        .select("nome, sku, quantidade")
         .ilike("categoria", `%${termo}%`)
         .limit(5);
       if (error) throw error;
-      return { fala: FALA.kit(data || []), intencao };
+      return {
+        fala: FALA.kit(data || []),
+        intencao,
+        dados: data?.length ? data : null,
+      };
     }
 
     default:
-      return { fala: FALA.naoEntendi, intencao: "desconhecido" };
+      return { fala: FALA.naoEntendi, intencao: "desconhecido", dados: null };
   }
 }
 
