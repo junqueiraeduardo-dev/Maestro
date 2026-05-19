@@ -427,7 +427,9 @@ function App({ onLogout, plano }) {
       )}
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: M.bg,
         WebkitOverflowScrolling: "touch" }}>
-        {body}
+        <RouteFade keyId={`${tab}|${stack.length}|${(top && top.screen) || ''}|${(top && top.params && top.params.id) || ''}`}>
+          {body}
+        </RouteFade>
       </div>
 
       <MicFAB state={mic.phase === "thinking" ? "thinking" : mic.phase}

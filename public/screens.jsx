@@ -634,8 +634,8 @@ function PartsScreen({ nav, openMic }) {
           <div style={{ marginTop: 16 }}>
             {busy && <ScreenLoader label="Buscando…"/>}
             {!busy && res.length === 0 && (
-              <EmptyState icon="search" title="Nada encontrado"
-                body={`Nenhuma peça contém "${q}".`}
+              <EmptyState icon="search" title="Não achei essa peça"
+                body={`Procurei por "${q}" no estoque e não veio nada. Você pode cadastrar agora.`}
                 action="Cadastrar peça" onAction={() => setSheet('nova')}/>
             )}
             {!busy && res.length > 0 && (
@@ -955,9 +955,9 @@ function OsListScreen({ nav }) {
             ))}
           </AnimatedList>
           {filtered.length === 0 && (
-            <EmptyState icon="wrench" title="Nenhuma OS"
-              body="Não há ordens com esse status. Crie uma nova com o botão +."
-              action="Nova OS" onAction={() => setNovo(true)}/>
+            <EmptyState icon="wrench" title="Tudo em ordem por aqui"
+              body="Nenhuma OS com esse status. Quando algo precisar de manutenção, abra por aqui."
+              action="Abrir uma OS" onAction={() => setNovo(true)}/>
           )}
         </div>
       )}
@@ -1216,7 +1216,7 @@ function OsDetailScreen({ nav, params }) {
               <div style={{ fontSize: 12, color: M.textDim, marginTop: 4,
                 fontFamily: "'JetBrains Mono', monospace" }}>{os.equipId}</div>
             </div>
-            {concluida && <Tag tone="green">CONCLUÍDA</Tag>}
+            {concluida && <Stamp cor={M.green}>concluída</Stamp>}
           </div>
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14,
@@ -1524,9 +1524,9 @@ function EquipListScreen({ nav }) {
             <EquipRow key={e.id} equip={e} onClick={() => nav.push('equip-detail', { id: e.id })}/>
           ))}
           {filtered.length === 0 && (
-            <EmptyState icon="truck" title="Nada encontrado"
-              body="Nenhum equipamento com esse filtro."
-              action="Novo equipamento" onAction={() => setNovo(true)}/>
+            <EmptyState icon="truck" title="Nenhum aqui ainda"
+              body="Ajuste o filtro ou cadastre o primeiro equipamento da sua operação."
+              action="Cadastrar equipamento" onAction={() => setNovo(true)}/>
           )}
         </div>
       )}
@@ -1923,7 +1923,7 @@ function DashScreen({ nav }) {
               <div style={{
                 fontSize: 26, fontWeight: 700, color: k.cor,
                 fontFamily: "'JetBrains Mono', monospace",
-              }}>{k.valor}</div>
+              }}><CountUp to={k.valor}/></div>
               <div style={{ fontSize: 11, color: M.textMute, marginTop: 6, lineHeight: 1.3 }}>
                 {k.dica}
               </div>
@@ -1970,7 +1970,7 @@ function DashScreen({ nav }) {
               <div key={s.l} style={{ flex: 1, textAlign: 'center',
                 background: M.bg, borderRadius: 10, padding: '14px 6px' }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: s.cor,
-                  fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</div>
+                  fontFamily: "'JetBrains Mono', monospace" }}><CountUp to={s.n}/></div>
                 <div style={{ fontSize: 11, color: M.textDim, marginTop: 4 }}>{s.l}</div>
               </div>
             ))}
@@ -2065,8 +2065,8 @@ function InspecaoScreen({ nav }) {
           </div>
 
           {equips.length === 0 && (
-            <EmptyState icon="truck" title="Sem equipamentos"
-              body="Cadastre equipamentos para inspecionar."
+            <EmptyState icon="truck" title="Nada para inspecionar ainda"
+              body="A inspeção do dia roda em cima dos seus equipamentos. Cadastre o primeiro pra começar."
               action="Ir para Equipamentos" onAction={() => nav.go('equip')}/>
           )}
 

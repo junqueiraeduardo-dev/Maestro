@@ -4,7 +4,7 @@
 // Design tokens (mirror the spec)
 // =========================================================================
 const M = {
-  bg:        '#0E1117',
+  bg:        '#0F1117',   // levemente mais quente que cinza-puro: dá vida ao dark
   surface:   '#161B22',
   surface2:  '#1B222C',
   border:    '#1E2A3A',
@@ -211,9 +211,12 @@ function TopBar({ title, onBack, right, mono = false, subtitle }) {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 17, fontWeight: 700, letterSpacing: mono ? 0.8 : 0.3,
+          fontSize: 17, fontWeight: 700,
+          letterSpacing: mono ? 0.8 : -0.2,
           color: M.text, lineHeight: 1.2,
-          fontFamily: mono ? "'JetBrains Mono', monospace" : 'Inter, sans-serif',
+          fontFamily: mono
+            ? "'JetBrains Mono', monospace"
+            : "'Space Grotesk', 'Inter', sans-serif",
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>{title}</div>
         {subtitle && (
@@ -527,8 +530,70 @@ function AnimatedList({ children, gap = 10, step = 55 }) {
   );
 }
 
+// =========================================================================
+// CountUp — anima de 0 ao alvo. Dá "vida" a KPIs (anti AI-flat).
+// Easing easeOutCubic em ~700ms (faixa boa entre informativo e elegante).
+// =========================================================================
+function CountUp({ to, duration = 700, prefix = "", suffix = "" }) {
+  const [v, setV] = React.useState(0);
+  React.useEffect(() => {
+    const alvo = Number(to) || 0;
+    if (alvo === 0) { setV(0); return; }
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t) => {
+      const k = Math.min(1, (t - t0) / duration);
+      const eased = 1 - Math.pow(1 - k, 3); // easeOutCubic
+      setV(Math.round(alvo * eased));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to, duration]);
+  return <span className="num">{prefix}{v}{suffix}</span>;
+}
+
+// =========================================================================
+// RouteFade — transição entre telas (slide + fade leve) baseada em chave.
+// "Cara de produto", não de site estático: trocas de tab/push têm narrativa.
+// =========================================================================
+function RouteFade({ keyId, children }) {
+  return (
+    <>
+      <style>{`
+        @keyframes maestro-route-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div key={keyId} style={{
+        animation: 'maestro-route-in .26s cubic-bezier(.22,.9,.3,1.1) both',
+        height: '100%',
+      }}>{children}</div>
+    </>
+  );
+}
+
+// =========================================================================
+// Stamp — selo "carimbo" levemente rotacionado. Detalhe editorial.
+// Para usar em OS concluída, etc. (anti card-genérico de IA).
+// =========================================================================
+function Stamp({ children, cor = M.green, rot = -6 }) {
+  return (
+    <span style={{
+      display: 'inline-block', transform: `rotate(${rot}deg)`,
+      border: `2px solid ${cor}`, color: cor,
+      padding: '4px 10px', borderRadius: 6,
+      fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+      fontWeight: 700, fontSize: 12, letterSpacing: 2,
+      textTransform: 'uppercase', background: 'transparent',
+      boxShadow: `inset 0 0 0 1px ${cor}33`,
+    }}>{children}</span>
+  );
+}
+
 Object.assign(window, {
   M, Icon, StatusDot, Tag, Card, Btn, SectionHeader, TopBar,
   BottomTabBar, MicFAB, EmptyState, Toast, BottomSheet, Waveform, Logo,
-  AnimatedList, TABS,
+  AnimatedList, CountUp, RouteFade, Stamp, TABS,
 });
