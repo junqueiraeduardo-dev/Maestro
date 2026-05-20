@@ -533,7 +533,10 @@ function Login({ onOk }) {
       display: "flex", flexDirection: "column", alignItems: "center",
       padding: "40px 24px", paddingTop: "max(40px, env(safe-area-inset-top))",
     }}>
-      <div style={{ marginBottom: 22 }}><Logo size={56} word/></div>
+      <div style={{
+        marginBottom: 22,
+        animation: 'maestro-logo-in .7s cubic-bezier(.34,1.56,.64,1) both',
+      }}><Logo size={56} word/></div>
       <div style={{ width: "100%", maxWidth: 380 }}>
         <input type="text" value={nome} autoFocus
           onChange={(e) => setNome(e.target.value)} placeholder="Seu nome"

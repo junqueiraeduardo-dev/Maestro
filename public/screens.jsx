@@ -154,12 +154,19 @@ function HomeScreen({ nav, openMic, onLogout }) {
             color: M.text, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Icon name="bell" size={20}/>
+            <span style={{
+              display: 'inline-flex', transformOrigin: '50% 8%',
+              animation: temAlerta ? 'maestro-bell 1.2s ease 0.6s 2' : 'none',
+            }}>
+              <Icon name="bell" size={20}/>
+            </span>
             {temAlerta && (
               <span style={{
                 position: 'absolute', top: 8, right: 9,
                 width: 8, height: 8, borderRadius: '50%',
                 background: M.red, border: `2px solid ${M.surface}`,
+                boxShadow: `0 0 0 0 ${M.red}66`,
+                animation: 'maestro-pulse 1.6s ease-out infinite',
               }}/>
             )}
           </button>
@@ -942,7 +949,9 @@ function OsListScreen({ nav }) {
         })}
       </div>
 
-      {lista === null && !erro && <ScreenLoader label="Carregando ordens…"/>}
+      {lista === null && !erro && (
+        <div style={{ padding: 16 }}><SkeletonList rows={4} h={92}/></div>
+      )}
       {erro && (
         <EmptyState icon="alert" title="Erro" body={erro}
           action="Tentar de novo" onAction={carregar}/>
@@ -1513,7 +1522,9 @@ function EquipListScreen({ nav }) {
         </div>
       </div>
 
-      {todos === null && !erro && <ScreenLoader label="Carregando equipamentos…"/>}
+      {todos === null && !erro && (
+        <div style={{ padding: '4px 12px' }}><SkeletonList rows={5} h={76}/></div>
+      )}
       {erro && (
         <EmptyState icon="alert" title="Erro" body={erro}
           action="Tentar de novo" onAction={carregar}/>

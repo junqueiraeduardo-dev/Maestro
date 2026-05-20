@@ -32,10 +32,40 @@
     input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    button { font-family: inherit; transition: transform .14s ease, filter .14s ease; }
-    /* Feedback tátil global: todo clique reage */
-    button:not(:disabled):active { transform: scale(0.97); }
-    input { font-family: inherit; }
+    button { font-family: inherit; transition: transform .14s ease, filter .14s ease, box-shadow .2s ease; }
+    /* Feedback tátil global: todo clique "afunda" */
+    button:not(:disabled):active { transform: scale(0.97); filter: brightness(0.94); }
+    input, select, textarea { font-family: inherit; transition: border-color .18s ease, box-shadow .25s ease; }
+    /* Glow âmbar ao focar — sensação tátil/produto, não site */
+    input:focus, select:focus, textarea:focus {
+      border-color: #F59E0B !important;
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.12);
+    }
+    /* shimmer global (skeleton) */
+    @keyframes maestro-shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    /* anel orbital do microfone */
+    @keyframes maestro-orbit {
+      0% { transform: translate(-50%,-50%) scale(.9); opacity: 0; }
+      40% { opacity: .35; }
+      100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+    }
+    /* sino chacoalhando quando tem alerta */
+    @keyframes maestro-bell {
+      0%,100% { transform: rotate(0); }
+      10%,30% { transform: rotate(-12deg); }
+      20%,40% { transform: rotate(10deg); }
+      50% { transform: rotate(-6deg); }
+      60% { transform: rotate(0); }
+    }
+    /* monograma do login pulsa 1 vez ao carregar */
+    @keyframes maestro-logo-in {
+      0% { transform: translateY(8px) scale(.94); opacity: 0; }
+      60% { transform: translateY(0) scale(1.04); opacity: 1; }
+      100% { transform: translateY(0) scale(1); }
+    }
     /* Números tabulares — alinham peso visual em listas/KPIs */
     .num { font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
     .display { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -0.01em; }

@@ -22,19 +22,20 @@ const M = {
 // =========================================================================
 // Lucide-style icons (inlined SVG paths; stroke=1.75, round caps)
 // =========================================================================
-function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, style }) {
+function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 2, style }) {
   const P = {
     'home':        <><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V9.5Z"/></>,
-    'box':         <><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></>,
-    'wrench':      <><path d="M14.7 6.3a4 4 0 0 0 5 5l-8.4 8.4a2 2 0 0 1-2.8-2.8L17 8.5a4 4 0 0 1-2.3-2.2Z"/></>,
-    'truck':       <><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></>,
+    'box':         <><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/><path d="m7.5 5.5 9 5"/></>,
+    'wrench':      <><path d="M14.7 6.3a4 4 0 0 0 5 5l-8.4 8.4a2 2 0 0 1-2.8-2.8L17 8.5a4 4 0 0 1-2.3-2.2Z"/><circle cx="17.4" cy="6.6" r="0.9" fill="currentColor" stroke="none"/></>,
+    'truck':       <><path d="M3 7.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1V16H3z"/><path d="M14 10h4l3 3.2V16h-7"/><path d="M3 11h11"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M9 13h2"/></>,
     'list-checks': <><path d="M3 6h2l1 1 2-2"/><path d="M3 12h2l1 1 2-2"/><path d="M3 18h2l1 1 2-2"/><path d="M11 6h10"/><path d="M11 12h10"/><path d="M11 18h10"/></>,
     'chart':       <><path d="M3 3v18h18"/><path d="M7 14v4"/><path d="M12 9v9"/><path d="M17 5v13"/></>,
-    'mic':         <><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></>,
+    'mic':         <><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M9 21h6"/><path d="M11 6h2"/><path d="M11 9h2"/></>,
     'mic-off':     <><path d="M2 2l20 20"/><path d="M9 9v3a3 3 0 0 0 5.1 2.1"/><path d="M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11 5.5"/></>,
     'search':      <><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></>,
     'pin':         <><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></>,
-    'bell':        <><path d="M6 9a6 6 0 0 1 12 0v5l2 2H4l2-2V9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></>,
+    'bell':        <><path d="M6 9a6 6 0 0 1 12 0c0 4.5 1 5.5 2 7H4c1-1.5 2-2.5 2-7Z"/><path d="M10 19a2 2 0 0 0 4 0"/><path d="M10.5 3.5a2 2 0 0 1 3 0"/></>,
+    'sparkles':    <><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="m5.6 18.4 2.1-2.1"/><path d="m16.3 7.7 2.1-2.1"/></>,
     'plus':        <><path d="M12 5v14"/><path d="M5 12h14"/></>,
     'arrow-left':  <><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></>,
     'chevron-r':   <><path d="m9 6 6 6-6 6"/></>,
@@ -118,8 +119,22 @@ function Tag({ children, tone = 'neutral', mono = false, size = 'sm' }) {
 // Card — surface container
 // =========================================================================
 function Card({ children, padding = 16, onClick, style, accentColor }) {
+  const clickable = !!onClick;
   return (
-    <div onClick={onClick}
+    <div
+      onClick={onClick}
+      onMouseDown={clickable ? (e) => {
+        e.currentTarget.style.transform = 'translateY(1px) scale(0.99)';
+        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.35) inset';
+      } : undefined}
+      onMouseUp={clickable ? (e) => {
+        e.currentTarget.style.transform = '';
+        e.currentTarget.style.boxShadow = '';
+      } : undefined}
+      onMouseLeave={clickable ? (e) => {
+        e.currentTarget.style.transform = '';
+        e.currentTarget.style.boxShadow = '';
+      } : undefined}
       style={{
         background: M.surface,
         border: `1px solid ${M.border}`,
@@ -127,7 +142,8 @@ function Card({ children, padding = 16, onClick, style, accentColor }) {
         padding,
         position: 'relative',
         overflow: 'hidden',
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'transform .14s ease, box-shadow .2s ease, border-color .2s ease',
         ...style,
       }}>
       {accentColor && (
@@ -152,22 +168,45 @@ function Btn({ children, variant = 'primary', onClick, icon, full = false, size 
     ghost:      { bg: 'transparent', fg: M.text, border: `1px solid ${M.border}` },
     'ghost-amber': { bg: 'transparent', fg: M.amber, border: `1px solid ${M.amber}55` },
   }[variant];
+  const isPrimary = variant === 'primary';
   return (
-    <button disabled={disabled} onClick={onClick} style={{
-      height: sz.h, fontSize: sz.fs, padding: `0 ${sz.px}px`,
-      background: styles.bg, color: styles.fg, border: styles.border,
-      borderRadius: 10, fontWeight: 700, fontFamily: 'Inter, sans-serif',
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      width: full ? '100%' : 'auto', cursor: disabled ? 'not-allowed' : 'pointer',
-      opacity: disabled ? 0.5 : 1, letterSpacing: 0.2,
-      transition: 'transform .08s ease, filter .15s ease',
-    }}
-    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-      {icon && <Icon name={icon} size={18}/>}
-      {children}
-    </button>
+    <>
+      {isPrimary && (
+        <style>{`
+          @keyframes maestro-btn-sheen {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(220%); }
+          }
+        `}</style>
+      )}
+      <button disabled={disabled} onClick={onClick} style={{
+        position: 'relative', overflow: 'hidden',
+        height: sz.h, fontSize: sz.fs, padding: `0 ${sz.px}px`,
+        background: styles.bg, color: styles.fg, border: styles.border,
+        borderRadius: 10, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        width: full ? '100%' : 'auto', cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1, letterSpacing: 0.2,
+        boxShadow: isPrimary && !disabled ? `0 6px 16px -6px ${M.amber}66` : 'none',
+        transition: 'transform .12s ease, filter .15s ease, box-shadow .2s ease',
+      }}
+      onMouseEnter={(e) => { if (isPrimary && !disabled) e.currentTarget.style.boxShadow = `0 10px 22px -6px ${M.amber}99`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)';
+        if (isPrimary && !disabled) e.currentTarget.style.boxShadow = `0 6px 16px -6px ${M.amber}66`; }}
+      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+        {icon && <Icon name={icon} size={18}/>}
+        <span style={{ position: 'relative', zIndex: 1 }}>{children}</span>
+        {isPrimary && !disabled && (
+          <span style={{
+            position: 'absolute', top: 0, bottom: 0, width: '38%',
+            background: 'linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.42) 50%, transparent 100%)',
+            animation: 'maestro-btn-sheen 2.6s ease-in-out infinite',
+            pointerEvents: 'none',
+          }}/>
+        )}
+      </button>
+    </>
   );
 }
 
@@ -276,6 +315,7 @@ function BottomTabBar({ active, onChange }) {
 function MicFAB({ state, onPress }) {
   // state: 'idle' | 'listening' | 'thinking'
   const isListening = state === 'listening';
+  const isThinking = state === 'thinking';
   return (
     <>
       <style>{`
@@ -285,7 +325,30 @@ function MicFAB({ state, onPress }) {
           100% { box-shadow: 0 0 0 0 ${M.amber}00, 0 0 0 0 ${M.amber}00; }
         }
         @keyframes maestro-spin { to { transform: rotate(360deg); } }
+        @keyframes maestro-mic-idle {
+          0%,100% { box-shadow: 0 8px 24px -4px ${M.amber}66, 0 4px 12px rgba(0,0,0,0.5); }
+          50%     { box-shadow: 0 10px 30px -2px ${M.amber}88, 0 4px 14px rgba(0,0,0,0.55); }
+        }
       `}</style>
+      {/* Anel orbital — só quando está ouvindo, dá "campo de força" sutil */}
+      {isListening && (
+        <>
+          <span style={{
+            position: 'absolute', bottom: 70, left: '50%',
+            width: 64, height: 64, borderRadius: '50%',
+            border: `2px solid ${M.amber}`,
+            pointerEvents: 'none', zIndex: 49,
+            animation: 'maestro-orbit 1.8s ease-out infinite',
+          }}/>
+          <span style={{
+            position: 'absolute', bottom: 70, left: '50%',
+            width: 64, height: 64, borderRadius: '50%',
+            border: `2px solid ${M.amber}`,
+            pointerEvents: 'none', zIndex: 49,
+            animation: 'maestro-orbit 1.8s ease-out .9s infinite',
+          }}/>
+        </>
+      )}
       <button onClick={onPress}
         aria-label="Microfone"
         style={{
@@ -293,17 +356,23 @@ function MicFAB({ state, onPress }) {
           bottom: 38, left: '50%',
           transform: `translateX(-50%) scale(${isListening ? 1.1 : 1})`,
           width: 64, height: 64, borderRadius: '50%',
-          background: M.amber, border: `3px solid ${M.bg}`,
+          background: isThinking
+            ? `conic-gradient(${M.amber} 0%, ${M.amber}55 50%, ${M.amber} 100%)`
+            : `radial-gradient(circle at 35% 30%, #FFC76A 0%, ${M.amber} 60%, ${M.amberDim} 100%)`,
+          border: `3px solid ${M.bg}`,
           color: '#fff', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: isListening
             ? `0 0 0 0 ${M.amber}88`
             : `0 8px 24px -4px ${M.amber}66, 0 4px 12px rgba(0,0,0,0.5)`,
           transition: 'transform .2s ease, box-shadow .2s ease, background .2s ease',
-          animation: isListening ? 'maestro-pulse 1.4s infinite' : 'none',
+          animation: isListening ? 'maestro-pulse 1.4s infinite'
+            : isThinking ? 'maestro-spin 1.2s linear infinite'
+            : 'maestro-mic-idle 3.4s ease-in-out infinite',
           zIndex: 50,
         }}>
-        <Icon name="mic" size={28} strokeWidth={2.2} color="#fff"/>
+        <Icon name="mic" size={28} strokeWidth={2.2} color="#fff"
+          style={{ animation: isThinking ? 'maestro-spin 1.2s linear reverse infinite' : 'none' }}/>
       </button>
     </>
   );
@@ -402,7 +471,7 @@ function BottomSheet({ open, onClose, children, peek = false }) {
         borderTop: `1px solid ${M.border}`,
         zIndex: 95,
         transform: open ? 'translateY(0)' : 'translateY(110%)',
-        transition: 'transform .3s cubic-bezier(.2,.9,.3,1.1)',
+        transition: 'transform .42s cubic-bezier(.34,1.56,.64,1)',
         maxHeight: '78%', overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
         boxShadow: '0 -20px 40px rgba(0,0,0,0.5)',
@@ -554,23 +623,48 @@ function CountUp({ to, duration = 700, prefix = "", suffix = "" }) {
 }
 
 // =========================================================================
-// RouteFade — transição entre telas (slide + fade leve) baseada em chave.
-// "Cara de produto", não de site estático: trocas de tab/push têm narrativa.
+// RouteFade — transição entre telas com mola sutil (mais perceptível).
 // =========================================================================
 function RouteFade({ keyId, children }) {
   return (
     <>
       <style>{`
         @keyframes maestro-route-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
+          0%   { opacity: 0; transform: translateY(14px) scale(.985); }
+          60%  { opacity: 1; transform: translateY(-2px) scale(1.003); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
       <div key={keyId} style={{
-        animation: 'maestro-route-in .26s cubic-bezier(.22,.9,.3,1.1) both',
+        animation: 'maestro-route-in .42s cubic-bezier(.34,1.56,.64,1) both',
         height: '100%',
       }}>{children}</div>
     </>
+  );
+}
+
+// =========================================================================
+// Skeleton — placeholder com shimmer. Substitui o spinner triste.
+// Use <Skeleton h={64}/> ou <SkeletonList rows={3}/>.
+// =========================================================================
+function Skeleton({ h = 16, w = '100%', radius = 8, style }) {
+  return (
+    <div style={{
+      height: h, width: w, borderRadius: radius,
+      background: `linear-gradient(90deg, ${M.surface} 0%, ${M.surface2} 50%, ${M.surface} 100%)`,
+      backgroundSize: '200% 100%',
+      animation: 'maestro-shimmer 1.4s ease-in-out infinite',
+      ...style,
+    }}/>
+  );
+}
+function SkeletonList({ rows = 3, h = 84, gap = 10 }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} h={h} radius={12}/>
+      ))}
+    </div>
   );
 }
 
@@ -595,5 +689,5 @@ function Stamp({ children, cor = M.green, rot = -6 }) {
 Object.assign(window, {
   M, Icon, StatusDot, Tag, Card, Btn, SectionHeader, TopBar,
   BottomTabBar, MicFAB, EmptyState, Toast, BottomSheet, Waveform, Logo,
-  AnimatedList, CountUp, RouteFade, Stamp, TABS,
+  AnimatedList, CountUp, RouteFade, Stamp, Skeleton, SkeletonList, TABS,
 });
