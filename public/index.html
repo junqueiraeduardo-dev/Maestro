@@ -9,6 +9,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <link rel="apple-touch-icon" href="/favicon.svg"/>
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <meta name="application-name" content="Maestro"/>
+  <meta name="apple-mobile-web-app-title" content="Maestro"/>
+  <meta name="description" content="CMMS por voz para PME — almoxarifado, OS e equipamentos. Instalável em iOS, Android e PC."/>
   <title>Maestro · Manutenção por voz</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +70,34 @@
       60% { transform: translateY(0) scale(1.04); opacity: 1; }
       100% { transform: translateY(0) scale(1); }
     }
+    /* Premium celebration: badge dourada brotando */
+    @keyframes maestro-badge-pop {
+      0%   { transform: scale(.3) rotate(-30deg); opacity: 0; }
+      55%  { transform: scale(1.15) rotate(8deg); opacity: 1; }
+      75%  { transform: scale(0.95) rotate(-4deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    /* Halo dourado pulsando atrás da badge */
+    @keyframes maestro-halo {
+      0%   { transform: scale(0.6); opacity: 0; }
+      40%  { opacity: 0.55; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    /* Sheen passando pelo card "PREMIUM" */
+    @keyframes maestro-sheen {
+      0%   { transform: translateX(-120%); }
+      100% { transform: translateX(220%); }
+    }
+    /* Overlay fade-in geral */
+    @keyframes maestro-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* Texto subindo */
+    @keyframes maestro-rise {
+      from { transform: translateY(14px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
     /* Números tabulares — alinham peso visual em listas/KPIs */
     .num { font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
     .display { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -0.01em; }
@@ -106,8 +138,31 @@
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
   <script src="data.js"></script>
   <script src="api.js"></script>
+  <script src="confetti.js"></script>
   <script type="text/babel" src="ui.jsx"></script>
   <script type="text/babel" src="screens.jsx"></script>
   <script type="text/babel" src="app.jsx"></script>
+  <script>
+    // ---- PWA: registro do Service Worker (cache-first do shell + offline) ----
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function (e) {
+          console.warn('[pwa] sw falhou:', e && e.message);
+        });
+      });
+    }
+    // ---- Captura o evento de instalação do Chrome/Android/desktop ----
+    // O app.jsx escuta window.__maestroInstall pra abrir o sheet de instalação
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__maestroDeferredInstall = e;
+      window.dispatchEvent(new CustomEvent('maestro:installavailable'));
+    });
+    window.addEventListener('appinstalled', function () {
+      try { localStorage.setItem('maestro_installed', '1'); } catch (_) {}
+      window.__maestroDeferredInstall = null;
+      window.dispatchEvent(new CustomEvent('maestro:installed'));
+    });
+  </script>
 </body>
 </html>

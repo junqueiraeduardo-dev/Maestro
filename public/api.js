@@ -14,14 +14,22 @@
         localStorage.getItem("maestro_email") || "—").slice(0, 120);
     } catch (_) { return "—"; }
   }
+  function getWorkspace() {
+    try { return localStorage.getItem("maestro_workspace_id") || ""; } catch (_) { return ""; }
+  }
+  function setWorkspace(id) {
+    try { localStorage.setItem("maestro_workspace_id", id); } catch (_) {}
+  }
 
-  // Cabeçalhos: token (Bearer) + autor da ação (X-Ator) p/ o log
+  // Cabeçalhos: token + autor + workspace ativo (X-Workspace-Id)
   function authHeaders(json) {
     var h = {};
     if (json) h["Content-Type"] = "application/json";
     var tk = getToken();
     if (tk) h["Authorization"] = "Bearer " + tk;
     h["X-Ator"] = ator();
+    var ws = getWorkspace();
+    if (ws) h["X-Workspace-Id"] = ws;
     return h;
   }
 
@@ -60,13 +68,19 @@
     // ---- portão de acesso ----
     isAuthed: function () { return !!getToken(); },
     authHeaders: authHeaders,
+    // Default 'pai': sem ACCESS_PASSWORD_ADMIN configurado no servidor,
+    // quem entra é dono (acesso total). Filho só quando o backend define
+    // explicitamente (login com senha não-admin em ambiente que separa).
     role: function () {
-      try { return localStorage.getItem("maestro_role") || "filho"; }
-      catch (_) { return "filho"; }
+      try { return localStorage.getItem("maestro_role") || "pai"; }
+      catch (_) { return "pai"; }
     },
     logout: function () {
       clearToken();
-      try { localStorage.removeItem("maestro_role"); } catch (_) {}
+      try {
+        localStorage.removeItem("maestro_role");
+        localStorage.removeItem("maestro_workspace_id");
+      } catch (_) {}
       location.reload();
     },
     login: function (senha) {
@@ -83,21 +97,43 @@
         });
       });
     },
-    startTrial: function (email) {
+    // Cadastrar: cria conta com SENHA própria e inicia teste grátis.
+    cadastrar: function (email, senha) {
       return fetch("/api/trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email }),
+        body: JSON.stringify({ email: email, senha: senha }),
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok || !j.token) {
-            var e = new Error(j && j.erro ? j.erro : "Falha ao iniciar teste.");
+            var e = new Error(j && j.erro ? j.erro : "Falha ao cadastrar.");
             e.expirado = !!(j && j.expirado);
+            e.jaCadastrado = !!(j && j.jaCadastrado);
             throw e;
           }
           setToken(j.token);
           try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
-          return j; // { plano, expMs, dias }
+          return j;
+        });
+      });
+    },
+    // Entrar: login por e-mail + senha pessoal.
+    entrar: function (email, senha) {
+      return fetch("/api/entrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, senha: senha }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok || !j.token) {
+            var e = new Error(j && j.erro ? j.erro : "Falha ao entrar.");
+            e.expirado = !!(j && j.expirado);
+            e.semConta = !!(j && j.semConta);
+            throw e;
+          }
+          setToken(j.token);
+          try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
+          return j;
         });
       });
     },
@@ -121,18 +157,91 @@
     osComment: function (codigo, payload) { return req("POST", "/api/os/" + encodeURIComponent(codigo) + "/comentarios", payload); },
     osAddPeca: function (codigo, payload) { return req("POST", "/api/os/" + encodeURIComponent(codigo) + "/pecas", payload); },
     osDelete: function (codigo) { return req("DELETE", "/api/os/" + encodeURIComponent(codigo)); },
-    equipList: function (tipo, q) { return req("GET", "/api/equipamentos" + qs({ tipo: tipo, q: q })); },
+    equipList: function (tipo, q, verTudo) {
+      var perf = "";
+      if (!verTudo) {
+        try { perf = localStorage.getItem("maestro_perfil") || ""; } catch (_) {}
+      }
+      return req("GET", "/api/equipamentos" + qs({ tipo: tipo, q: q, perfil: perf }));
+    },
     equipGet: function (codigo) { return req("GET", "/api/equipamentos/" + encodeURIComponent(codigo)); },
     equipCreate: function (payload) { return req("POST", "/api/equipamentos", payload); },
     equipUpdate: function (codigo, payload) { return req("PATCH", "/api/equipamentos/" + encodeURIComponent(codigo), payload); },
     equipDelete: function (codigo) { return req("DELETE", "/api/equipamentos/" + encodeURIComponent(codigo)); },
-    pecaSearch: function (q) { return req("GET", "/api/pecas" + qs({ q: q })); },
+    pecaSearch: function (q, verTudo) {
+      var perf = "";
+      if (!verTudo) {
+        try { perf = localStorage.getItem("maestro_perfil") || ""; } catch (_) {}
+      }
+      return req("GET", "/api/pecas" + qs({ q: q, perfil: perf }));
+    },
     pecaCreate: function (payload) { return req("POST", "/api/pecas", payload); },
     pecaUpdate: function (sku, payload) { return req("PATCH", "/api/pecas/" + encodeURIComponent(sku), payload); },
     pecaDelete: function (sku) { return req("DELETE", "/api/pecas/" + encodeURIComponent(sku)); },
     inspecoesHoje: function () { return req("GET", "/api/inspecoes"); },
     inspecaoCreate: function (payload) { return req("POST", "/api/inspecoes", payload); },
     atividade: function () { return req("GET", "/api/atividade"); },
+    // Marketplace: busca pelo nome da peça no Mercado Livre (link externo).
+    // Nenhum dado nosso é compartilhado — só uma URL de busca pública.
+    // Workspaces
+    workspaceList: function () { return req("GET", "/api/workspaces"); },
+    workspaceCreate: function (payload) { return req("POST", "/api/workspaces", payload); },
+    workspaceActive: function () { return getWorkspace(); },
+    workspaceSetActive: function (id) { setWorkspace(id); },
+    // Constrói a URL com CONTEXTO para não cair em produtos não relacionados.
+    // Prioridade: categoria da peça > domínio do perfil > "peça automotiva".
+    mlBusca: function (nome, categoria) {
+      var DOMINIO = {
+        'Produtor rural': 'agrícola',
+        'Empresário': 'industrial',
+        'Dono de loja / oficina': 'automotivo',
+        'Mecânico / Operador': 'automotivo',
+        'Gestor de manutenção': 'industrial',
+      };
+      var perfil = "";
+      try { perfil = localStorage.getItem("maestro_perfil") || ""; } catch (_) {}
+      var ctx = (categoria && String(categoria).trim()) ||
+                DOMINIO[perfil] || "peça automotiva";
+      var q = ((nome || "") + " " + ctx)
+        .toString()
+        .slice(0, 100)
+        .replace(/[^\wÀ-ÿ\s\-/]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return "https://lista.mercadolivre.com.br/" + encodeURIComponent(q);
+    },
+    // LGPD: usuário apaga próprio cadastro (e-mail + senha hashada + assinaturas)
+    contaExcluir: function () { return req("DELETE", "/api/conta"); },
+    // Busca a chave Premium emitida pra um payment_id (TTL 7d após pagamento).
+    payChave: function (paymentId) {
+      return fetch("/api/pay/chave?payment_id=" + encodeURIComponent(paymentId))
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw new Error(j && j.erro ? j.erro : "Falha ao buscar a chave.");
+            return j;
+          });
+        });
+    },
+    // Faz login direto com a chave Premium (mesmo fluxo do botão "Já sou Premium")
+    loginComChave: function (chave) {
+      return fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senha: chave }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j && j.erro ? j.erro : "Falha ao entrar.");
+          return j;
+        });
+      });
+    },
+    // Persiste sessão (token + role) — usado pelo auto-login após pagamento
+    sessaoSalvar: function (j) {
+      if (j && j.token) setToken(j.token);
+      try {
+        if (j && j.role) localStorage.setItem("maestro_role", j.role);
+      } catch (_) {}
+    },
     // pagamento (público — não exige token)
     payCheckout: function (plano, email) {
       return fetch("/api/pay/checkout", {

@@ -41,6 +41,11 @@ supabase/06_tutorial_inspecao.sql tutorial_url em peças + tabela inspecoes
 supabase/07_planos.sql          tabela trials (teste grátis por e-mail)
 supabase/08_auditoria.sql       tabela atividade (log "quem fez o quê")
 supabase/09_assinaturas.sql     assinaturas pagas (e-mail, HASH da chave, validade)
+supabase/10_marketplace.sql     ponto_reposicao em peças (alerta de estoque baixo)
+supabase/11_workspaces.sql      multi-workspace (workspace_id em todas as tabelas + RPCs)
+supabase/12_perfil.sql          coluna perfil em peças/equipamentos (filtro por profissão)
+supabase/13_senha_preco.sql     senha pessoal (hash scrypt) + preço unitário em peças
+src/workspace.ts                Resolução do workspace ativo por requisição (header)
 src/auth.ts                     Premium/Trial + papéis pai x filho + chave de assinatura
 src/audit.ts                    Log de atividade por ator (header X-Ator)
 src/pay.ts                      Mercado Pago Checkout Pro + webhook + chave por e-mail
@@ -80,8 +85,8 @@ Papéis: `ACCESS_PASSWORD` = filhos (uso diário). `ACCESS_PASSWORD_ADMIN`
 1. **Supabase:** crie um projeto → SQL Editor → rode na ordem `01_schema.sql`,
    `02_rpc.sql`, `03_seed_mro_frota.sql`, `04_os_equipamentos.sql`,
    `06_tutorial_inspecao.sql`, `07_planos.sql`, `08_auditoria.sql`,
-   `09_assinaturas.sql`. Para zerar uma base com dados de teste, rode
-   também `05_reset_dados.sql`.
+   `09_assinaturas.sql`, `10_marketplace.sql`, `11_workspaces.sql`. Para
+   zerar uma base com dados de teste, rode também `05_reset_dados.sql`.
 2. **App:** copie `.env.example` → `.env`, preencha as chaves **incluindo
    `ACCESS_PASSWORD`** (sem ela o app nega tudo — fail-closed), `npm install`.
    - Dev: `npm run dev` · Produção: `npm run build && npm start`.

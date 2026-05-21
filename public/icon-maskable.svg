@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable: arte centralizada no "safe zone" (raio ~205px), fundo cobre tudo -->
+  <rect width="512" height="512" fill="#F59E0B"/>
+  <g fill="#0E1117" transform="translate(106 144) scale(6.25)">
+    <rect x="0"     y="44.4" width="3.84" height="7.2"  rx="1.5"/>
+    <rect x="6.74"  y="36"   width="3.84" height="24"   rx="1.5"/>
+    <rect x="13.48" y="41.4" width="3.84" height="13.2" rx="1.5"/>
+    <rect x="20.22" y="36"   width="3.84" height="24"   rx="1.5"/>
+    <rect x="26.96" y="44.4" width="3.84" height="7.2"  rx="1.5"/>
+  </g>
+</svg>

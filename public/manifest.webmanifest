@@ -1,0 +1,23 @@
+{
+  "name": "Maestro — CMMS por voz",
+  "short_name": "Maestro",
+  "description": "Manutenção (MRO, frota, oficina, agro) operada por voz. Almoxarifado, OS e equipamentos.",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1117",
+  "theme_color": "#0F1117",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Almoxarifado", "short_name": "Estoque", "url": "/?tab=almox" },
+    { "name": "Ordens de Serviço", "short_name": "OS", "url": "/?tab=os" }
+  ]
+}

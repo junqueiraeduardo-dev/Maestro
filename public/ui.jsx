@@ -36,6 +36,7 @@ function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 2, style 
     'pin':         <><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></>,
     'bell':        <><path d="M6 9a6 6 0 0 1 12 0c0 4.5 1 5.5 2 7H4c1-1.5 2-2.5 2-7Z"/><path d="M10 19a2 2 0 0 0 4 0"/><path d="M10.5 3.5a2 2 0 0 1 3 0"/></>,
     'sparkles':    <><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="m5.6 18.4 2.1-2.1"/><path d="m16.3 7.7 2.1-2.1"/></>,
+    'cart':        <><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2.4l2.6 11h11l2-7H6.5"/></>,
     'plus':        <><path d="M12 5v14"/><path d="M5 12h14"/></>,
     'arrow-left':  <><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></>,
     'chevron-r':   <><path d="m9 6 6 6-6 6"/></>,

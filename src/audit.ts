@@ -14,12 +14,14 @@ export function logAtiv(req: Request, acao: string, alvo: string): void {
     .toString()
     .slice(0, 120);
   const papel = (req as any).papel || "?";
+  const workspace_id = (req as any).workspaceId || null;
   // fire-and-forget: nunca atrapalha a resposta principal
   supabase
     .from("atividade")
     .insert({
       ator,
       papel,
+      workspace_id,
       acao: String(acao).slice(0, 60),
       alvo: String(alvo).slice(0, 160),
     })

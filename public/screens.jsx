@@ -128,7 +128,7 @@ function HomeScreen({ nav, openMic, onLogout }) {
       const inspIds = new Set(ins.map(i => i.equipId));
       setSt({
         pecas: pc.length,
-        baixas: pc.filter(p => p.qtd < 6),
+        baixas: pc.filter(p => p.qtd < (p.ponto || 6)),
         osAb: os.filter(o => o.status === 'aberta').length,
         equip: eq.length,
         parados: eq.filter(e => e.status === 'parado'),
@@ -188,9 +188,19 @@ function HomeScreen({ nav, openMic, onLogout }) {
           margin: 0, fontSize: 22, fontWeight: 700, color: M.text,
           lineHeight: 1.25, letterSpacing: -0.3,
         }}>Olá, {nome}</h1>
-        <div style={{ fontSize: 13, color: M.textDim, marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 13, color: M.textDim, marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ textTransform: 'capitalize' }}>{hoje}</span>
           {perfil && <><span style={{ opacity: 0.4 }}>·</span><span>{perfil}</span></>}
+          {(() => {
+            const list = (typeof window !== 'undefined' && window.__workspaces) || [];
+            const active = window.API.workspaceActive();
+            const cur = list.find(w => w.id === active);
+            if (!cur) return null;
+            return <><span style={{ opacity: 0.4 }}>·</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: M.amber }}>
+                <Icon name="pin" size={12}/>{cur.nome}
+              </span></>;
+          })()}
           {window.API.role() === 'pai' && (
             <><span style={{ opacity: 0.4 }}>·</span>
             <span style={{ color: M.amber, fontWeight: 700 }}>admin</span></>
@@ -323,8 +333,9 @@ function NotificationsSheet({ st, nav, onClose }) {
       d: 'Ordens de serviço aguardando', go: () => { onClose(); nav.go('os'); },
     });
     st.baixas.forEach(p => itens.push({
-      cor: M.amber, ic: 'box', t: `Estoque baixo: ${p.nome}`,
-      d: `${p.sku} · ${p.qtd} em estoque`, go: () => { onClose(); nav.go('parts'); },
+      cor: M.amber, ic: 'cart', t: `Estoque baixo: ${p.nome}`,
+      d: `${p.sku} · ${p.qtd} em estoque${p.ponto ? ' (mín. ' + p.ponto + ')' : ''} · toque para comprar`,
+      go: () => { onClose(); window.open(window.API.mlBusca(p.nome, p.cat), '_blank'); },
     }));
   }
   return (
@@ -385,11 +396,33 @@ function UserMenuSheet({ onClose, onLogout }) {
   const [view, setView] = useState('menu');
   const [pagando, setPagando] = useState(false);
   const [erroPag, setErroPag] = useState(null);
+  // exclusão de conta (LGPD): exige digitar "EXCLUIR" pra evitar acidente
+  const [confirmaTxt, setConfirmaTxt] = useState('');
+  const [excluindo, setExcluindo] = useState(false);
+  const [erroExc, setErroExc] = useState(null);
   const { nome, email, perfil } = lerPerfil();
   const role = window.API.role();
   const plano = window.API.plan() || { plan: 'premium' };
   const papelLabel = role === 'pai' ? 'Administrador (pai)'
     : role === 'trial' ? 'Teste grátis' : 'Usuário (filho)';
+
+  function excluir() {
+    if (confirmaTxt.trim().toUpperCase() !== 'EXCLUIR') {
+      setErroExc('Digite EXCLUIR (em maiúsculas) para confirmar.');
+      return;
+    }
+    setExcluindo(true); setErroExc(null);
+    window.API.contaExcluir()
+      .then(() => {
+        // limpa tudo do navegador (token, perfil, preferências) e desloga
+        try { localStorage.clear(); } catch (_) {}
+        if (onLogout) onLogout();
+      })
+      .catch(err => {
+        setExcluindo(false);
+        setErroExc((err && err.message) || 'Falha ao excluir. Tente novamente.');
+      });
+  }
 
   function pagar(planoId) {
     setPagando(true); setErroPag(null);
@@ -450,20 +483,35 @@ function UserMenuSheet({ onClose, onLogout }) {
             <div style={{ fontSize: 18, fontWeight: 700, color: M.text }}>
               {view === 'perfil' ? 'Meu perfil'
                 : view === 'assinaturas' ? 'Assinatura'
+                : view === 'workspace' ? 'Workspace'
+                : view === 'ajuda' ? 'Ajuda e contato'
+                : view === 'excluir' ? 'Excluir conta'
                 : 'Conta'}
             </div>
           </div>
 
-          {view === 'menu' && (
-            <AnimatedList gap={10}>
-              {opt('user', 'Ver perfil', `${nome || email || '—'}`, () => setView('perfil'))}
-              {opt('chart', 'Gerenciar assinatura',
-                plano.plan === 'trial' ? `Teste grátis · ${plano.dias} dia(s)` : 'Plano Premium',
-                () => setView('assinaturas'))}
-              {opt('arrow-up-r', 'Sair da conta', 'Encerrar sessão neste aparelho',
-                () => { if (confirm('Sair da conta?')) onLogout && onLogout(); }, true)}
-            </AnimatedList>
-          )}
+          {view === 'menu' && (() => {
+            const list = (typeof window !== 'undefined' && window.__workspaces) || [];
+            const active = window.API.workspaceActive();
+            const cur = list.find(w => w.id === active);
+            return (
+              <AnimatedList gap={10}>
+                {opt('user', 'Ver perfil', `${nome || email || '—'}`, () => setView('perfil'))}
+                {opt('pin', 'Workspace',
+                  cur ? `Ativo: ${cur.nome}` : 'Escolher / criar',
+                  () => setView('workspace'))}
+                {opt('chart', 'Gerenciar assinatura',
+                  plano.plan === 'trial' ? `Teste grátis · ${plano.dias} dia(s)` : 'Plano Premium',
+                  () => setView('assinaturas'))}
+                {opt('check', 'Ajuda e contato', 'Suporte, privacidade, termos',
+                  () => setView('ajuda'))}
+                {opt('arrow-up-r', 'Sair da conta', 'Encerrar sessão neste aparelho',
+                  () => { if (confirm('Sair da conta?')) onLogout && onLogout(); }, true)}
+                {opt('x', 'Excluir minha conta', 'Apaga seu cadastro e chave Premium (LGPD)',
+                  () => { setConfirmaTxt(''); setErroExc(null); setView('excluir'); }, true)}
+              </AnimatedList>
+            );
+          })()}
 
           {view === 'perfil' && (
             <div>
@@ -481,6 +529,8 @@ function UserMenuSheet({ onClose, onLogout }) {
               {linha('Plano', plano.plan === 'trial' ? `Teste grátis (${plano.dias}d)` : 'Premium')}
             </div>
           )}
+
+          {view === 'workspace' && <WorkspacePicker onSwitched={onClose}/>}
 
           {view === 'assinaturas' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -507,7 +557,8 @@ function UserMenuSheet({ onClose, onLogout }) {
                 textTransform: 'uppercase', marginTop: 2 }}>Assinar / renovar</div>
               <div style={{ fontSize: 12, color: M.textDim, lineHeight: 1.5, marginTop: -4 }}>
                 Pagamento por cartão ou Pix na página segura do Mercado Pago.
-                A chave chega no e-mail <b style={{ color: M.text }}>{email || '—'}</b>.
+                Sua chave aparece <b style={{ color: M.text }}>na tela</b> assim
+                que confirmar — com botão de copiar e login automático.
               </div>
 
               {[
@@ -538,9 +589,230 @@ function UserMenuSheet({ onClose, onLogout }) {
               }}>Já tenho a chave / trocar conta</button>
             </div>
           )}
+
+          {view === 'ajuda' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Card padding={16}>
+                <div style={{ fontSize: 12, color: M.textDim, textTransform: 'uppercase',
+                  letterSpacing: 0.4, marginBottom: 6 }}>Suporte</div>
+                <div style={{ fontSize: 14, color: M.text, lineHeight: 1.5 }}>
+                  Dúvidas, bugs, sugestões? Manda e-mail — respondo em até 24h em dias úteis.
+                </div>
+                <a href="mailto:junqueiraeduardo2@gmail.com?subject=Maestro%20-%20Suporte"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12,
+                    padding: '10px 14px', background: M.amber, color: '#0E1117',
+                    borderRadius: 10, fontWeight: 700, fontSize: 13.5,
+                    textDecoration: 'none',
+                  }}>
+                  <Icon name="check" size={14}/>
+                  junqueiraeduardo2@gmail.com
+                </a>
+              </Card>
+              <a href="/sobre.html" target="_blank" style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: M.surface2, border: `1px solid ${M.border}`,
+                borderRadius: 12, padding: '14px 16px', textDecoration: 'none', color: M.text,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Sobre o Maestro</span>
+                <Icon name="chevron-r" size={16} color={M.textDim}/>
+              </a>
+              <a href="/privacidade.html" target="_blank" style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: M.surface2, border: `1px solid ${M.border}`,
+                borderRadius: 12, padding: '14px 16px', textDecoration: 'none', color: M.text,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Política de Privacidade</span>
+                <Icon name="chevron-r" size={16} color={M.textDim}/>
+              </a>
+              <a href="/termos.html" target="_blank" style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: M.surface2, border: `1px solid ${M.border}`,
+                borderRadius: 12, padding: '14px 16px', textDecoration: 'none', color: M.text,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Termos de Uso</span>
+                <Icon name="chevron-r" size={16} color={M.textDim}/>
+              </a>
+              <div style={{ fontSize: 11.5, color: M.textMute, textAlign: 'center',
+                marginTop: 8, lineHeight: 1.6 }}>
+                Maestro CMMS · versão de produção
+              </div>
+            </div>
+          )}
+
+          {view === 'excluir' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{
+                background: 'rgba(239,68,68,0.08)', border: `1px solid ${M.red}44`,
+                borderRadius: 12, padding: 14, color: '#FCA5A5', fontSize: 13.5, lineHeight: 1.5,
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: 6, color: M.red }}>
+                  Isto é irreversível
+                </div>
+                Vamos apagar do nosso servidor:
+                <ul style={{ margin: '8px 0 0 18px', padding: 0 }}>
+                  <li>seu e-mail, nome e senha (hash)</li>
+                  <li>sua chave Premium ativa (se houver)</li>
+                </ul>
+                <div style={{ marginTop: 10, fontSize: 12.5, color: '#FCA5A5BB' }}>
+                  Dados operacionais do <b>workspace</b> (peças, OS, equipamentos)
+                  PERMANECEM, pois pertencem à empresa, não a você. Se você é o único usuário,
+                  ninguém mais terá acesso a eles.
+                </div>
+                {plano.plan !== 'trial' && (
+                  <div style={{ marginTop: 10, fontSize: 12.5, color: '#FCA5A5BB' }}>
+                    <b>Importante:</b> a cobrança recorrente do Mercado Pago precisa ser
+                    cancelada por você no painel do MP. Excluir a conta aqui não cancela
+                    o cartão.
+                  </div>
+                )}
+              </div>
+
+              <div style={{ fontSize: 13, color: M.textDim }}>
+                Para confirmar, digite <b style={{ color: M.text }}>EXCLUIR</b> abaixo:
+              </div>
+              <input type="text" value={confirmaTxt}
+                onChange={e => setConfirmaTxt(e.target.value)}
+                placeholder="EXCLUIR"
+                autoCapitalize="characters"
+                style={{
+                  width: '100%', padding: '14px 16px',
+                  background: M.bg, color: M.text,
+                  border: `1px solid ${erroExc ? M.red : M.border}`,
+                  borderRadius: 10, fontSize: 15, fontWeight: 600,
+                  letterSpacing: 1, textAlign: 'center',
+                  outline: 'none',
+                }}/>
+              {erroExc && (
+                <div style={{ fontSize: 13, color: M.red, textAlign: 'center' }}>
+                  {erroExc}
+                </div>
+              )}
+              <button onClick={excluir} disabled={excluindo}
+                style={{
+                  width: '100%', padding: '14px 16px', borderRadius: 10,
+                  background: M.red, color: '#fff', border: 'none',
+                  fontWeight: 800, fontSize: 14, cursor: excluindo ? 'wait' : 'pointer',
+                  opacity: excluindo ? 0.6 : 1,
+                }}>
+                {excluindo ? 'Excluindo…' : 'Excluir minha conta para sempre'}
+              </button>
+              <button onClick={() => setView('menu')} style={{
+                background: 'transparent', border: 'none', color: M.textDim,
+                fontSize: 13, cursor: 'pointer', padding: 8,
+              }}>Cancelar</button>
+            </div>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+// Workspace picker dentro do UserMenu — listar / trocar / criar
+function WorkspacePicker({ onSwitched }) {
+  const [list, setList] = useState(window.__workspaces || null);
+  const [criando, setCriando] = useState(false);
+  const [novoNome, setNovoNome] = useState('');
+  const [novoSlug, setNovoSlug] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState(null);
+  const active = window.API.workspaceActive();
+
+  function carregar() {
+    setErro(null);
+    API.workspaceList()
+      .then(r => { setList(r.workspaces || []); window.__workspaces = r.workspaces || []; })
+      .catch(e => setErro(e.message || 'Falha ao carregar.'));
+  }
+  useEffect(() => { if (list === null) carregar(); }, []);
+
+  function trocar(id) {
+    if (id === active) return;
+    window.API.workspaceSetActive(id);
+    // Reload garante que toda tela busque dados do novo workspace.
+    location.reload();
+  }
+  function criar() {
+    const nome = novoNome.trim();
+    const slug = (novoSlug.trim() || nome).toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (!nome) { setErro('Informe um nome.'); return; }
+    setBusy(true); setErro(null);
+    API.workspaceCreate({ slug, nome })
+      .then(r => {
+        window.API.workspaceSetActive(r.workspace.id);
+        location.reload();
+      })
+      .catch(e => { setErro(e.message || 'Falha ao criar workspace.'); setBusy(false); });
+  }
+
+  const inputStyle = {
+    width: '100%', background: M.bg, border: `1px solid ${M.border}`,
+    borderRadius: 10, padding: '12px 14px', color: M.text,
+    fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none',
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ fontSize: 13, color: M.textDim, lineHeight: 1.5 }}>
+        Cada workspace é um espaço isolado (loja, fazenda, unidade). Os dados
+        não se misturam entre eles.
+      </div>
+      {list === null ? (
+        <ScreenLoader label="Carregando…"/>
+      ) : list.length === 0 ? (
+        <Card padding={14}>
+          <div style={{ fontSize: 13, color: M.textDim }}>Nenhum workspace ainda.</div>
+        </Card>
+      ) : (
+        <AnimatedList gap={8}>
+          {list.map(w => {
+            const on = w.id === active;
+            return (
+              <button key={w.id} onClick={() => trocar(w.id)} style={{
+                width: '100%', textAlign: 'left', cursor: on ? 'default' : 'pointer',
+                background: on ? '#3B2A0E' : M.surface2,
+                border: `1px solid ${on ? M.amber : M.border}`,
+                borderRadius: 12, padding: 14,
+                display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                  background: M.bg, color: on ? M.amber : M.textDim,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}><Icon name="pin" size={16}/></div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: M.text }}>{w.nome}</div>
+                  <div style={{ fontSize: 11, color: M.textDim, marginTop: 2,
+                    fontFamily: "'JetBrains Mono', monospace" }}>{w.slug}</div>
+                </div>
+                {on && <Tag tone="amber">ativo</Tag>}
+              </button>
+            );
+          })}
+        </AnimatedList>
+      )}
+
+      {!criando ? (
+        <Btn variant="ghost" full icon="plus" onClick={() => setCriando(true)}>
+          Novo workspace
+        </Btn>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input style={inputStyle} placeholder="Nome (ex.: Loja Centro)"
+            value={novoNome} onChange={e => setNovoNome(e.target.value)}/>
+          <input style={inputStyle} placeholder="Slug (ex.: loja-centro — opcional)"
+            value={novoSlug} onChange={e => setNovoSlug(e.target.value)}/>
+          {erro && <div style={{ fontSize: 13, color: M.red }}>{erro}</div>}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Btn variant="ghost" full onClick={() => { setCriando(false); setErro(null); }}>Cancelar</Btn>
+            <Btn variant="primary" full icon="check" disabled={busy} onClick={criar}>
+              {busy ? 'Criando…' : 'Criar e ativar'}
+            </Btn>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -582,31 +854,46 @@ function ModuleCard({ icon, title, badge, onClick }) {
 // SCREEN 2 — ALMOXARIFADO (parts by voice)
 // =========================================================================
 function PartsScreen({ nav, openMic }) {
-  const ex = exemplosPerfil();
   const [q, setQ] = useState('');
-  const [res, setRes] = useState(null);   // null = sem busca; [] = vazio
+  const [todos, setTodos] = useState(null);  // lista completa (A→Z)
+  const [res, setRes] = useState(null);       // null = mostra todos; [] = busca vazia
   const [busy, setBusy] = useState(false);
-  const [sheet, setSheet] = useState(null); // null | 'nova' | {edit:peca}
+  const [sheet, setSheet] = useState(null);
+  const [verTudo, setVerTudo] = useState(false); // ignora filtro de perfil
   const [flash, flashNode] = useFlash();
 
-  // busca real com debounce (não martela o backend a cada tecla)
+  function carregarTodos() {
+    API.pecaSearch('', verTudo)
+      .then(r => setTodos(r.pecas || []))
+      .catch(() => setTodos([]));
+  }
+  useEffect(carregarTodos, [verTudo]);
+
+  // busca real com debounce (só quando há termo)
   useEffect(() => {
     const termo = q.trim();
     if (!termo) { setRes(null); setBusy(false); return; }
     setBusy(true);
     const t = setTimeout(() => {
-      API.pecaSearch(termo)
+      API.pecaSearch(termo, verTudo)
         .then(r => setRes(r.pecas || []))
         .catch(() => setRes([]))
         .finally(() => setBusy(false));
     }, 350);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, verTudo]);
 
   function recarregarBusca() {
+    carregarTodos();
     if (!q.trim()) return;
-    API.pecaSearch(q.trim()).then(r => setRes(r.pecas || [])).catch(() => {});
+    API.pecaSearch(q.trim(), verTudo).then(r => setRes(r.pecas || [])).catch(() => {});
   }
+
+  // O que aparece na lista: resultado da busca (se digitando) OU todos.
+  const lista = q.trim() ? res : todos;
+  const sorted = (lista || []).slice().sort((a, b) =>
+    (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+  );
 
   return (
     <div data-screen-label="02 Almoxarifado" style={{ paddingBottom: 120 }}>
@@ -637,69 +924,100 @@ function PartsScreen({ nav, openMic }) {
           {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', color: M.textDim, cursor: 'pointer', padding: 0 }}><Icon name="x" size={18}/></button>}
         </div>
 
-        {res !== null && (
-          <div style={{ marginTop: 16 }}>
-            {busy && <ScreenLoader label="Buscando…"/>}
-            {!busy && res.length === 0 && (
-              <EmptyState icon="search" title="Não achei essa peça"
-                body={`Procurei por "${q}" no estoque e não veio nada. Você pode cadastrar agora.`}
-                action="Cadastrar peça" onAction={() => setSheet('nova')}/>
-            )}
-            {!busy && res.length > 0 && (
+        {(() => {
+          let perf = ''; try { perf = localStorage.getItem('maestro_perfil') || ''; } catch (_) {}
+          if (!perf) return null;
+          return (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 8, marginTop: 10, fontSize: 11.5, color: M.textMute, letterSpacing: 0.3,
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Icon name="user" size={12} color={M.textMute}/>
+                {verTudo
+                  ? <>Mostrando <b style={{ color: M.amber }}>todas as peças</b> (qualquer perfil)</>
+                  : <>Filtro: perfil <b style={{ color: M.amber }}>{perf}</b></>}
+              </span>
+              <button onClick={() => setVerTudo(v => !v)} style={{
+                background: 'transparent', border: 'none', color: M.amber,
+                cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: 0,
+              }}>{verTudo ? 'Filtrar' : 'Ver tudo'}</button>
+            </div>
+          );
+        })()}
+
+        <div style={{ marginTop: 16 }}>
+          {/* Loader inicial */}
+          {todos === null && !q.trim() && <SkeletonList rows={4} h={70}/>}
+          {busy && <ScreenLoader label="Buscando…"/>}
+
+          {/* Busca sem resultado */}
+          {!busy && q.trim() && res && res.length === 0 && (
+            <EmptyState icon="search" title="Não achei essa peça"
+              body={`Procurei por "${q}" no estoque e não veio nada. Você pode cadastrar agora.`}
+              action="Cadastrar peça" onAction={() => setSheet('nova')}/>
+          )}
+
+          {/* Sem peças cadastradas ainda */}
+          {!busy && !q.trim() && todos && todos.length === 0 && (
+            <EmptyState icon="box" title="Seu estoque está vazio"
+              body="Cadastre a primeira peça para começar — ou peça ao microfone (botão amarelo abaixo)."
+              action="Cadastrar peça" onAction={() => setSheet('nova')}/>
+          )}
+
+          {/* Lista (A→Z): resultado da busca ou todos */}
+          {!busy && sorted.length > 0 && (() => {
+            const valorTotal = sorted.reduce((acc, p) =>
+              acc + (p.preco != null ? Number(p.preco) * Number(p.qtd || 0) : 0), 0);
+            const fmtBRL = (n) => 'R$ ' + n.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2, maximumFractionDigits: 2,
+            });
+            return (
+            <>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                margin: '4px 4px 10px', fontSize: 11, color: M.textDim,
+                textTransform: 'uppercase', letterSpacing: 0.6,
+              }}>
+                <span>{sorted.length} {sorted.length === 1 ? 'peça' : 'peças'}{q.trim() ? '' : ' no estoque'}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: M.amber }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h13"/><path d="M3 12h9"/><path d="M3 18h6"/>
+                    <path d="M17 4v16"/><path d="m13 16 4 4 4-4"/>
+                  </svg>
+                  A → Z
+                </span>
+              </div>
+              {valorTotal > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: M.surface2, border: `1px solid ${M.border}`,
+                  borderRadius: 12, padding: '12px 14px', marginBottom: 12,
+                }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: M.textDim, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Valor total do estoque
+                    </div>
+                    <div style={{ fontSize: 11, color: M.textMute, marginTop: 2 }}>
+                      {q.trim() ? 'desta busca' : 'das peças com preço cadastrado'}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 18, fontWeight: 700, color: M.green,
+                  }}>{fmtBRL(valorTotal)}</div>
+                </div>
+              )}
               <AnimatedList gap={8}>
-                {res.map(p => (
+                {sorted.map(p => (
                   <PartRow key={p.sku} part={p} onClick={() => setSheet({ edit: p })}/>
                 ))}
               </AnimatedList>
-            )}
-          </div>
-        )}
-
-        {res === null && (
-          <>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '24px 0 20px', color: M.textDim,
-            }}>
-              <span style={{ flex: 1, height: 1, background: M.border }}/>
-              <span style={{ fontSize: 12, letterSpacing: 2, fontWeight: 600 }}>OU FALE</span>
-              <span style={{ flex: 1, height: 1, background: M.border }}/>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 8px' }}>
-              <button onClick={openMic} style={{
-                width: 120, height: 120, borderRadius: '50%',
-                background: M.amber, border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: `0 12px 32px -4px ${M.amber}66`,
-                transition: 'transform .08s',
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-                <Icon name="mic" size={48} color="#fff" strokeWidth={2}/>
-              </button>
-              <div style={{ fontSize: 15, fontWeight: 600, color: M.text, marginTop: 16 }}>
-                Toque e fale o comando
-              </div>
-              <div style={{ fontSize: 12, color: M.textDim, marginTop: 12, lineHeight: 1.8, textAlign: 'center', maxWidth: 280 }}>
-                {ex.voz[0]}<br/>
-                {ex.voz[1]}<br/>
-                {ex.voz[2]}
-              </div>
-            </div>
-
-            <div style={{ paddingTop: 28 }}>
-              <SectionHeader>Estoque</SectionHeader>
-              <Card padding={16}>
-                <div style={{ fontSize: 13, color: M.textDim, lineHeight: 1.6 }}>
-                  Use a busca acima para consultar e <b style={{ color: M.text }}>editar</b> uma
-                  peça, ou o botão <b style={{ color: M.amber }}>+</b> para cadastrar uma nova.
-                </div>
-              </Card>
-            </div>
-          </>
-        )}
+            </>
+            );
+          })()}
+        </div>
       </div>
 
       {flashNode}
@@ -748,7 +1066,7 @@ function PartRow({ part, onClick }) {
       <div style={{ textAlign: 'right' }}>
         <div style={{
           fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700,
-          color: part.qtd < 6 ? M.red : M.green,
+          color: part.qtd < (part.ponto || 6) ? M.red : M.green,
         }}>{part.qtd}</div>
         <div style={{ fontSize: 10, color: M.textDim }}>un.</div>
       </div>
@@ -766,6 +1084,11 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
   const [loc, setLoc] = useState(peca ? (peca.loc || '') : '');
   const [cat, setCat] = useState(peca ? (peca.cat || '') : '');
   const [tut, setTut] = useState(peca ? (peca.tutorial || '') : '');
+  const [ponto, setPonto] = useState(peca && peca.ponto != null ? String(peca.ponto) : '');
+  const [preco, setPreco] = useState(peca && peca.preco != null
+    ? String(peca.preco).replace('.', ',') : '');
+  // universal = visível em todos os perfis (perfil = 'TODOS'). Default: false.
+  const [universal, setUniversal] = useState(peca ? peca.perfil === 'TODOS' : false);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -778,12 +1101,18 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
   function salvar() {
     if (!sku.trim() || !nome.trim()) { setErro('SKU e nome são obrigatórios.'); return; }
     setBusy(true); setErro(null);
+    const perfilAtual = (function () {
+      try { return localStorage.getItem('maestro_perfil') || ''; } catch (_) { return ''; }
+    })();
     const payload = {
       nome: nome.trim(),
       quantidade: parseInt(qtd, 10) || 0,
       localizacao_fisica: loc.trim(),
       categoria: cat.trim(),
       tutorial_url: tut.trim(),
+      ponto_reposicao: ponto.trim() === '' ? null : (parseInt(ponto, 10) || 0),
+      preco: preco.trim() === '' ? null : preco.trim().replace(',', '.'),
+      perfil: universal ? 'TODOS' : perfilAtual,
     };
     const p = editando
       ? API.pecaUpdate(peca.sku, payload)
@@ -855,6 +1184,65 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
                 </a>
               )}
             </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: M.textDim, marginBottom: 6 }}>
+                  Preço unitário (R$)
+                </div>
+                <input style={inputStyle} inputMode="decimal"
+                  placeholder="ex.: 89,90"
+                  value={preco} onChange={e => setPreco(e.target.value)}/>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: M.textDim, marginBottom: 6 }}>
+                  Ponto de reposição
+                </div>
+                <input style={inputStyle} type="number" min="0"
+                  placeholder="ex.: 6"
+                  value={ponto} onChange={e => setPonto(e.target.value)}/>
+              </div>
+            </div>
+            {(() => {
+              const perfilAtual = (function () {
+                try { return localStorage.getItem('maestro_perfil') || ''; } catch (_) { return ''; }
+              })();
+              const dono = editando ? (peca.perfil || perfilAtual) : perfilAtual;
+              return (
+                <div style={{
+                  background: M.bg, border: `1px solid ${M.border}`,
+                  borderRadius: 10, padding: 12,
+                }}>
+                  <div style={{ fontSize: 12, color: M.textDim, marginBottom: 6 }}>
+                    Aparece para
+                  </div>
+                  <div style={{ fontSize: 14, color: M.text, fontWeight: 600 }}>
+                    {universal ? 'Todos os perfis' : (dono || '—')}
+                  </div>
+                  <label style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginTop: 10,
+                    fontSize: 13, color: M.textDim, cursor: 'pointer',
+                  }}>
+                    <input type="checkbox" checked={universal}
+                      onChange={(e) => setUniversal(e.target.checked)}
+                      style={{ width: 18, height: 18, accentColor: M.amber }}/>
+                    Visível para todos os perfis
+                  </label>
+                </div>
+              );
+            })()}
+            {editando && (
+              <a
+                href={window.API.mlBusca(peca.nome, peca.cat)}
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  background: 'transparent', border: `1px solid ${M.amber}55`,
+                  color: M.amber, borderRadius: 10, padding: '12px 0',
+                  fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                }}>
+                <Icon name="cart" size={16}/> Buscar fornecedor no Mercado Livre
+              </a>
+            )}
             {erro && <div style={{ fontSize: 13, color: M.red }}>{erro}</div>}
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
               <Btn variant="ghost" full onClick={onClose}>Cancelar</Btn>
@@ -1458,15 +1846,16 @@ function EquipListScreen({ nav }) {
   const [type, setType] = useState('todos');
   const [todos, setTodos] = useState(null);
   const [erro, setErro] = useState(null);
+  const [verTudo, setVerTudo] = useState(false);
 
   const [novo, setNovo] = useState(false);
   function carregar() {
     setErro(null);
-    API.equipList()
+    API.equipList(undefined, undefined, verTudo)
       .then(r => setTodos(r.equipamentos || []))
       .catch(e => setErro(e.message || 'Falha ao carregar.'));
   }
-  useEffect(carregar, []);
+  useEffect(carregar, [verTudo]);
 
   const types = ['todos', ...new Set((todos || []).map(e => e.tipo).filter(Boolean))];
   const filtered = (todos || []).filter(e =>
@@ -1504,6 +1893,28 @@ function EquipListScreen({ nav }) {
         </div>
       </div>
 
+      {(() => {
+        let perf = ''; try { perf = localStorage.getItem('maestro_perfil') || ''; } catch (_) {}
+        if (!perf) return null;
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 8, padding: '8px 16px 0', fontSize: 11.5, color: M.textMute, letterSpacing: 0.3,
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="user" size={12} color={M.textMute}/>
+              {verTudo
+                ? <>Mostrando <b style={{ color: M.amber }}>todos os equipamentos</b></>
+                : <>Filtro: perfil <b style={{ color: M.amber }}>{perf}</b></>}
+            </span>
+            <button onClick={() => setVerTudo(v => !v)} style={{
+              background: 'transparent', border: 'none', color: M.amber,
+              cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: 0,
+            }}>{verTudo ? 'Filtrar' : 'Ver tudo'}</button>
+          </div>
+        );
+      })()}
+
       <div style={{ padding: '4px 12px 8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {types.map(t => {
@@ -1530,15 +1941,34 @@ function EquipListScreen({ nav }) {
           action="Tentar de novo" onAction={carregar}/>
       )}
       {todos && (
-        <div style={{ padding: '4px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.map(e => (
-            <EquipRow key={e.id} equip={e} onClick={() => nav.push('equip-detail', { id: e.id })}/>
-          ))}
-          {filtered.length === 0 && (
-            <EmptyState icon="truck" title="Nenhum aqui ainda"
-              body="Ajuste o filtro ou cadastre o primeiro equipamento da sua operação."
-              action="Cadastrar equipamento" onAction={() => setNovo(true)}/>
+        <div style={{ padding: '4px 12px' }}>
+          {filtered.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              margin: '4px 4px 10px', fontSize: 11, color: M.textDim,
+              textTransform: 'uppercase', letterSpacing: 0.6,
+            }}>
+              <span>{filtered.length} {filtered.length === 1 ? 'equipamento' : 'equipamentos'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: M.amber }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h13"/><path d="M3 12h9"/><path d="M3 18h6"/>
+                  <path d="M17 4v16"/><path d="m13 16 4 4 4-4"/>
+                </svg>
+                A → Z
+              </span>
+            </div>
           )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filtered.map(e => (
+              <EquipRow key={e.id} equip={e} onClick={() => nav.push('equip-detail', { id: e.id })}/>
+            ))}
+            {filtered.length === 0 && (
+              <EmptyState icon="truck" title="Nenhum aqui ainda"
+                body="Ajuste o filtro ou cadastre o primeiro equipamento da sua operação."
+                action="Cadastrar equipamento" onAction={() => setNovo(true)}/>
+            )}
+          </div>
         </div>
       )}
 
@@ -1570,9 +2000,12 @@ function EquipForm({ onClose, onCreated }) {
   function salvar() {
     if (!codigo.trim() || !nome.trim()) { setErro('Código e nome são obrigatórios.'); return; }
     setBusy(true); setErro(null);
+    let perf = '';
+    try { perf = localStorage.getItem('maestro_perfil') || ''; } catch (_) {}
     API.equipCreate({
       codigo: codigo.trim(), nome: nome.trim(), tipo: tipo.trim(),
       modelo: modelo.trim(), ano: ano ? parseInt(ano, 10) : null, placa: placa.trim(),
+      perfil: perf || null,
     }).then(r => onCreated(r.equip))
       .catch(e => { setErro(e.message || 'Falha ao cadastrar.'); setBusy(false); });
   }

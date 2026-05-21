@@ -18,6 +18,7 @@ import { Router, Request, Response } from "express";
 import { supabase } from "../config/supabase";
 import { requireAdmin } from "../auth";
 import { logAtiv } from "../audit";
+import { getWs } from "../workspace";
 
 export const osRouter = Router();
 
@@ -97,21 +98,27 @@ const OS_SELECT =
 osRouter.get("/equipamentos", async (req: Request, res: Response) => {
   try {
     const { tipo, q } = req.query as { tipo?: string; q?: string };
+    const ws = getWs(req);
     let query = supabase
       .from("equipamentos")
-      .select("codigo,nome,modelo,ano,placa,tipo,status,custo_mes")
+      .select("codigo,nome,modelo,ano,placa,tipo,status,custo_mes,perfil")
+      .eq("workspace_id", ws)
       .order("codigo");
     if (tipo && tipo !== "todos") query = query.eq("tipo", String(tipo).slice(0, 40));
     const qs = termoSeguro(q);
     if (qs) query = query.or(`nome.ilike.%${qs}%,placa.ilike.%${qs}%`);
+    // Filtro ESTRITO: só este perfil ou "TODOS" explícito. NULL = oculto.
+    const perfil = termoSeguro(req.query.perfil);
+    if (perfil) query = query.or(`perfil.eq.${perfil},perfil.eq.TODOS`);
     const { data, error } = await query;
     if (error) throw error;
 
-    // osAno = nº de OS do equipamento no ano corrente
+    // osAno = nº de OS do equipamento no ano corrente (no workspace)
     const anoIni = new Date(new Date().getFullYear(), 0, 1).toISOString();
     const { data: osDoAno } = await supabase
       .from("ordens_servico")
       .select("equipamento_id,equipamentos(codigo)")
+      .eq("workspace_id", ws)
       .gte("aberta_em", anoIni);
     const cont: Record<string, number> = {};
     (osDoAno || []).forEach((o: any) => {
@@ -140,9 +147,11 @@ osRouter.get("/equipamentos", async (req: Request, res: Response) => {
 osRouter.get("/equipamentos/:codigo", async (req: Request, res: Response) => {
   try {
     const { codigo } = req.params;
+    const ws = getWs(req);
     const { data: e, error } = await supabase
       .from("equipamentos")
       .select("*")
+      .eq("workspace_id", ws)
       .eq("codigo", codigo)
       .maybeSingle();
     if (error) throw error;
@@ -151,6 +160,7 @@ osRouter.get("/equipamentos/:codigo", async (req: Request, res: Response) => {
     const { data: oss } = await supabase
       .from("ordens_servico")
       .select("codigo,descricao,status,aberta_em,fechada_em")
+      .eq("workspace_id", ws)
       .eq("equipamento_id", e.id)
       .order("aberta_em", { ascending: false })
       .limit(12);
@@ -197,6 +207,7 @@ osRouter.get("/os", async (req: Request, res: Response) => {
     let query = supabase
       .from("ordens_servico")
       .select(OS_SELECT)
+      .eq("workspace_id", getWs(req))
       .order("aberta_em", { ascending: false });
     if (status) query = query.eq("status", status);
     const { data, error } = await query;
@@ -214,6 +225,7 @@ osRouter.get("/os/:codigo", async (req: Request, res: Response) => {
     const { data: r, error } = await supabase
       .from("ordens_servico")
       .select(OS_SELECT + ",id")
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .maybeSingle();
     if (error) throw error;
@@ -261,25 +273,32 @@ osRouter.get("/os/:codigo", async (req: Request, res: Response) => {
 
 osRouter.post("/os", async (req: Request, res: Response) => {
   try {
-    const equipId = String(req.body?.equipId ?? "").trim();
-    const desc = String(req.body?.desc ?? "").trim();
+    // Limites de tamanho aplicados ANTES de qualquer DB write:
+    //   equipId 32 = mesmo formato de code() (A-Z0-9-)
+    //   desc 2000 = parágrafo longo cabe; impede atacante encher a DB
+    //   mec 80 = nome típico; corta tentativas de stuff via "operador"
+    const equipId = String(req.body?.equipId ?? "").trim().slice(0, 32);
+    const desc = String(req.body?.desc ?? "").trim().slice(0, 2000);
     const tipo = req.body?.tipo === "preventiva" ? "preventiva" : "corretiva";
     const prio = req.body?.prio === "urgente" ? "urgente" : "normal";
-    const mec = String(req.body?.mec ?? "Operador").trim() || "Operador";
+    const mec = (String(req.body?.mec ?? "Operador").trim() || "Operador").slice(0, 80);
     if (!equipId || !desc)
       return res.status(400).json({ erro: "Informe equipamento e descrição." });
 
+    const ws = getWs(req);
     const { data: eq } = await supabase
       .from("equipamentos")
       .select("id")
+      .eq("workspace_id", ws)
       .eq("codigo", equipId)
       .maybeSingle();
     if (!eq) return res.status(400).json({ erro: "Equipamento inválido." });
 
-    // novo código: maior sufixo numérico + 1
+    // novo código: maior sufixo numérico + 1 (dentro do workspace)
     const { data: todos } = await supabase
       .from("ordens_servico")
-      .select("codigo");
+      .select("codigo")
+      .eq("workspace_id", ws);
     let maxN = 1041;
     (todos || []).forEach((o: any) => {
       const n = parseInt(String(o.codigo).replace(/\D/g, ""), 10);
@@ -290,6 +309,7 @@ osRouter.post("/os", async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("ordens_servico")
       .insert({
+        workspace_id: ws,
         codigo,
         equipamento_id: eq.id,
         tipo,
@@ -323,6 +343,7 @@ osRouter.post("/os/:codigo/fechar", async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("ordens_servico")
       .update({ status: "concluida", fechada_em: new Date().toISOString() })
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .select(OS_SELECT)
       .maybeSingle();
@@ -339,12 +360,14 @@ osRouter.post("/os/:codigo/fechar", async (req: Request, res: Response) => {
 osRouter.post("/os/:codigo/comentarios", async (req: Request, res: Response) => {
   try {
     const { codigo } = req.params;
-    const texto = String(req.body?.texto ?? "").trim();
-    const autor = String(req.body?.autor ?? "Operador").trim() || "Operador";
+    // Limites de tamanho: comentário 1000 chars (~bloco de texto), autor 80
+    const texto = String(req.body?.texto ?? "").trim().slice(0, 1000);
+    const autor = (String(req.body?.autor ?? "Operador").trim() || "Operador").slice(0, 80);
     if (!texto) return res.status(400).json({ erro: "Comentário vazio." });
     const { data: os } = await supabase
       .from("ordens_servico")
       .select("id")
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .maybeSingle();
     if (!os) return res.status(404).json({ erro: "OS não encontrada." });
@@ -363,13 +386,15 @@ osRouter.post("/os/:codigo/comentarios", async (req: Request, res: Response) => 
 osRouter.post("/os/:codigo/pecas", async (req: Request, res: Response) => {
   try {
     const { codigo } = req.params;
-    const nome = String(req.body?.nome ?? "").trim();
-    const sku = String(req.body?.sku ?? "").trim() || null;
-    const qtd = Math.max(1, parseInt(String(req.body?.qtd ?? "1"), 10) || 1);
+    const nome = String(req.body?.nome ?? "").trim().slice(0, 140);
+    const sku = (String(req.body?.sku ?? "").trim().slice(0, 32)) || null;
+    const qtd = Math.max(1, Math.min(1_000_000,
+      parseInt(String(req.body?.qtd ?? "1"), 10) || 1));
     if (!nome) return res.status(400).json({ erro: "Informe a peça." });
     const { data: os } = await supabase
       .from("ordens_servico")
       .select("id")
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .maybeSingle();
     if (!os) return res.status(404).json({ erro: "OS não encontrada." });
@@ -391,6 +416,7 @@ osRouter.delete("/os/:codigo", requireAdmin, async (req: Request, res: Response)
     const { data, error } = await supabase
       .from("ordens_servico")
       .delete()
+      .eq("workspace_id", getWs(req))
       .eq("codigo", String(codigo).slice(0, 32))
       .select("codigo")
       .maybeSingle();
@@ -407,7 +433,7 @@ osRouter.delete("/os/:codigo", requireAdmin, async (req: Request, res: Response)
 // =====================================================================
 // INSPEÇÃO DO DIA (checklist pré-operacional)
 // =====================================================================
-osRouter.get("/inspecoes", async (_req: Request, res: Response) => {
+osRouter.get("/inspecoes", async (req: Request, res: Response) => {
   try {
     const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(
       new Date()
@@ -415,6 +441,7 @@ osRouter.get("/inspecoes", async (_req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("inspecoes")
       .select("id,operador,ok,itens,created_at,equipamentos(codigo,nome)")
+      .eq("workspace_id", getWs(req))
       .gte("created_at", `${hoje}T00:00:00-03:00`)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -452,14 +479,17 @@ osRouter.post("/inspecoes", async (req: Request, res: Response) => {
     }));
     const tudoOk = itens.every((x: any) => x.ok);
 
+    const ws = getWs(req);
     const { data: eq } = await supabase
       .from("equipamentos")
       .select("id")
+      .eq("workspace_id", ws)
       .eq("codigo", equipId)
       .maybeSingle();
     if (!eq) return res.status(400).json({ erro: "Equipamento inválido." });
 
     const { error } = await supabase.from("inspecoes").insert({
+      workspace_id: ws,
       equipamento_id: eq.id,
       operador,
       itens,
@@ -477,11 +507,12 @@ osRouter.post("/inspecoes", async (req: Request, res: Response) => {
 // =====================================================================
 // ATIVIDADE — quem fez o quê (somente o "pai"/admin)
 // =====================================================================
-osRouter.get("/atividade", requireAdmin, async (_req: Request, res: Response) => {
+osRouter.get("/atividade", requireAdmin, async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("atividade")
       .select("ator,papel,acao,alvo,created_at")
+      .eq("workspace_id", getWs(req))
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;

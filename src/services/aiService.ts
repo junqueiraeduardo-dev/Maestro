@@ -3,11 +3,21 @@
  *
  * Interpreta a fala do operador e devolve a INTENÇÃO estruturada.
  *
- * Estratégia de Custo Zero (Gemini 2.0 Flash - Free Tier):
+ * Dois modelos, escolhidos pelo plano do usuário:
+ *   FREE    → gemini-2.0-flash  (rápido, cota generosa: 15 RPM / 1500 RPD)
+ *   PREMIUM → gemini-2.5-flash  (raciocínio melhor; cota free menor: 10 RPM / 250 RPD)
+ *
+ * Por que separar:
+ *   - Quem paga não compete com a cota dos testes grátis (buckets distintos).
+ *   - 2.5-flash entende comandos ambíguos/com ruído (oficina, fábrica) bem
+ *     melhor que 2.0-flash — diferença sentida em "tira dois litro de óleo
+ *     do hidráulico ali, daquela prateleira" e variações regionais.
+ *
+ * Estratégia de Custo Zero mantida:
  *   1. fastPath(): regex resolve comandos óbvios SEM chamar a IA.
- *   2. Token bucket local: corta excesso ANTES de gastar cota (não leva 429).
+ *   2. Token bucket local POR PLANO: corta excesso antes de gastar cota.
  *   3. responseSchema JSON: 1 chamada resolve, sem retry de parsing.
- *   4. Backoff exponencial só quando a API realmente devolve 429.
+ *   4. Falha de IA degrada para "buscar" (READ-ONLY, seguro).
  *
  * A IA NÃO escreve a frase falada - só classifica. A resposta de voz
  * é montada por template na rota (evita 2ª chamada de IA).
@@ -18,6 +28,7 @@ import {
 } from "@google/generative-ai";
 
 export type Intencao = "buscar" | "baixa" | "kit" | "desconhecido";
+export type Plano = "free" | "premium";
 
 export interface IntentResult {
   intencao: Intencao;
@@ -59,42 +70,65 @@ Regras:
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
-const model = genAI.getGenerativeModel({
+const RESPONSE_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    intencao: {
+      type: SchemaType.STRING,
+      format: "enum",
+      enum: ["buscar", "baixa", "kit", "desconhecido"],
+    },
+    termo: { type: SchemaType.STRING },
+    quantidade: { type: SchemaType.INTEGER },
+  },
+  required: ["intencao", "termo", "quantidade"],
+} as const;
+
+// Dois modelos, instanciados uma vez (caro recriar a cada request).
+const modeloFree = genAI.getGenerativeModel({
   model: "gemini-2.0-flash",
   systemInstruction: SYSTEM_PROMPT,
   generationConfig: {
     temperature: 0,
     maxOutputTokens: 80,
     responseMimeType: "application/json",
-    responseSchema: {
-      type: SchemaType.OBJECT,
-      properties: {
-        intencao: {
-          type: SchemaType.STRING,
-          format: "enum",
-          enum: ["buscar", "baixa", "kit", "desconhecido"],
-        },
-        termo: { type: SchemaType.STRING },
-        quantidade: { type: SchemaType.INTEGER },
-      },
-      required: ["intencao", "termo", "quantidade"],
-    },
+    responseSchema: RESPONSE_SCHEMA as any,
   },
 });
 
-// --------------------- Token bucket (em memória) --------------------
-const LIMITE_POR_MIN = 12; // margem abaixo de 15 p/ não raspar o teto
-let janela = Math.floor(Date.now() / 60_000);
-let contador = 0;
+const modeloPremium = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash",
+  systemInstruction: SYSTEM_PROMPT,
+  generationConfig: {
+    temperature: 0,
+    maxOutputTokens: 120, // 2.5 raciocina melhor; deixa espaço pra termos longos
+    responseMimeType: "application/json",
+    responseSchema: RESPONSE_SCHEMA as any,
+  },
+});
 
-function temCota(): boolean {
+// --------------------- Token buckets (em memória) -------------------
+// Buckets SEPARADOS por plano: assim picos de uso free não afetam premium.
+// Limites ficam abaixo do teto do free tier do Google AI Studio:
+//   free    bucket = 12/min  (teto real 2.0-flash = 15 RPM)
+//   premium bucket =  8/min  (teto real 2.5-flash = 10 RPM)
+const LIMITES: Record<Plano, number> = { free: 12, premium: 8 };
+
+type Bucket = { janela: number; contador: number };
+const buckets: Record<Plano, Bucket> = {
+  free:    { janela: Math.floor(Date.now() / 60_000), contador: 0 },
+  premium: { janela: Math.floor(Date.now() / 60_000), contador: 0 },
+};
+
+function temCota(plano: Plano): boolean {
+  const b = buckets[plano];
   const agora = Math.floor(Date.now() / 60_000);
-  if (agora !== janela) {
-    janela = agora;
-    contador = 0;
+  if (agora !== b.janela) {
+    b.janela = agora;
+    b.contador = 0;
   }
-  if (contador >= LIMITE_POR_MIN) return false;
-  contador += 1;
+  if (b.contador >= LIMITES[plano]) return false;
+  b.contador += 1;
   return true;
 }
 
@@ -128,10 +162,13 @@ function fastPath(texto: string): IntentResult | null {
 // --------------------------- API pública ----------------------------
 /**
  * Interpreta o texto transcrito e retorna a intenção estruturada.
- * @throws RateLimitError  cota local esgotada
- * @throws AIServiceError  falha de rede/serviço no Gemini
+ * @param texto   fala transcrita pelo Web Speech API
+ * @param plano   'premium' (paga, usa 2.5-flash) ou 'free' (default, 2.0-flash)
  */
-export async function interpretarComando(texto: string): Promise<IntentResult> {
+export async function interpretarComando(
+  texto: string,
+  plano: Plano = "free"
+): Promise<IntentResult> {
   const limpo = texto.trim().slice(0, 200);
   if (!limpo) return { intencao: "desconhecido", termo: "", quantidade: 1 };
 
@@ -139,16 +176,16 @@ export async function interpretarComando(texto: string): Promise<IntentResult> {
   const atalho = fastPath(limpo);
   if (atalho) return atalho;
 
-  // 2) Cota local: se estourou, NÃO trava o operador -> degrada para busca.
-  if (!temCota()) {
-    console.warn("[gemini] cota local atingida; degradando para busca");
+  // 2) Cota local POR PLANO: se estourou, NÃO trava o operador -> degrada para busca.
+  if (!temCota(plano)) {
+    console.warn(`[gemini:${plano}] cota local atingida; degradando para busca`);
     return { intencao: "buscar", termo: limpo, quantidade: 1 };
   }
 
-  // 3) UMA chamada ao Gemini. Sem retry: em free tier, retentar num 429
-  //    só queima mais cota (a janela de RPM não reabre em 1-2s).
+  // 3) UMA chamada ao Gemini com o modelo do plano.
+  const modelo = plano === "premium" ? modeloPremium : modeloFree;
   try {
-    const res = await model.generateContent(limpo);
+    const res = await modelo.generateContent(limpo);
     const parsed = JSON.parse(res.response.text()) as Partial<IntentResult>;
 
     const intencao = (parsed.intencao ?? "desconhecido") as Intencao;
@@ -162,9 +199,9 @@ export async function interpretarComando(texto: string): Promise<IntentResult> {
   } catch (err: any) {
     // 429 (quota), rede, 5xx ou JSON inválido: o assistente NÃO pode travar.
     // Degrada para "buscar" (operação READ-ONLY, segura: nunca dá baixa errada)
-    // usando a fala crua como termo. O log registra o motivo real para diagnóstico.
+    // usando a fala crua como termo. O log registra o motivo real.
     const msg = String(err?.message ?? err?.status ?? err);
-    console.warn("[gemini] indisponível, degradando para busca:", msg);
+    console.warn(`[gemini:${plano}] indisponível, degradando para busca:`, msg);
     return { intencao: "buscar", termo: limpo, quantidade: 1 };
   }
 }

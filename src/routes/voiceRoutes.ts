@@ -11,6 +11,7 @@
  */
 import { Router, Request, Response } from "express";
 import { supabase } from "../config/supabase";
+import { getWs } from "../workspace";
 import {
   interpretarComando,
   IntentResult,
@@ -43,13 +44,14 @@ const FALA = {
 // (SKU, qtd, local / itens do kit). É opcional: se a IA degradar ou nada
 // for encontrado, vem null e o frontend cai no texto `fala`.
 async function executar(
-  intent: IntentResult
+  intent: IntentResult,
+  ws: string
 ): Promise<{ fala: string; intencao: string; dados: any }> {
   const { intencao, termo, quantidade } = intent;
 
   switch (intencao) {
     case "buscar": {
-      const { data, error } = await supabase.rpc("buscar_peca", { termo });
+      const { data, error } = await supabase.rpc("buscar_peca", { p_workspace: ws, termo });
       if (error) throw error;
       const p = data?.[0];
       return p
@@ -69,6 +71,7 @@ async function executar(
     case "baixa": {
       // Não pedimos SKU à IA: resolvemos termo -> peça real e usamos o SKU.
       const { data: achados, error: e1 } = await supabase.rpc("buscar_peca", {
+        p_workspace: ws,
         termo,
       });
       if (e1) throw e1;
@@ -76,6 +79,7 @@ async function executar(
         return { fala: FALA.baixaNaoAchou(termo), intencao, dados: null };
 
       const { data, error: e2 } = await supabase.rpc("dar_baixa_estoque", {
+        p_workspace: ws,
         p_sku: achados[0].sku,
         p_qtd: quantidade,
       });
@@ -106,6 +110,7 @@ async function executar(
       const { data, error } = await supabase
         .from("estoque_pecas")
         .select("nome, sku, quantidade")
+        .eq("workspace_id", ws)
         .ilike("categoria", `%${termo}%`)
         .limit(5);
       if (error) throw error;
@@ -128,9 +133,13 @@ voiceRouter.post("/process-voice", async (req: Request, res: Response) => {
     return res.status(400).json({ fala: FALA.naoEntendi, intencao: "desconhecido" });
   }
 
+  // Plano define qual modelo Gemini usar (premium = 2.5-flash, raciocínio melhor)
+  const papel = (req as any).papel as "pai" | "filho" | "trial" | undefined;
+  const plano = papel === "trial" ? "free" : "premium";
+
   try {
-    const intent = await interpretarComando(texto);
-    const out = await executar(intent);
+    const intent = await interpretarComando(texto, plano);
+    const out = await executar(intent, getWs(req));
     return res.status(200).json(out);
   } catch (err: any) {
     // Cada falha vira uma frase falável + status HTTP coerente.

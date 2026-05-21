@@ -15,6 +15,7 @@ import { Router, Request, Response } from "express";
 import { supabase } from "../config/supabase";
 import { requireAdmin } from "../auth";
 import { logAtiv } from "../audit";
+import { getWs } from "../workspace";
 
 export const catalogRouter = Router();
 
@@ -58,6 +59,16 @@ function intIn(v: unknown, def: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
+/** Preço em R$ — aceita "12,50" ou 12.5; arredonda a 2 casas; null se vazio. */
+function precoNum(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number"
+    ? v
+    : parseFloat(String(v).replace(",", ".").replace(/[^0-9.\-]/g, ""));
+  if (!Number.isFinite(n) || n < 0 || n > 99_999_999) return null;
+  return Math.round(n * 100) / 100;
+}
+
 /** URL http/https válida (ou null). Bloqueia javascript:, data:, etc. */
 function url(v: unknown): string | null {
   const t = String(v ?? "").trim().slice(0, 400);
@@ -86,9 +97,11 @@ catalogRouter.post("/equipamentos", async (req: Request, res: Response) => {
       ? req.body.status
       : "operacional";
 
+    const ws = getWs(req);
     const { data: existe } = await supabase
       .from("equipamentos")
       .select("id")
+      .eq("workspace_id", ws)
       .eq("codigo", codigo)
       .maybeSingle();
     if (existe)
@@ -97,12 +110,14 @@ catalogRouter.post("/equipamentos", async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("equipamentos")
       .insert({
+        workspace_id: ws,
         codigo,
         nome,
         modelo: s(req.body?.modelo, 80),
         ano: req.body?.ano ? intIn(req.body.ano, 0, 1900, 2100) : null,
         placa: s(req.body?.placa, 16),
         tipo: s(req.body?.tipo, 40),
+        perfil: s(req.body?.perfil, 60),
         status,
       })
       .select("codigo,nome,modelo,ano,placa,tipo,status")
@@ -140,6 +155,7 @@ catalogRouter.patch("/equipamentos/:codigo", async (req: Request, res: Response)
     if ("tipo" in req.body) patch.tipo = s(req.body.tipo, 40);
     if ("ano" in req.body)
       patch.ano = req.body.ano ? intIn(req.body.ano, 0, 1900, 2100) : null;
+    if ("perfil" in req.body) patch.perfil = s(req.body.perfil, 60);
     if ("status" in req.body) {
       if (!STATUS_EQUIP.includes(req.body.status))
         return res.status(400).json({ erro: "Status inválido." });
@@ -151,6 +167,7 @@ catalogRouter.patch("/equipamentos/:codigo", async (req: Request, res: Response)
     const { data, error } = await supabase
       .from("equipamentos")
       .update(patch)
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .select("codigo")
       .maybeSingle();
@@ -172,9 +189,16 @@ catalogRouter.get("/pecas", async (req: Request, res: Response) => {
     const q = term(req.query.q);
     let query = supabase
       .from("estoque_pecas")
-      .select("sku,nome,quantidade,localizacao_fisica,categoria,segmento,tutorial_url")
+      .select("sku,nome,quantidade,localizacao_fisica,categoria,segmento,tutorial_url,ponto_reposicao,perfil,preco")
+      .eq("workspace_id", getWs(req))
       .order("nome")
-      .limit(40);
+      .limit(80);
+    // Filtro ESTRITO por perfil: só itens taggeados a este perfil ou
+    // explicitamente marcados como "TODOS" (universais). NULL = não aparece.
+    const perfil = term(req.query.perfil);
+    if (perfil) {
+      query = query.or(`perfil.eq.${perfil},perfil.eq.TODOS`);
+    }
     if (q) {
       // Busca "frouxa": quebra em palavras e casa QUALQUER uma em
       // nome/sku/sinônimos/categoria. Assim "kit de troca de oleo" acha
@@ -207,6 +231,9 @@ catalogRouter.get("/pecas", async (req: Request, res: Response) => {
         cat: p.categoria,
         seg: p.segmento,
         tutorial: p.tutorial_url || null,
+        ponto: p.ponto_reposicao,
+        perfil: p.perfil || null,
+        preco: p.preco != null ? Number(p.preco) : null,
       })),
     });
   } catch (err: any) {
@@ -228,15 +255,18 @@ catalogRouter.post("/pecas", async (req: Request, res: Response) => {
       ? req.body.segmento
       : null;
 
+    const ws = getWs(req);
     const { data: existe } = await supabase
       .from("estoque_pecas")
       .select("id")
+      .eq("workspace_id", ws)
       .eq("sku", sku)
       .maybeSingle();
     if (existe)
       return res.status(409).json({ erro: `Já existe a peça ${sku}.` });
 
     const { error } = await supabase.from("estoque_pecas").insert({
+      workspace_id: ws,
       sku,
       nome,
       quantidade: intIn(req.body?.quantidade, 0, 0, 1_000_000),
@@ -244,6 +274,12 @@ catalogRouter.post("/pecas", async (req: Request, res: Response) => {
       sinonimos: s(req.body?.sinonimos, 240) || "",
       categoria: s(req.body?.categoria, 60),
       tutorial_url: url(req.body?.tutorial_url),
+      ponto_reposicao:
+        req.body?.ponto_reposicao != null && req.body?.ponto_reposicao !== ""
+          ? intIn(req.body.ponto_reposicao, 0, 0, 1_000_000)
+          : null,
+      perfil: s(req.body?.perfil, 60),
+      preco: precoNum(req.body?.preco),
       segmento,
     });
     if (error) throw error;
@@ -268,6 +304,13 @@ catalogRouter.patch("/pecas/:sku", async (req: Request, res: Response) => {
       patch.sinonimos = s(req.body.sinonimos, 240) || "";
     if ("categoria" in req.body) patch.categoria = s(req.body.categoria, 60);
     if ("tutorial_url" in req.body) patch.tutorial_url = url(req.body.tutorial_url);
+    if ("perfil" in req.body) patch.perfil = s(req.body.perfil, 60);
+    if ("preco" in req.body) patch.preco = precoNum(req.body.preco);
+    if ("ponto_reposicao" in req.body)
+      patch.ponto_reposicao =
+        req.body.ponto_reposicao != null && req.body.ponto_reposicao !== ""
+          ? intIn(req.body.ponto_reposicao, 0, 0, 1_000_000)
+          : null;
     if ("segmento" in req.body)
       patch.segmento = SEGMENTOS.includes(req.body.segmento)
         ? req.body.segmento
@@ -280,6 +323,7 @@ catalogRouter.patch("/pecas/:sku", async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("estoque_pecas")
       .update(patch)
+      .eq("workspace_id", getWs(req))
       .eq("sku", sku)
       .select("sku")
       .maybeSingle();
@@ -300,6 +344,7 @@ catalogRouter.delete("/pecas/:sku", requireAdmin, async (req: Request, res: Resp
     const { data, error } = await supabase
       .from("estoque_pecas")
       .delete()
+      .eq("workspace_id", getWs(req))
       .eq("sku", sku)
       .select("sku")
       .maybeSingle();
@@ -320,6 +365,7 @@ catalogRouter.delete("/equipamentos/:codigo", requireAdmin, async (req: Request,
     const { data, error } = await supabase
       .from("equipamentos")
       .delete()
+      .eq("workspace_id", getWs(req))
       .eq("codigo", codigo)
       .select("codigo")
       .maybeSingle();
