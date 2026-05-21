@@ -425,16 +425,14 @@ function App({ onLogout, plano }) {
 
   return (
     <div style={{
-      // Em mobile (≤480px) ocupa tudo; em desktop constrange a 480px
-      // centralizado, com bordas suaves — visual de "app" e não de site largo.
-      position: "fixed", top: 0, bottom: 0, left: "50%",
-      transform: "translateX(-50%)",
-      width: "100%", maxWidth: 480,
+      // Preenche a tela inteira (mesmo design no mobile e no PC).
+      // O conteúdo das telas internas tem seu próprio maxWidth pra leitura
+      // boa em monitor wide — só o "shell" externo ocupa tudo.
+      position: "fixed", inset: 0,
       display: "flex", flexDirection: "column",
       background: M.bg, overflow: "hidden",
       paddingTop: "env(safe-area-inset-top)",
       paddingBottom: "env(safe-area-inset-bottom)",
-      boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.5)",
     }}>
       {plano && plano.plan === "trial" && (
         <div style={{
@@ -452,9 +450,13 @@ function App({ onLogout, plano }) {
       <InstallBanner/>
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: M.bg,
         WebkitOverflowScrolling: "touch" }}>
-        <RouteFade keyId={`${tab}|${stack.length}|${(top && top.screen) || ''}|${(top && top.params && top.params.id) || ''}`}>
-          {body}
-        </RouteFade>
+        {/* Conteúdo centralizado com maxWidth p/ leitura boa em monitor wide.
+            Em mobile (≤1100px) ocupa tudo; em PC fica no meio sem esticar feio. */}
+        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+          <RouteFade keyId={`${tab}|${stack.length}|${(top && top.screen) || ''}|${(top && top.params && top.params.id) || ''}`}>
+            {body}
+          </RouteFade>
+        </div>
       </div>
 
       <MicFAB state={mic.phase === "thinking" ? "thinking" : mic.phase}
