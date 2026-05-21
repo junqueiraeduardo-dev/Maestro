@@ -73,6 +73,22 @@ const CSP = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+/**
+ * Cache-Control: no-store em respostas /api/*. Impede que browsers, proxies
+ * corporativos ou caches CDN guardem respostas que carregam tokens, chaves
+ * Premium, dados de usuário. Sem isso, voltar pelo histórico podia mostrar
+ * pra outro usuário (em compartilhamento de máquina).
+ *
+ * NÃO aplicado em estáticos (HTML/JS/CSS) — esses PRECISAM cachear pra app
+ * carregar rápido. SW controla o cache do shell.
+ */
+export function apiNoCache(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+}
+
 export function securityHeaders(_req: Request, res: Response, next: NextFunction) {
   // CSP — restringe XSS / supply chain
   res.setHeader("Content-Security-Policy", CSP);

@@ -13,7 +13,7 @@ import { workspaceRouter } from "./routes/workspaceRoutes";
 import { workspaceMw } from "./workspace";
 import { loginHandler, trialHandler, entrarHandler, requireAuth, excluirContaHandler } from "./auth";
 import { payPlanos, payCheckout, payWebhook, payChave } from "./pay";
-import { securityHeaders, limitePorIp, limitePorEmail } from "./security";
+import { securityHeaders, apiNoCache, limitePorIp, limitePorEmail } from "./security";
 
 const app = express();
 
@@ -29,6 +29,11 @@ app.use(securityHeaders);
 // passa por browser), então CORS também não se aplica. Remover = mais seguro.
 
 app.use(express.json({ limit: "16kb" })); // payload de voz é minúsculo
+
+// Cache-Control no-store em TUDO de /api/*. Mata cache de tokens/chaves
+// em browsers e proxies. Aplicado ANTES dos handlers, vale pra qualquer
+// método (GET/POST/PATCH/DELETE) e qualquer rota /api.
+app.use("/api", apiNoCache);
 
 // Health check (útil p/ "manter acordado" o free tier que dorme)
 app.get("/health", (_req, res) => res.json({ ok: true }));
