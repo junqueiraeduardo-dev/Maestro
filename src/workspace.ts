@@ -71,15 +71,16 @@ export async function workspaceMw(
   const header = String(req.headers["x-workspace-id"] || "").trim();
 
   if (header) {
-    if (!UUID_RE.test(header))
-      return res.status(400).json({ erro: "Workspace inválido." });
+    // Status codes UNIFICADOS pra impedir enumeração de workspaces alheios.
+    // Antes: 400 (UUID invál), 404 (não existe), 403 (não é seu) — atacante
+    // distinguia UUIDs existentes vs inexistentes via códigos diferentes.
+    // Agora: TUDO 403 com a mesma mensagem genérica.
+    const acessoNegado = () =>
+      res.status(403).json({ erro: "Workspace inválido ou sem acesso." });
+    if (!UUID_RE.test(header)) return acessoNegado();
     const dono = await donoDoWorkspace(header);
-    if (dono === undefined)
-      return res.status(404).json({ erro: "Workspace não encontrado." });
-    if (!podeUsar(userEmail, dono))
-      return res
-        .status(403)
-        .json({ erro: "Você não tem acesso a este workspace." });
+    if (dono === undefined) return acessoNegado();
+    if (!podeUsar(userEmail, dono)) return acessoNegado();
     (req as any).workspaceId = header;
     return next();
   }

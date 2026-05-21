@@ -22,6 +22,7 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
 import { supabase } from "./config/supabase";
+import { emailValido } from "./auth";
 
 // Quanto tempo a chave em texto vive na tabela (apenas pra entrega na tela).
 // Reduzido pra 24h: janela suficiente pro cliente copiar/usar; minimiza
@@ -126,7 +127,9 @@ export async function payCheckout(req: Request, res: Response) {
 
     const email = String(req.body?.email ?? "").trim().toLowerCase().slice(0, 160);
     const plano = String(req.body?.plano ?? "").trim();
-    if (!email || !/.+@.+\..+/.test(email))
+    // Validação estrita (sem vírgula/pipe/etc) — protege o split de external_reference
+    // 'email|plano' e o filtro PostgREST `.or()` em workspaceRoutes.
+    if (!email || !emailValido(email))
       return res.status(400).json({ erro: "Informe um e-mail válido." });
     const P = PLANOS[plano];
     if (!P) return res.status(400).json({ erro: "Plano inválido." });

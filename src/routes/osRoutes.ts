@@ -103,7 +103,9 @@ osRouter.get("/equipamentos", async (req: Request, res: Response) => {
       .from("equipamentos")
       .select("codigo,nome,modelo,ano,placa,tipo,status,custo_mes,perfil")
       .eq("workspace_id", ws)
-      .order("codigo");
+      .order("codigo")
+      .limit(500); // cap: PME real raramente passa de 500 equipamentos;
+                   // protege banda/memória contra varredura mal-intencionada
     if (tipo && tipo !== "todos") query = query.eq("tipo", String(tipo).slice(0, 40));
     const qs = termoSeguro(q);
     if (qs) query = query.or(`nome.ilike.%${qs}%,placa.ilike.%${qs}%`);
@@ -208,7 +210,9 @@ osRouter.get("/os", async (req: Request, res: Response) => {
       .from("ordens_servico")
       .select(OS_SELECT)
       .eq("workspace_id", getWs(req))
-      .order("aberta_em", { ascending: false });
+      .order("aberta_em", { ascending: false })
+      .limit(500); // cap: PME real raramente tem 500 OS abertas;
+                   // protege resposta contra varredura em workspace cheia
     if (status) query = query.eq("status", status);
     const { data, error } = await query;
     if (error) throw error;

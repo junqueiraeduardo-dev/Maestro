@@ -18,6 +18,24 @@ import { validarChaveAssinatura } from "./pay";
 
 export const TRIAL_DIAS = 7;
 
+/**
+ * Validação de e-mail estrita. A regex permissiva /.+@.+\..+/ aceitava
+ * vírgula, ponto-e-vírgula, parêntese, pipe etc. — chars que viram
+ * separadores no filtro `.or()` do PostgREST. Email com vírgula podia
+ * vazar dados de outro usuário cujo e-mail fosse o "outro lado" do split.
+ *
+ * Esta regex aceita só a forma comum (RFC 5322 simplificado):
+ *   - local: letras, dígitos, e os símbolos seguros . _ % + -
+ *   - @ obrigatório
+ *   - domínio: letras, dígitos, hífen, pontos
+ *   - TLD com >= 2 letras
+ * Bloqueia: vírgula, ponto-e-vírgula, pipe, parêntese, aspas, espaço.
+ */
+export function emailValido(s: string): boolean {
+  return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(s)
+    && s.length <= 160;
+}
+
 function sha256(s: string): Buffer {
   return crypto.createHash("sha256").update(s, "utf8").digest();
 }
@@ -190,7 +208,7 @@ export async function trialHandler(req: Request, res: Response) {
     .toLowerCase()
     .slice(0, 160);
   const senha = String(req.body?.senha ?? "");
-  if (!email || !/.+@.+\..+/.test(email))
+  if (!email || !emailValido(email))
     return res.status(400).json({ erro: "Informe um e-mail válido." });
   if (!senha || senha.length < 6)
     return res.status(400).json({ erro: "Senha precisa ter pelo menos 6 caracteres." });
