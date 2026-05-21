@@ -5,7 +5,10 @@
    - /api/*: network-first c/ fallback "modo offline" minimalista
    - sem cache de fontes externas (mantém leve)
 */
-const VERSION = "v1-2026-05-20";
+// IMPORTANTE: bumpa este valor a cada deploy que mexer em arquivos do shell
+// (app.jsx, screens.jsx, ui.jsx, index.html). Sem bump, browser serve
+// versão cacheada e usuário não vê a mudança.
+const VERSION = "v2-2026-05-21-fullwidth";
 const SHELL = "maestro-shell-" + VERSION;
 const RUNTIME = "maestro-runtime-" + VERSION;
 

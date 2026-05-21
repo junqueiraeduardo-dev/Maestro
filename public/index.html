@@ -144,10 +144,31 @@
   <script type="text/babel" src="app.jsx"></script>
   <script>
     // ---- PWA: registro do Service Worker (cache-first do shell + offline) ----
+    // Auto-update: ao detectar SW novo, manda SKIP_WAITING; quando ele assume,
+    // recarrega a página automaticamente pra usuário ver a versão nova SEM
+    // precisar de Ctrl+Shift+R. (Single reload por update.)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function (e) {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          // Quando nova versão for instalada, força ativação imediata
+          reg.addEventListener('updatefound', function () {
+            var nv = reg.installing;
+            if (nv) nv.addEventListener('statechange', function () {
+              if (nv.state === 'installed' && navigator.serviceWorker.controller) {
+                nv.postMessage('SKIP_WAITING');
+              }
+            });
+          });
+        }).catch(function (e) {
           console.warn('[pwa] sw falhou:', e && e.message);
+        });
+        // Quando o SW novo assume o controle, recarrega 1x pra carregar o
+        // bundle/jsx atualizado. Flag evita loop.
+        var recarregado = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (recarregado) return;
+          recarregado = true;
+          window.location.reload();
         });
       });
     }

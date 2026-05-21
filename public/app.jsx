@@ -450,13 +450,12 @@ function App({ onLogout, plano }) {
       <InstallBanner/>
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: M.bg,
         WebkitOverflowScrolling: "touch" }}>
-        {/* Conteúdo centralizado com maxWidth p/ leitura boa em monitor wide.
-            Em mobile (≤1100px) ocupa tudo; em PC fica no meio sem esticar feio. */}
-        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
-          <RouteFade keyId={`${tab}|${stack.length}|${(top && top.screen) || ''}|${(top && top.params && top.params.id) || ''}`}>
-            {body}
-          </RouteFade>
-        </div>
+        {/* Sem maxWidth: conteúdo ocupa a tela inteira em qualquer viewport.
+            Mobile usa o espaço todo (igual antes); desktop também — cards
+            do grid 1fr 1fr crescem proporcionalmente. */}
+        <RouteFade keyId={`${tab}|${stack.length}|${(top && top.screen) || ''}|${(top && top.params && top.params.id) || ''}`}>
+          {body}
+        </RouteFade>
       </div>
 
       <MicFAB state={mic.phase === "thinking" ? "thinking" : mic.phase}
