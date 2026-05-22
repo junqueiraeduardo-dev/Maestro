@@ -38,11 +38,13 @@ const WEBHOOK_TS_WINDOW_MS = 5 * 60 * 1000;
 
 const httpFetch: any = (globalThis as any).fetch;
 
-// Preços e duração — AUTORIDADE É O SERVIDOR.
+// Preços e duração — AUTORIDADE É O SERVIDOR (cliente nunca define preço).
+// Tabela inicial (lançamento) — agressiva pra capturar PME que vê SaaS
+// caro como barreira. Subir depois com validação de mercado.
 const PLANOS: Record<string, { preco: number; dias: number; nome: string }> = {
-  mensal: { preco: 89.0, dias: 30, nome: "Maestro Premium · Mensal" },
-  anual: { preco: 801.0, dias: 365, nome: "Maestro Premium · Anual" },
-  equipe: { preco: 80.1, dias: 30, nome: "Maestro Premium · Equipe (até 25)" },
+  mensal: { preco: 39.0, dias: 30, nome: "Maestro Premium · Mensal" },
+  anual:  { preco: 351.0, dias: 365, nome: "Maestro Premium · Anual" },     // 25% off vs mensal
+  equipe: { preco: 149.0, dias: 30, nome: "Maestro Premium · Equipe (até 25)" }, // < R$ 6/usuário
 };
 
 function baseUrl(req: Request): string {

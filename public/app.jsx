@@ -499,7 +499,7 @@ function App({ onLogout, plano }) {
           <Icon name="clock" size={14}/>
           Teste grátis · {plano.dias} dia{plano.dias === 1 ? "" : "s"} restante{plano.dias === 1 ? "" : "s"}
           <span style={{ opacity: 0.5 }}>·</span>
-          <span style={{ color: M.text }}>Premium R$ 89/mês</span>
+          <span style={{ color: M.text }}>Premium R$ 39/mês</span>
         </div>
       )}
       <InstallBanner/>
@@ -832,28 +832,36 @@ function Login({ onOk }) {
             cor={M.textDim}
             itens={["Acesso completo a tudo", "Sem cartão de crédito", "Bloqueia após 7 dias"]}/>
           <PlanoCard
-            nome="Premium Mensal" preco="R$ 89" periodo="/mês"
+            nome="Premium Mensal" preco="R$ 39" periodo="/mês"
             cor={M.amber} destaque
             itens={[
               "Tudo ilimitado: peças, equipamentos, OS, inspeções",
-              "Assistente de voz com IA",
-              "Até 25 usuários com a senha do plano",
-              "Tutoriais em vídeo + suporte prioritário",
+              "Assistente de voz com IA (Gemini 2.5)",
+              "1 usuário (você)",
+              "Suporte por e-mail",
             ]}/>
           <PlanoCard
-            nome="Premium Anual" preco="R$ 801" periodo="/ano · −25%"
+            nome="Premium Anual" preco="R$ 351" periodo="/ano · −25%"
             cor={M.green} destaque
             itens={[
               "Tudo do Premium Mensal",
-              "Economia de 25% (≈ R$ 66,75/mês)",
+              "Economia de 25% (≈ R$ 29/mês)",
               "3 meses grátis no ano",
+            ]}/>
+          <PlanoCard
+            nome="Equipe · até 25 usuários" preco="R$ 149" periodo="/mês"
+            cor="#60A5FA" destaque
+            itens={[
+              "Tudo do Premium",
+              "Chefe convida funcionários por link (grátis pra eles)",
+              "Vê tudo que cada operador faz (audit log)",
+              "Menos de R$ 6 por usuário no time cheio",
             ]}/>
           <div style={{
             fontSize: 11.5, color: M.textMute, textAlign: "center",
             lineHeight: 1.6, padding: "2px 6px",
           }}>
-            Equipe com até 25 usuários: <span style={{ color: M.amber }}>10% de
-            desconto adicional</span> sobre o plano escolhido.
+            Cancela quando quiser. Reembolso integral em até 7 dias (CDC).
           </div>
         </div>
       </div>

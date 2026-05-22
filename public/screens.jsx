@@ -621,9 +621,9 @@ function UserMenuSheet({ onClose, onLogout }) {
               </div>
 
               {[
-                { id: 'mensal', t: 'Mensal', p: 'R$ 89/mês' },
-                { id: 'anual', t: 'Anual', p: 'R$ 801/ano · −25%' },
-                { id: 'equipe', t: 'Equipe (até 25)', p: 'R$ 80,10/mês' },
+                { id: 'mensal', t: 'Mensal', p: 'R$ 39/mês' },
+                { id: 'anual', t: 'Anual', p: 'R$ 351/ano · −25%' },
+                { id: 'equipe', t: 'Equipe (até 25)', p: 'R$ 149/mês' },
               ].map(o => (
                 <button key={o.id} disabled={pagando} onClick={() => pagar(o.id)}
                   style={{

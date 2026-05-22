@@ -103,7 +103,9 @@ export async function workspaceMw(
   //      → quando funcionário usou link do chefe pra se cadastrar
   //   2. Workspace que o usuário é DONO (`owner_email`)
   //      → chefe Premium pago dono do próprio
-  //   3. Workspace "principal" (default sem dono, legado)
+  //   3. AUTO-CRIA workspace pro Premium pagante (multi-tenant)
+  //      → primeiro acesso depois do pagamento, sem precisar de setup manual
+  //   4. Workspace "principal" (default sem dono, legado / fallback)
   if (userEmail) {
     // 1) Convite: trial vinculado ao workspace do chefe
     const { data: t } = await supabase
@@ -112,7 +114,6 @@ export async function workspaceMw(
       .eq("email", userEmail)
       .maybeSingle();
     if (t?.workspace_padrao) {
-      // valida que o workspace ainda existe e cacheia
       const dono = await donoDoWorkspace(t.workspace_padrao);
       if (dono !== undefined) {
         (req as any).workspaceId = t.workspace_padrao;
@@ -132,6 +133,17 @@ export async function workspaceMw(
       (req as any).workspaceId = data.id as string;
       return next();
     }
+    // 3) Premium pagante sem workspace? Auto-cria (multi-tenant verdadeiro).
+    //    Só pra "pai" (premium pago) — não pra trial sem convite (esses ficam
+    //    no "principal" shared, que vira workspace de avaliação).
+    const papel = (req as any).papel;
+    if (papel === "pai") {
+      const wsAuto = await criarWorkspacePremium(userEmail);
+      if (wsAuto) {
+        (req as any).workspaceId = wsAuto;
+        return next();
+      }
+    }
   }
 
   const def = await defaultWorkspaceId();
@@ -139,6 +151,48 @@ export async function workspaceMw(
     return res.status(503).json({ erro: "Servidor sem workspace padrão." });
   (req as any).workspaceId = def;
   next();
+}
+
+/**
+ * Cria workspace para um Premium pagante na primeira vez que ele acessa
+ * (multi-tenant transparente). Idempotente: se já existe (race), retorna o
+ * existente. Slug gerado a partir do email.
+ */
+async function criarWorkspacePremium(email: string): Promise<string | null> {
+  // Slug: parte antes do @, sem caracteres especiais, + sufixo curto pra
+  // não colidir (pode existir "joao" de outro cliente). Tamanho cap 32.
+  const local = email.split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 20) || "wsp";
+  const sufixo = Math.random().toString(36).slice(2, 6);
+  const slug = `${local}-${sufixo}`.slice(0, 32);
+  const nome = `Workspace de ${email.split("@")[0]}`.slice(0, 80);
+
+  try {
+    const { data, error } = await supabase
+      .from("workspaces")
+      .insert({ slug, nome, owner_email: email })
+      .select("id")
+      .single();
+    if (error) {
+      // Se RACE entre 2 requests simultâneos, retoma o que já criou
+      const { data: e } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("owner_email", email)
+        .limit(1)
+        .maybeSingle();
+      return e?.id || null;
+    }
+    ownerOf.set(data.id, email);
+    return data.id;
+  } catch (e: any) {
+    console.warn("[ws] auto-create falhou:", e?.message ?? e);
+    return null;
+  }
 }
 
 export function getWs(req: Request): string {
