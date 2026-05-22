@@ -8,7 +8,7 @@
 // IMPORTANTE: bumpa este valor a cada deploy que mexer em arquivos do shell
 // (app.jsx, screens.jsx, ui.jsx, index.html). Sem bump, browser serve
 // versão cacheada e usuário não vê a mudança.
-const VERSION = "v2-2026-05-21-fullwidth";
+const VERSION = "v3-2026-05-21-icons-voice";
 const SHELL = "maestro-shell-" + VERSION;
 const RUNTIME = "maestro-runtime-" + VERSION;
 
@@ -23,6 +23,9 @@ const SHELL_FILES = [
   "/confetti.js",
   "/favicon.svg",
   "/icon-maskable.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-512-maskable.png",
   "/manifest.webmanifest",
 ];
 

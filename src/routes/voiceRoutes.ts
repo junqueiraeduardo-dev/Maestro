@@ -10,8 +10,10 @@
  * Sempre retorna um campo `fala` falável, mesmo em erro.
  */
 import { Router, Request, Response } from "express";
+import crypto from "crypto";
 import { supabase } from "../config/supabase";
 import { getWs } from "../workspace";
+import { logAtiv } from "../audit";
 import {
   interpretarComando,
   IntentResult,
@@ -34,11 +36,33 @@ const FALA = {
     itens.length
       ? `Kit sugerido: ${itens.map((i) => i.nome).join(", ")}.`
       : "Não tenho um kit cadastrado para esse serviço.",
+  addOk: (nome: string, qtd: number, sku: string) =>
+    `Pronto. Adicionei ${qtd} ${nome} no estoque com código ${sku}. Toque pra completar os dados.`,
+  addExiste: (nome: string, qtd: number) =>
+    `Já existia ${nome}. Aumentei o estoque em ${qtd} unidades.`,
+  addNomeCurto: "Nome muito curto, repita com mais detalhes.",
   limite: "Sistema ocupado, tente em alguns segundos.",
   erroIA: "Não consegui processar o comando agora.",
   erroDB: "Tive um problema ao consultar o estoque.",
   naoEntendi: "Não entendi o comando, repita por favor.",
 };
+
+/**
+ * Gera um SKU curto baseado no nome + sufixo aleatório.
+ *  "filtro de óleo" → "FIL-A3F2"
+ * Tira acentos, pega 3 primeiras letras + 4 hex random. Quase impossível
+ * colidir (16^4 = 65k combinações por prefixo).
+ */
+function geraSkuDeNome(nome: string): string {
+  const limpo = nome
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  const prefixo = limpo.slice(0, 3) || "ITM";
+  const sufixo = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `${prefixo}-${sufixo}`;
+}
 
 // `dados` carrega o resultado estruturado para a UI desenhar os cards
 // (SKU, qtd, local / itens do kit). É opcional: se a IA degradar ou nada
@@ -121,6 +145,80 @@ async function executar(
       };
     }
 
+    case "adicionar": {
+      // Cadastro por voz com defaults sãos. Se já existe peça com nome
+      // parecido (fuzzy match via RPC), incrementa o estoque ao invés
+      // de criar duplicata. Caso novo, gera SKU temporário e a peça
+      // entra com quantidade inicial — usuário completa no app depois.
+      const nome = termo.trim();
+      if (nome.length < 3) {
+        return { fala: FALA.addNomeCurto, intencao, dados: null };
+      }
+
+      // 1) Tenta achar peça existente similar (defesa contra duplicação)
+      const { data: similar } = await supabase.rpc("buscar_peca", {
+        p_workspace: ws,
+        termo: nome,
+      });
+      const jaTinha = similar?.[0];
+      if (jaTinha && jaTinha.score > 0.5) {
+        // Match alto → incrementa estoque ao invés de criar nova
+        const { error: eUpd } = await supabase
+          .from("estoque_pecas")
+          .update({ quantidade: jaTinha.quantidade + quantidade })
+          .eq("workspace_id", ws)
+          .eq("sku", jaTinha.sku);
+        if (eUpd) throw eUpd;
+        return {
+          fala: FALA.addExiste(jaTinha.nome, quantidade),
+          intencao,
+          dados: {
+            sku: jaTinha.sku,
+            nome: jaTinha.nome,
+            quantidade: jaTinha.quantidade + quantidade,
+            adicionados: quantidade,
+            existia: true,
+          },
+        };
+      }
+
+      // 2) Nova peça — gera SKU único (retry até 3x em colisão improvável)
+      let sku = geraSkuDeNome(nome);
+      for (let i = 0; i < 3; i++) {
+        const { data: col } = await supabase
+          .from("estoque_pecas")
+          .select("id")
+          .eq("workspace_id", ws)
+          .eq("sku", sku)
+          .maybeSingle();
+        if (!col) break;
+        sku = geraSkuDeNome(nome);
+      }
+
+      const { error: eIns } = await supabase.from("estoque_pecas").insert({
+        workspace_id: ws,
+        sku,
+        nome: nome.slice(0, 140),
+        quantidade,
+        localizacao_fisica: null,
+        sinonimos: "",
+        categoria: null,
+      });
+      if (eIns) throw eIns;
+      // logAtiv precisa de req — workaround: passo via closure (refator pequeno)
+      // Já fazemos isso em outras rotas; aqui chamamos do handler abaixo.
+      return {
+        fala: FALA.addOk(nome, quantidade, sku),
+        intencao,
+        dados: {
+          sku,
+          nome,
+          quantidade,
+          existia: false,
+        },
+      };
+    }
+
     default:
       return { fala: FALA.naoEntendi, intencao: "desconhecido", dados: null };
   }
@@ -140,6 +238,13 @@ voiceRouter.post("/process-voice", async (req: Request, res: Response) => {
   try {
     const intent = await interpretarComando(texto, plano);
     const out = await executar(intent, getWs(req));
+    // Auditoria: registra ações que MUDAM dados (baixa, adicionar).
+    if (intent.intencao === "baixa" && out.dados?.sku)
+      logAtiv(req, "baixou peça (voz)", String(out.dados.sku));
+    if (intent.intencao === "adicionar" && out.dados?.sku)
+      logAtiv(req,
+        out.dados.existia ? "incrementou estoque (voz)" : "cadastrou peça (voz)",
+        String(out.dados.sku));
     return res.status(200).json(out);
   } catch (err: any) {
     // Cada falha vira uma frase falável + status HTTP coerente.

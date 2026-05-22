@@ -27,7 +27,7 @@ import {
   SchemaType,
 } from "@google/generative-ai";
 
-export type Intencao = "buscar" | "baixa" | "kit" | "desconhecido";
+export type Intencao = "buscar" | "baixa" | "kit" | "adicionar" | "desconhecido";
 export type Plano = "free" | "premium";
 
 export interface IntentResult {
@@ -61,6 +61,7 @@ Intenções:
 - "buscar": localizar/contar um item. Ex.: "onde está o rolamento 6205", "quanto tem de filtro de combustível".
 - "baixa": consumir/retirar item do estoque. Ex.: "tira 2 correias", "baixa 4 litros de óleo hidráulico".
 - "kit": sugerir itens de uma manutenção/revisão. Ex.: "monta o kit de revisão de 500 horas", "kit de troca de óleo do motor".
+- "adicionar": cadastrar nova peça no estoque. Ex.: "adicione velas de motor", "cadastra 5 filtros de ar", "registra rolamento 6205", "novo item óleo 15w40".
 - "desconhecido": não se encaixa em nada acima.
 
 Regras:
@@ -76,7 +77,7 @@ const RESPONSE_SCHEMA = {
     intencao: {
       type: SchemaType.STRING,
       format: "enum",
-      enum: ["buscar", "baixa", "kit", "desconhecido"],
+      enum: ["buscar", "baixa", "kit", "adicionar", "desconhecido"],
     },
     termo: { type: SchemaType.STRING },
     quantidade: { type: SchemaType.INTEGER },
@@ -156,6 +157,22 @@ function fastPath(texto: string): IntentResult | null {
     return { intencao: "buscar", quantidade: 1, termo: mBusca[1].trim() };
   }
 
+  // Cadastrar peça nova: cobre as conjugações comuns do operador.
+  //   adicion[a|e|o|ar]  → adiciona/adicione/adiciono/adicionar
+  //   cadastr[a|e|o|ar]  → cadastra/cadastre/cadastro/cadastrar
+  //   registr[a|e|o|ar]  → registra/registre/registro/registrar
+  //   inclu[i|a|ir]      → inclui/inclua/incluir
+  //   nov[o|a]           → novo/nova item
+  //   anot[a|e|ar]       → anota/anote/anotar
+  //   p[õ|o]e            → põe/poe
+  // Quantidade opcional (\d+). Termo = resto.
+  const mAdd = t.match(
+    /^(?:adicion[aeo]r?|cadastr[aeo]r?|registr[aeo]r?|inclu[ia]r?|nov[oa]|anot[ae]r?|p[oõ]e|ponha|coloc[ae]r?)\s+(?:item\s+|peça\s+|nova\s+peça\s+|novo\s+item\s+)?(\d+)?\s*(.+)$/
+  );
+  if (mAdd) {
+    return { intencao: "adicionar", quantidade: normalizar(mAdd[1]), termo: mAdd[2].trim() };
+  }
+
   return null; // não é óbvio -> Gemini
 }
 
@@ -190,7 +207,7 @@ export async function interpretarComando(
 
     const intencao = (parsed.intencao ?? "desconhecido") as Intencao;
     return {
-      intencao: ["buscar", "baixa", "kit"].includes(intencao)
+      intencao: ["buscar", "baixa", "kit", "adicionar"].includes(intencao)
         ? intencao
         : "desconhecido",
       termo: (parsed.termo ?? "").toString().toLowerCase().trim(),

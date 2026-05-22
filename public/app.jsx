@@ -214,6 +214,61 @@ function VoiceSheet({ phase, transcript, resp, onClose }) {
     );
   }
 
+  // ADICIONAR — peça nova criada (ou existente incrementada)
+  if (intencao === "adicionar" && dados) {
+    const novoCadastro = !dados.existia;
+    return (
+      <div style={{ padding: "4px 20px 24px" }}>
+        <ResultHeader transcript={transcript} icon="check"
+          label={novoCadastro ? "PEÇA CADASTRADA" : "ESTOQUE ATUALIZADO"}/>
+        <div style={{
+          background: M.surface2, border: `1px solid ${M.green}55`,
+          borderRadius: 16, padding: 20, marginTop: 12, textAlign: "center",
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: "50%", margin: "0 auto 14px",
+            background: "#0E2B23", color: M.green,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}><Icon name="check" size={24} strokeWidth={2.4}/></div>
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: M.amber,
+            fontWeight: 700, marginBottom: 6, letterSpacing: 0.5,
+          }}>{dados.sku}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: M.text, lineHeight: 1.3, marginBottom: 12 }}>
+            {dados.nome}
+          </div>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            background: M.bg, borderRadius: 10, padding: "8px 14px",
+            border: `1px solid ${M.border}`,
+          }}>
+            <span style={{ fontSize: 12, color: M.textDim }}>
+              {novoCadastro ? "Estoque inicial" : `+${dados.adicionados} adicionado(s)`}
+            </span>
+            <span style={{ opacity: 0.4 }}>·</span>
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 18,
+              fontWeight: 700, color: M.green,
+            }}>{dados.quantidade} un.</span>
+          </div>
+          {novoCadastro && (
+            <div style={{
+              marginTop: 14, padding: 10, background: "rgba(245,158,11,0.08)",
+              border: `1px solid ${M.amber}44`, borderRadius: 8,
+              fontSize: 12, color: M.amber, lineHeight: 1.5,
+            }}>
+              💡 SKU temporário gerado. Vá em Almoxarifado → toque na peça pra
+              completar local, categoria e código real.
+            </div>
+          )}
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <Btn variant="primary" full icon="check" onClick={onClose}>Pronto</Btn>
+        </div>
+      </div>
+    );
+  }
+
   // Fallback: nada encontrado, IA degradada, erro ou "não entendi".
   // O backend SEMPRE manda uma frase falável em `fala`.
   const erro = intencao === "erro";
