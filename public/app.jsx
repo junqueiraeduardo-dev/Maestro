@@ -559,6 +559,8 @@ function Login({ onOk }) {
   // Convite na URL → força modo "cadastrar" e mostra banner
   const [convite] = useS(() => lerConviteURL());
   const [convInfo, setConvInfo] = useS(null);
+  // Toggle Mensal/Anual nos cards de preço (estilo Grok)
+  const [periodoPlano, setPeriodoPlano] = useS("mensal");
   // 'entrar' | 'cadastrar' | 'premium'
   const [modo, setModo] = useS(() => convite ? "cadastrar"
     : (ls("maestro_email", "") ? "entrar" : "cadastrar"));
@@ -825,38 +827,45 @@ function Login({ onOk }) {
           </form>
         )}
 
-        {/* Planos */}
+        {/* Planos com toggle Mensal ↔ Anual (estilo Grok) */}
         <div style={{ marginTop: 26, display: "flex", flexDirection: "column", gap: 12 }}>
+          <PriceToggle periodo={periodoPlano} onChange={setPeriodoPlano}/>
+
           <PlanoCard
             nome="Free · Teste grátis" preco="R$ 0" periodo="por 7 dias"
             cor={M.textDim}
             itens={["Acesso completo a tudo", "Sem cartão de crédito", "Bloqueia após 7 dias"]}/>
+
           <PlanoCard
-            nome="Premium Mensal" preco="R$ 39" periodo="/mês"
+            nome="Premium"
+            preco={periodoPlano === "anual" ? "R$ 29" : "R$ 39"}
+            periodo={periodoPlano === "anual" ? "/mês (R$ 351/ano)" : "/mês"}
+            badge={periodoPlano === "anual" ? "−25%" : null}
             cor={M.amber} destaque
+            animKey={periodoPlano}
             itens={[
               "Tudo ilimitado: peças, equipamentos, OS, inspeções",
               "Assistente de voz com IA (Gemini 2.5)",
               "1 usuário (você)",
               "Suporte por e-mail",
             ]}/>
+
           <PlanoCard
-            nome="Premium Anual" preco="R$ 351" periodo="/ano · −25%"
-            cor={M.green} destaque
-            itens={[
-              "Tudo do Premium Mensal",
-              "Economia de 25% (≈ R$ 29/mês)",
-              "3 meses grátis no ano",
-            ]}/>
-          <PlanoCard
-            nome="Equipe · até 25 usuários" preco="R$ 149" periodo="/mês"
+            nome="Equipe · até 25 usuários"
+            preco={periodoPlano === "anual" ? "R$ 112" : "R$ 149"}
+            periodo={periodoPlano === "anual" ? "/mês (R$ 1.341/ano)" : "/mês"}
+            badge={periodoPlano === "anual" ? "−25%" : null}
             cor="#60A5FA" destaque
+            animKey={periodoPlano}
             itens={[
               "Tudo do Premium",
               "Chefe convida funcionários por link (grátis pra eles)",
               "Vê tudo que cada operador faz (audit log)",
-              "Menos de R$ 6 por usuário no time cheio",
+              periodoPlano === "anual"
+                ? "Menos de R$ 4,50 por usuário no time cheio"
+                : "Menos de R$ 6 por usuário no time cheio",
             ]}/>
+
           <div style={{
             fontSize: 11.5, color: M.textMute, textAlign: "center",
             lineHeight: 1.6, padding: "2px 6px",
@@ -872,17 +881,101 @@ function Login({ onOk }) {
   );
 }
 
-function PlanoCard({ nome, preco, periodo, itens, cor, destaque }) {
+// =========================================================================
+// PRICE TOGGLE — segmented control "Mensal | Anual −25%" estilo Grok.
+// "Pílula" amarela que desliza com transição suave entre os 2 botões.
+// =========================================================================
+function PriceToggle({ periodo, onChange }) {
+  const isAnual = periodo === "anual";
+  return (
+    <div style={{
+      display: "flex", justifyContent: "center", marginBottom: 4,
+    }}>
+      <div style={{
+        position: "relative",
+        background: M.surface, border: `1px solid ${M.border}`,
+        borderRadius: 999, padding: 4,
+        display: "inline-flex", alignItems: "center",
+      }}>
+        {/* Pill que desliza */}
+        <span style={{
+          position: "absolute", top: 4, bottom: 4,
+          left: isAnual ? "50%" : 4,
+          width: isAnual ? "calc(50% - 4px)" : "calc(50% - 4px)",
+          background: M.amber, borderRadius: 999,
+          transition: "left .35s cubic-bezier(.34,1.56,.64,1), width .35s ease",
+          boxShadow: "0 2px 8px rgba(245,158,11,0.35)",
+        }}/>
+        <button type="button" onClick={() => onChange("mensal")}
+          style={{
+            position: "relative", zIndex: 1,
+            padding: "8px 18px", border: "none", background: "transparent",
+            color: !isAnual ? "#0E1117" : M.textDim,
+            fontWeight: 700, fontSize: 13, cursor: "pointer",
+            transition: "color .25s ease",
+            borderRadius: 999,
+          }}>
+          Mensal
+        </button>
+        <button type="button" onClick={() => onChange("anual")}
+          style={{
+            position: "relative", zIndex: 1,
+            padding: "8px 18px", border: "none", background: "transparent",
+            color: isAnual ? "#0E1117" : M.textDim,
+            fontWeight: 700, fontSize: 13, cursor: "pointer",
+            transition: "color .25s ease",
+            borderRadius: 999,
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}>
+          Anual
+          {!isAnual && (
+            <span style={{
+              fontSize: 10, fontWeight: 800, color: M.amber,
+              background: "rgba(245,158,11,0.15)",
+              padding: "2px 6px", borderRadius: 6,
+              letterSpacing: 0.3,
+            }}>−25%</span>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PlanoCard({ nome, preco, periodo, itens, cor, destaque, badge, animKey }) {
   return (
     <div style={{
       background: M.surface, borderRadius: 14,
       border: `1px solid ${destaque ? M.amber : M.border}`,
       padding: 16,
     }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: cor }}>{nome}</span>
-        <span style={{ fontSize: 18, fontWeight: 800, color: M.text }}>
-          {preco}<span style={{ fontSize: 11, color: M.textDim, fontWeight: 500 }}> {periodo}</span>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: cor, display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {nome}
+          {badge && (
+            <span style={{
+              fontSize: 10, fontWeight: 800, color: M.green,
+              background: "rgba(34,197,94,0.15)",
+              padding: "2px 6px", borderRadius: 6,
+              letterSpacing: 0.3,
+              animation: "maestro-rise .35s ease both",
+            }}>{badge}</span>
+          )}
+        </span>
+        {/* Preço com animação ao mudar (key change re-monta o span → anima) */}
+        <span style={{
+          fontSize: 18, fontWeight: 800, color: M.text,
+          display: "inline-flex", alignItems: "baseline",
+          whiteSpace: "nowrap",
+        }}>
+          <span key={"preco-" + animKey + "-" + preco} style={{
+            display: "inline-block",
+            animation: animKey ? "maestro-price-swap .35s cubic-bezier(.34,1.56,.64,1) both" : "none",
+          }}>{preco}</span>
+          <span key={"periodo-" + animKey + "-" + periodo} style={{
+            fontSize: 11, color: M.textDim, fontWeight: 500, marginLeft: 4,
+            animation: animKey ? "maestro-fade-in .35s ease .1s both" : "none",
+          }}> {periodo}</span>
         </span>
       </div>
       <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>

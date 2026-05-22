@@ -42,9 +42,10 @@ const httpFetch: any = (globalThis as any).fetch;
 // Tabela inicial (lançamento) — agressiva pra capturar PME que vê SaaS
 // caro como barreira. Subir depois com validação de mercado.
 const PLANOS: Record<string, { preco: number; dias: number; nome: string }> = {
-  mensal: { preco: 39.0, dias: 30, nome: "Maestro Premium · Mensal" },
-  anual:  { preco: 351.0, dias: 365, nome: "Maestro Premium · Anual" },     // 25% off vs mensal
-  equipe: { preco: 149.0, dias: 30, nome: "Maestro Premium · Equipe (até 25)" }, // < R$ 6/usuário
+  mensal:        { preco:   39.0, dias:  30, nome: "Maestro Premium · Mensal" },
+  anual:         { preco:  351.0, dias: 365, nome: "Maestro Premium · Anual" },           // 25% off
+  equipe:        { preco:  149.0, dias:  30, nome: "Maestro Equipe · até 25 (Mensal)" },  // < R$ 6/usuário
+  equipe_anual:  { preco: 1341.0, dias: 365, nome: "Maestro Equipe · até 25 (Anual)" },   // 25% off
 };
 
 function baseUrl(req: Request): string {
