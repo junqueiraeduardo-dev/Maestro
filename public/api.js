@@ -212,6 +212,47 @@
     },
     // LGPD: usuário apaga próprio cadastro (e-mail + senha hashada + assinaturas)
     contaExcluir: function () { return req("DELETE", "/api/conta"); },
+    // Premium cancela assinatura: marca cancelada, mantém acesso até valido_ate
+    contaCancelar: function () { return req("POST", "/api/conta/cancelar"); },
+    // Equipe — chefe gera convite + lista membros
+    equipeListar: function () { return req("GET", "/api/equipe"); },
+    conviteCriar: function (dias, maxUsos) {
+      return req("POST", "/api/equipe/convite",
+        { dias: dias || 7, maxUsos: maxUsos || 25 });
+    },
+    conviteRevogar: function (codigo) {
+      return req("POST", "/api/equipe/convite/" + encodeURIComponent(codigo) + "/revogar");
+    },
+    // Valida convite ANTES do cadastro (público, sem token)
+    conviteValidar: function (codigo) {
+      return fetch("/api/equipe/convite/" + encodeURIComponent(codigo))
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw new Error(j && j.erro ? j.erro : "Convite inválido.");
+            return j;
+          });
+        });
+    },
+    // Cadastrar trial COM convite (usa o mesmo endpoint /api/trial)
+    cadastrarComConvite: function (email, senha, codigo) {
+      return fetch("/api/trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, senha: senha, convite: codigo }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok || !j.token) {
+            var e = new Error(j && j.erro ? j.erro : "Falha ao cadastrar.");
+            e.expirado = !!(j && j.expirado);
+            e.jaCadastrado = !!(j && j.jaCadastrado);
+            throw e;
+          }
+          setToken(j.token);
+          try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
+          return j;
+        });
+      });
+    },
     // Busca a chave Premium emitida pra um payment_id (TTL 7d após pagamento).
     payChave: function (paymentId) {
       return fetch("/api/pay/chave?payment_id=" + encodeURIComponent(paymentId))

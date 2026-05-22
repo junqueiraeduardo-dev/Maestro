@@ -541,6 +541,14 @@ const PERFIS = [
   "Outro",
 ];
 
+function lerConviteURL() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const c = (p.get("convite") || "").toUpperCase().trim();
+    return /^[A-F0-9]{12}$/.test(c) ? c : null;
+  } catch (_) { return null; }
+}
+
 function Login({ onOk }) {
   const ls = (k, d) => { try { return localStorage.getItem(k) || d; } catch (_) { return d; } };
   const [nome, setNome] = useS(() => ls("maestro_nome", ""));
@@ -548,11 +556,23 @@ function Login({ onOk }) {
   const perfilSalvo = ls("maestro_perfil", PERFIS[0]);
   const [perfil, setPerfil] = useS(() => (PERFIS.includes(perfilSalvo) ? perfilSalvo : "Outro"));
   const [profCustom, setProfCustom] = useS(() => (PERFIS.includes(perfilSalvo) ? "" : perfilSalvo));
+  // Convite na URL → força modo "cadastrar" e mostra banner
+  const [convite] = useS(() => lerConviteURL());
+  const [convInfo, setConvInfo] = useS(null);
   // 'entrar' | 'cadastrar' | 'premium'
-  const [modo, setModo] = useS(() => (ls("maestro_email", "") ? "entrar" : "cadastrar"));
+  const [modo, setModo] = useS(() => convite ? "cadastrar"
+    : (ls("maestro_email", "") ? "entrar" : "cadastrar"));
   const [senha, setSenha] = useS("");
   const [busy, setBusy] = useS(false);
   const [erro, setErro] = useS(null);
+
+  // Valida convite ao carregar (mostra "Você vai entrar no workspace X")
+  useE(() => {
+    if (!convite) return;
+    window.API.conviteValidar(convite)
+      .then(setConvInfo)
+      .catch(err => setErro((err && err.message) || "Convite inválido."));
+  }, [convite]);
 
   function emailOk() { return /.+@.+\..+/.test(email.trim()); }
   function perfilFinal() {
@@ -590,8 +610,23 @@ function Login({ onOk }) {
     if (perfil === "Outro" && !profCustom.trim()) { setErro("Escreva sua profissão."); return; }
     if (!senha || senha.length < 6) { setErro("Crie uma senha de pelo menos 6 caracteres."); return; }
     setBusy(true); setErro(null);
-    window.API.cadastrar(email.trim(), senha)
-      .then(() => { salvarPerfilCompleto(); onOk(); })
+    // Se veio com convite válido, usa endpoint que vincula o workspace.
+    const fn = convite && convInfo
+      ? window.API.cadastrarComConvite(email.trim(), senha, convite)
+      : window.API.cadastrar(email.trim(), senha);
+    fn
+      .then(() => {
+        salvarPerfilCompleto();
+        // Limpa o ?convite= da URL depois de cadastrar
+        if (convite) {
+          try {
+            const u = new URL(window.location.href);
+            u.searchParams.delete("convite");
+            window.history.replaceState({}, "", u.pathname + (u.search || "") + u.hash);
+          } catch (_) {}
+        }
+        onOk();
+      })
       .catch((err) => {
         if (err.jaCadastrado) { setModo("entrar"); setErro("Já existe conta com esse e-mail. Use sua senha."); }
         else if (err.expirado) { setModo("premium"); setErro("Seu teste expirou. Use a chave Premium."); }
@@ -662,6 +697,21 @@ function Login({ onOk }) {
         animation: 'maestro-logo-in .7s cubic-bezier(.34,1.56,.64,1) both',
       }}><Logo size={56} word/></div>
       <div style={{ width: "100%", maxWidth: 380 }}>
+        {convite && (
+          <div style={{
+            marginBottom: 14, padding: "12px 14px",
+            background: "rgba(245,158,11,0.10)", border: `1px solid ${M.amber}66`,
+            borderRadius: 10, fontSize: 13, color: M.amber, lineHeight: 1.5,
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <Icon name="check" size={18}/>
+            <div style={{ flex: 1 }}>
+              {convInfo
+                ? <>Convite válido pra <b style={{ color: M.text }}>{convInfo.workspace_nome}</b>. Faça seu cadastro grátis abaixo.</>
+                : "Validando convite…"}
+            </div>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 8, margin: "0 0 16px" }}>
           <Tab id="entrar">Entrar</Tab>
           <Tab id="cadastrar">Cadastrar</Tab>

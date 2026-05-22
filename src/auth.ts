@@ -208,12 +208,38 @@ export async function trialHandler(req: Request, res: Response) {
     .toLowerCase()
     .slice(0, 160);
   const senha = String(req.body?.senha ?? "");
+  // Código de convite OPCIONAL: se vier, vincula o trial ao workspace do
+  // chefe que criou o convite. Senão, cai no workspace "principal".
+  const conviteCodigo = String(req.body?.convite ?? "")
+    .toUpperCase()
+    .trim();
+
   if (!email || !emailValido(email))
     return res.status(400).json({ erro: "Informe um e-mail válido." });
   if (!senha || senha.length < 6)
     return res.status(400).json({ erro: "Senha precisa ter pelo menos 6 caracteres." });
 
   try {
+    // Valida convite ANTES de qualquer escrita (se foi passado).
+    // Retorna workspace_id do convite ou null.
+    let workspaceDoConvite: string | null = null;
+    if (conviteCodigo) {
+      if (!/^[A-F0-9]{12}$/.test(conviteCodigo))
+        return res.status(400).json({ erro: "Código de convite inválido." });
+      const { data: conv } = await supabase
+        .from("convites_equipe")
+        .select("workspace_id,expira_em,max_usos,usos,revogado")
+        .eq("codigo", conviteCodigo)
+        .maybeSingle();
+      if (!conv || conv.revogado)
+        return res.status(404).json({ erro: "Convite não encontrado." });
+      if (new Date(conv.expira_em).getTime() < Date.now())
+        return res.status(410).json({ erro: "Convite expirou.", expirou: true });
+      if (conv.usos >= conv.max_usos)
+        return res.status(429).json({ erro: "Convite atingiu o limite de usos." });
+      workspaceDoConvite = conv.workspace_id;
+    }
+
     const { data: ex } = await supabase
       .from("trials")
       .select("expires_at, senha_hash")
@@ -235,9 +261,11 @@ export async function trialHandler(req: Request, res: Response) {
           erro: "Seu teste grátis expirou. Assine o Premium para continuar.",
           expirado: true,
         });
+      const patch: any = { senha_hash: hashSenha(senha) };
+      if (workspaceDoConvite) patch.workspace_padrao = workspaceDoConvite;
       const { error: e2 } = await supabase
         .from("trials")
-        .update({ senha_hash: hashSenha(senha) })
+        .update(patch)
         .eq("email", email);
       if (e2) throw e2;
     } else {
@@ -246,8 +274,15 @@ export async function trialHandler(req: Request, res: Response) {
         email,
         senha_hash: hashSenha(senha),
         expires_at: new Date(expMs).toISOString(),
+        workspace_padrao: workspaceDoConvite,
       });
       if (error) throw error;
+    }
+
+    // Incrementa contador do convite (best-effort; falha não bloqueia cadastro)
+    if (conviteCodigo) {
+      supabase.rpc("incrementa_convite", { p_codigo: conviteCodigo })
+        .then(undefined, (e: any) => console.warn("[trial] incrementa convite:", e?.message ?? e));
     }
 
     const dias = Math.max(1, Math.ceil((expMs - Date.now()) / 86400_000));

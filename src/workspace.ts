@@ -80,13 +80,46 @@ export async function workspaceMw(
     if (!UUID_RE.test(header)) return acessoNegado();
     const dono = await donoDoWorkspace(header);
     if (dono === undefined) return acessoNegado();
-    if (!podeUsar(userEmail, dono)) return acessoNegado();
+    if (!podeUsar(userEmail, dono)) {
+      // Permissão extra: trial convidado por link tem workspace_padrao
+      // apontando pra workspace do chefe (não é dele, mas tem acesso).
+      if (userEmail) {
+        const { data: t } = await supabase
+          .from("trials")
+          .select("workspace_padrao")
+          .eq("email", userEmail)
+          .maybeSingle();
+        if (t?.workspace_padrao !== header) return acessoNegado();
+      } else {
+        return acessoNegado();
+      }
+    }
     (req as any).workspaceId = header;
     return next();
   }
 
-  // Sem header → tenta workspace do usuário; admin/legado cai no "principal".
+  // Sem header → tenta resolver workspace do usuário em ordem de prioridade:
+  //   1. Workspace que o trial entrou por CONVITE (`workspace_padrao`)
+  //      → quando funcionário usou link do chefe pra se cadastrar
+  //   2. Workspace que o usuário é DONO (`owner_email`)
+  //      → chefe Premium pago dono do próprio
+  //   3. Workspace "principal" (default sem dono, legado)
   if (userEmail) {
+    // 1) Convite: trial vinculado ao workspace do chefe
+    const { data: t } = await supabase
+      .from("trials")
+      .select("workspace_padrao")
+      .eq("email", userEmail)
+      .maybeSingle();
+    if (t?.workspace_padrao) {
+      // valida que o workspace ainda existe e cacheia
+      const dono = await donoDoWorkspace(t.workspace_padrao);
+      if (dono !== undefined) {
+        (req as any).workspaceId = t.workspace_padrao;
+        return next();
+      }
+    }
+    // 2) Dono próprio (chefe Premium)
     const { data } = await supabase
       .from("workspaces")
       .select("id")

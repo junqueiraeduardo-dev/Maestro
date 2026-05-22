@@ -10,6 +10,7 @@ import { voiceRouter } from "./routes/voiceRoutes";
 import { osRouter } from "./routes/osRoutes";
 import { catalogRouter } from "./routes/catalogRoutes";
 import { workspaceRouter } from "./routes/workspaceRoutes";
+import { equipeRouter, validarConvite } from "./routes/equipeRoutes";
 import { workspaceMw } from "./workspace";
 import { loginHandler, trialHandler, entrarHandler, requireAuth, excluirContaHandler } from "./auth";
 import { payPlanos, payCheckout, payWebhook, payChave } from "./pay";
@@ -91,6 +92,13 @@ app.get("/api/pay/chave",
   limitePorIp("chave", 60_000, 10),
   payChave);
 
+// Validação de convite — público para que cadastro saiba se link é válido
+// ANTES de pedir senha. Rate limit pesado: código é 12 chars hex = 16^12
+// combinações, impossível brute-force, mas rate limit corta varredura.
+app.get("/api/equipe/convite/:codigo",
+  limitePorIp("convite-valida", 60_000, 30),
+  validarConvite);
+
 // Portão: tudo abaixo de /api exige token válido
 app.use("/api", requireAuth);
 
@@ -106,6 +114,7 @@ app.use("/api", voiceRouter);
 app.use("/api", osRouter);
 app.use("/api", catalogRouter);
 app.use("/api", workspaceRouter);
+app.use("/api", equipeRouter);
 
 // Frontend estático (público) - será criado no próximo passo
 app.use(

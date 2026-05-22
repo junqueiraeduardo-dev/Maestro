@@ -400,6 +400,13 @@ function UserMenuSheet({ onClose, onLogout }) {
   const [confirmaTxt, setConfirmaTxt] = useState('');
   const [excluindo, setExcluindo] = useState(false);
   const [erroExc, setErroExc] = useState(null);
+  // cancelar assinatura
+  const [cancelando, setCancelando] = useState(false);
+  const [okCancel, setOkCancel] = useState(null);
+  // equipe
+  const [equipe, setEquipe] = useState(null);
+  const [gerando, setGerando] = useState(false);
+  const [erroEq, setErroEq] = useState(null);
   const { nome, email, perfil } = lerPerfil();
   const role = window.API.role();
   const plano = window.API.plan() || { plan: 'premium' };
@@ -422,6 +429,52 @@ function UserMenuSheet({ onClose, onLogout }) {
         setExcluindo(false);
         setErroExc((err && err.message) || 'Falha ao excluir. Tente novamente.');
       });
+  }
+
+  function cancelarAssinatura() {
+    if (!window.confirm('Cancelar a assinatura?\n\nVocê mantém o acesso até a data de validade. Não cobramos a próxima renovação.')) return;
+    setCancelando(true); setErroPag(null);
+    window.API.contaCancelar()
+      .then(j => { setCancelando(false); setOkCancel(j); })
+      .catch(err => {
+        setCancelando(false);
+        setErroPag((err && err.message) || 'Falha ao cancelar.');
+      });
+  }
+
+  function carregarEquipe() {
+    setErroEq(null);
+    window.API.equipeListar()
+      .then(setEquipe)
+      .catch(err => setErroEq((err && err.message) || 'Falha ao carregar equipe.'));
+  }
+
+  function gerarConvite() {
+    setGerando(true); setErroEq(null);
+    window.API.conviteCriar(7, 25)
+      .then(() => { setGerando(false); carregarEquipe(); })
+      .catch(err => {
+        setGerando(false);
+        setErroEq((err && err.message) || 'Falha ao gerar convite.');
+      });
+  }
+
+  function revogarConvite(codigo) {
+    if (!window.confirm('Revogar este convite?')) return;
+    window.API.conviteRevogar(codigo)
+      .then(() => carregarEquipe())
+      .catch(err => setErroEq((err && err.message) || 'Falha ao revogar.'));
+  }
+
+  function copiarLinkConvite(codigo) {
+    var url = window.location.origin + '/?convite=' + codigo;
+    try { navigator.clipboard.writeText(url); }
+    catch (_) {
+      var ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+    }
   }
 
   function pagar(planoId) {
@@ -484,6 +537,7 @@ function UserMenuSheet({ onClose, onLogout }) {
               {view === 'perfil' ? 'Meu perfil'
                 : view === 'assinaturas' ? 'Assinatura'
                 : view === 'workspace' ? 'Workspace'
+                : view === 'equipe' ? 'Equipe'
                 : view === 'ajuda' ? 'Ajuda e contato'
                 : view === 'excluir' ? 'Excluir conta'
                 : 'Conta'}
@@ -503,6 +557,11 @@ function UserMenuSheet({ onClose, onLogout }) {
                 {opt('chart', 'Gerenciar assinatura',
                   plano.plan === 'trial' ? `Teste grátis · ${plano.dias} dia(s)` : 'Plano Premium',
                   () => setView('assinaturas'))}
+                {role === 'pai' && (
+                  opt('user', 'Equipe',
+                    'Convidar funcionários e ver atividade',
+                    () => { setView('equipe'); carregarEquipe(); })
+                )}
                 {opt('check', 'Ajuda e contato', 'Suporte, privacidade, termos',
                   () => setView('ajuda'))}
                 {opt('arrow-up-r', 'Sair da conta', 'Encerrar sessão neste aparelho',
@@ -587,6 +646,147 @@ function UserMenuSheet({ onClose, onLogout }) {
                 marginTop: 4, background: 'transparent', border: 'none',
                 color: M.textDim, fontSize: 12.5, cursor: 'pointer', padding: 8,
               }}>Já tenho a chave / trocar conta</button>
+
+              {/* Cancelar assinatura — só pra Premium pagante ativo */}
+              {plano.plan === 'premium' && role === 'pai' && !okCancel && (
+                <>
+                  <div style={{ marginTop: 16, paddingTop: 16,
+                    borderTop: `1px solid ${M.border}` }}>
+                    <div style={{ fontSize: 12, color: M.textDim,
+                      letterSpacing: 0.4, textTransform: 'uppercase' }}>
+                      Cancelar
+                    </div>
+                    <div style={{ fontSize: 12.5, color: M.textDim,
+                      lineHeight: 1.5, marginTop: 6 }}>
+                      Você mantém o acesso até a validade. Não há cobrança automática
+                      depois — pra renovar, basta assinar de novo.
+                    </div>
+                    <button onClick={cancelarAssinatura} disabled={cancelando}
+                      style={{
+                        marginTop: 12, width: '100%', padding: '12px 16px',
+                        borderRadius: 10, background: 'transparent',
+                        border: `1px solid ${M.red}66`, color: '#FCA5A5',
+                        fontWeight: 700, fontSize: 13,
+                        cursor: cancelando ? 'wait' : 'pointer',
+                      }}>
+                      {cancelando ? 'Cancelando…' : 'Cancelar minha assinatura'}
+                    </button>
+                  </div>
+                </>
+              )}
+              {okCancel && (
+                <div style={{
+                  marginTop: 16, padding: 14, background: 'rgba(34,197,94,0.08)',
+                  border: `1px solid ${M.green}55`, borderRadius: 10,
+                  fontSize: 13, color: M.green, lineHeight: 1.5,
+                }}>
+                  ✓ Assinatura cancelada. Acesso mantido até <b style={{ color: M.text }}>
+                    {new Date(okCancel.valido_ate).toLocaleDateString('pt-BR')}
+                  </b>.
+                </div>
+              )}
+            </div>
+          )}
+
+          {view === 'equipe' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 12.5, color: M.textDim, lineHeight: 1.55 }}>
+                Convide até 25 funcionários. Eles cadastram grátis com o link
+                e entram no <b style={{ color: M.text }}>seu workspace</b>. Toda
+                ação deles aparece em <b style={{ color: M.text }}>Gestão</b>.
+              </div>
+
+              <Btn variant="primary" full icon="check" disabled={gerando}
+                onClick={gerarConvite}>
+                {gerando ? 'Gerando…' : 'Gerar novo link de convite'}
+              </Btn>
+
+              {erroEq && <div style={{ fontSize: 13, color: M.red,
+                textAlign: 'center' }}>{erroEq}</div>}
+
+              {equipe && (
+                <>
+                  <div style={{ fontSize: 12, color: M.textDim,
+                    letterSpacing: 0.4, textTransform: 'uppercase', marginTop: 8 }}>
+                    Convites ({(equipe.convites || []).filter(c => c.ativo).length} ativos)
+                  </div>
+                  {(equipe.convites || []).length === 0 && (
+                    <div style={{ fontSize: 12.5, color: M.textMute,
+                      textAlign: 'center', padding: 12 }}>Nenhum convite ainda.</div>
+                  )}
+                  {(equipe.convites || []).map(c => (
+                    <Card key={c.codigo} padding={12}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 13, fontWeight: 700,
+                            color: c.ativo ? M.amber : M.textMute,
+                            wordBreak: 'break-all',
+                          }}>{c.codigo}</div>
+                          <div style={{ fontSize: 11, color: M.textDim, marginTop: 3 }}>
+                            {c.ativo
+                              ? `${c.usos}/${c.maxUsos} usos · até ${new Date(c.expira).toLocaleDateString('pt-BR')}`
+                              : c.revogado ? 'Revogado' : 'Expirado'}
+                          </div>
+                        </div>
+                        {c.ativo && (
+                          <>
+                            <button onClick={() => copiarLinkConvite(c.codigo)}
+                              title="Copiar link"
+                              style={{
+                                background: M.amber, color: '#0E1117', border: 'none',
+                                borderRadius: 8, padding: '6px 10px',
+                                fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                              }}>
+                              Copiar link
+                            </button>
+                            <button onClick={() => revogarConvite(c.codigo)}
+                              title="Revogar"
+                              style={{
+                                background: 'transparent', color: M.textDim,
+                                border: `1px solid ${M.border}`,
+                                borderRadius: 8, padding: '6px 10px',
+                                fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                              }}>×</button>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+
+                  <div style={{ fontSize: 12, color: M.textDim,
+                    letterSpacing: 0.4, textTransform: 'uppercase', marginTop: 14 }}>
+                    Membros ({(equipe.membros || []).length})
+                  </div>
+                  {(equipe.membros || []).length === 0 && (
+                    <div style={{ fontSize: 12.5, color: M.textMute,
+                      textAlign: 'center', padding: 12 }}>
+                      Ninguém entrou ainda. Gere e compartilhe um link acima.
+                    </div>
+                  )}
+                  {(equipe.membros || []).map(m => (
+                    <Card key={m.email} padding={12}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #475569, #1E293B)',
+                          color: M.text, display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontWeight: 700, fontSize: 12,
+                        }}>{m.email.slice(0, 2).toUpperCase()}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: M.text, fontWeight: 600,
+                            overflow: 'hidden', textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap' }}>{m.email}</div>
+                          <div style={{ fontSize: 11, color: M.textDim, marginTop: 2 }}>
+                            Trial até {new Date(m.ate).toLocaleDateString('pt-BR')}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </>
+              )}
             </div>
           )}
 
