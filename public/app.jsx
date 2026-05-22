@@ -769,7 +769,7 @@ function Login({ onOk }) {
               style={{ ...field, borderColor: erro ? M.red : M.border }}/>
             {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
             <Btn variant="primary" full icon="check" disabled={busy}
-              onClick={cadastrar}>{busy ? "Cadastrando…" : "Criar conta + 7 dias grátis"}</Btn>
+              onClick={cadastrar}>{busy ? "Cadastrando…" : "Criar conta grátis"}</Btn>
             <div style={{ fontSize: 11.5, color: M.textMute, textAlign: "center", marginTop: 12 }}>
               Sem cartão. Sua senha fica criptografada no servidor.
             </div>
