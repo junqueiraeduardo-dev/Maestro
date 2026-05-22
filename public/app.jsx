@@ -838,8 +838,8 @@ function Login({ onOk }) {
 
           <PlanoCard
             nome="Premium"
-            preco={periodoPlano === "anual" ? "R$ 29" : "R$ 39"}
-            periodo={periodoPlano === "anual" ? "/mês (R$ 351/ano)" : "/mês"}
+            preco={periodoPlano === "anual" ? "R$ 351" : "R$ 39"}
+            periodo={periodoPlano === "anual" ? "/ano (≈ R$ 29/mês)" : "/mês"}
             badge={periodoPlano === "anual" ? "−25%" : null}
             cor={M.amber} destaque
             animKey={periodoPlano}
@@ -852,8 +852,8 @@ function Login({ onOk }) {
 
           <PlanoCard
             nome="Equipe · até 25 usuários"
-            preco={periodoPlano === "anual" ? "R$ 112" : "R$ 149"}
-            periodo={periodoPlano === "anual" ? "/mês (R$ 1.341/ano)" : "/mês"}
+            preco={periodoPlano === "anual" ? "R$ 1.341" : "R$ 149"}
+            periodo={periodoPlano === "anual" ? "/ano (≈ R$ 112/mês)" : "/mês"}
             badge={periodoPlano === "anual" ? "−25%" : null}
             cor="#60A5FA" destaque
             animKey={periodoPlano}
@@ -892,24 +892,28 @@ function PriceToggle({ periodo, onChange }) {
       display: "flex", justifyContent: "center", marginBottom: 4,
     }}>
       <div style={{
+        // Grid 2 colunas IGUAIS → pílula de 50% sempre alinha certinho
+        // (antes: inline-flex deixava cada botão com width do conteúdo,
+        // "Anual −25%" era mais largo que "Mensal", pílula cortava a palavra).
         position: "relative",
         background: M.surface, border: `1px solid ${M.border}`,
         borderRadius: 999, padding: 4,
-        display: "inline-flex", alignItems: "center",
+        display: "grid", gridTemplateColumns: "1fr 1fr",
+        minWidth: 240,
       }}>
-        {/* Pill que desliza */}
+        {/* Pill que desliza — agora cada coluna é 50% exato */}
         <span style={{
           position: "absolute", top: 4, bottom: 4,
-          left: isAnual ? "50%" : 4,
-          width: isAnual ? "calc(50% - 4px)" : "calc(50% - 4px)",
+          left: isAnual ? "50%" : "4px",
+          width: "calc(50% - 4px)",
           background: M.amber, borderRadius: 999,
-          transition: "left .35s cubic-bezier(.34,1.56,.64,1), width .35s ease",
+          transition: "left .35s cubic-bezier(.34,1.56,.64,1)",
           boxShadow: "0 2px 8px rgba(245,158,11,0.35)",
         }}/>
         <button type="button" onClick={() => onChange("mensal")}
           style={{
             position: "relative", zIndex: 1,
-            padding: "8px 18px", border: "none", background: "transparent",
+            padding: "8px 0", border: "none", background: "transparent",
             color: !isAnual ? "#0E1117" : M.textDim,
             fontWeight: 700, fontSize: 13, cursor: "pointer",
             transition: "color .25s ease",
@@ -920,12 +924,12 @@ function PriceToggle({ periodo, onChange }) {
         <button type="button" onClick={() => onChange("anual")}
           style={{
             position: "relative", zIndex: 1,
-            padding: "8px 18px", border: "none", background: "transparent",
+            padding: "8px 0", border: "none", background: "transparent",
             color: isAnual ? "#0E1117" : M.textDim,
             fontWeight: 700, fontSize: 13, cursor: "pointer",
             transition: "color .25s ease",
             borderRadius: 999,
-            display: "inline-flex", alignItems: "center", gap: 6,
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
           }}>
           Anual
           {!isAnual && (
