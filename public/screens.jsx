@@ -201,10 +201,26 @@ function HomeScreen({ nav, openMic, onLogout }) {
                 <Icon name="pin" size={12}/>{cur.nome}
               </span></>;
           })()}
-          {window.API.role() === 'pai' && (
-            <><span style={{ opacity: 0.4 }}>·</span>
-            <span style={{ color: M.amber, fontWeight: 700 }}>admin</span></>
-          )}
+          {(() => {
+            // Badge de plano/role bem visível: usuário distingue ao bater o
+            // olho se está como trial, premium ou admin (antes só mostrava
+            // "admin"; trial não tinha sinal claro → confundia com admin).
+            const r = window.API.role();
+            const p = window.API.plan() || {};
+            let txt = null, cor = null;
+            if (r === 'pai' && p.plan === 'premium') { txt = 'PREMIUM'; cor = M.green; }
+            else if (r === 'pai') { txt = 'ADMIN'; cor = M.amber; }
+            else if (r === 'filho') { txt = 'EQUIPE'; cor = '#60A5FA'; }
+            else if (p.plan === 'trial') { txt = `TRIAL ${p.dias}D`; cor = M.amber; }
+            if (!txt) return null;
+            return <><span style={{ opacity: 0.4 }}>·</span>
+              <span style={{
+                color: cor, fontWeight: 800, fontSize: 11,
+                letterSpacing: 0.8, background: `${cor}1F`,
+                padding: '2px 7px', borderRadius: 999,
+                border: `1px solid ${cor}55`,
+              }}>{txt}</span></>;
+          })()}
         </div>
       </div>
 

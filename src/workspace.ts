@@ -133,16 +133,23 @@ export async function workspaceMw(
       (req as any).workspaceId = data.id as string;
       return next();
     }
-    // 3) Premium pagante sem workspace? Auto-cria (multi-tenant verdadeiro).
-    //    Só pra "pai" (premium pago) — não pra trial sem convite (esses ficam
-    //    no "principal" shared, que vira workspace de avaliação).
-    const papel = (req as any).papel;
-    if (papel === "pai") {
-      const wsAuto = await criarWorkspacePremium(userEmail);
-      if (wsAuto) {
-        (req as any).workspaceId = wsAuto;
-        return next();
+    // 3) Sem workspace? Auto-cria pra QUALQUER usuário com e-mail (trial OU
+    //    premium pago). Isolamento multi-tenant: cada usuário tem o próprio
+    //    workspace na primeira requisição.
+    //    Admin (ACCESS_PASSWORD, token sem e-mail) cai em "principal" abaixo.
+    const wsAuto = await criarWorkspacePessoal(userEmail);
+    if (wsAuto) {
+      (req as any).workspaceId = wsAuto;
+      // Pra trial: também grava workspace_padrao em `trials` pra próximas
+      // requests serem instantâneas (cache + evitar re-tentar create no race).
+      const papel = (req as any).papel;
+      if (papel === "trial") {
+        supabase.from("trials")
+          .update({ workspace_padrao: wsAuto })
+          .eq("email", userEmail)
+          .then(undefined, () => {/* best effort */});
       }
+      return next();
     }
   }
 
@@ -154,11 +161,11 @@ export async function workspaceMw(
 }
 
 /**
- * Cria workspace para um Premium pagante na primeira vez que ele acessa
- * (multi-tenant transparente). Idempotente: se já existe (race), retorna o
- * existente. Slug gerado a partir do email.
+ * Cria workspace pessoal para QUALQUER usuário (trial ou premium) na
+ * primeira vez que ele acessa — multi-tenant transparente. Idempotente:
+ * se já existe (race), retorna o existente. Slug gerado a partir do email.
  */
-async function criarWorkspacePremium(email: string): Promise<string | null> {
+async function criarWorkspacePessoal(email: string): Promise<string | null> {
   // Slug: parte antes do @, sem caracteres especiais, + sufixo curto pra
   // não colidir (pode existir "joao" de outro cliente). Tamanho cap 32.
   const local = email.split("@")[0]
