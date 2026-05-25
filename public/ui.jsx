@@ -7,14 +7,18 @@
 // fundo aparecerem por trás. backdrop-filter aplicado globalmente em todos
 // os cards via [style*="border-radius"][style*="background"] no index.html.
 const M = {
-  bg:        '#0F1117',
-  // Translúcido: rgba escuro com alpha baixo deixa os blobs vazarem.
-  // Combinado com backdrop-filter blur, gera o efeito de vidro fosco.
-  surface:   'rgba(22, 27, 34, 0.55)',
-  surface2:  'rgba(27, 34, 44, 0.62)',
-  // Bordas brancas sutis tipo "edge highlight" de vidro real.
-  border:    'rgba(255, 255, 255, 0.10)',
-  borderHi:  'rgba(255, 255, 255, 0.18)',
+  // bg AGORA também é rgba (alpha alto pra ainda dar fundo). Sem isso,
+  // os ~20 lugares que usam `background: M.bg` ficavam OPACOS e tapavam
+  // os blobs — o usuário viu cards sem efeito glass por causa disso.
+  bg:        'rgba(15, 17, 23, 0.5)',
+  // Mais transparente que antes (0.55 → 0.28) pra glass ficar evidente.
+  // Texto continua legível por causa do blur pesado atrás (lê como vidro
+  // fosco, não como vidro transparente).
+  surface:   'rgba(22, 27, 34, 0.28)',
+  surface2:  'rgba(27, 34, 44, 0.38)',
+  // Bordas mais visíveis (0.10 → 0.18) — edge highlight de vidro real.
+  border:    'rgba(255, 255, 255, 0.18)',
+  borderHi:  'rgba(255, 255, 255, 0.28)',
   amber:     '#F59E0B',
   amberDim:  '#B4730A',
   green:     '#10B981',

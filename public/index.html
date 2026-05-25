@@ -41,7 +41,7 @@
     }
     .bg-blob {
       position: absolute; border-radius: 50%;
-      filter: blur(90px); opacity: 0.55;
+      filter: blur(90px); opacity: 0.85;
       will-change: transform;
       mix-blend-mode: screen; /* cores se somam onde se cruzam, vibra mais */
     }
@@ -116,10 +116,10 @@
        efeito de vidro fosco. Borda branca sutil = edge highlight de vidro.
        =================================================================== */
     [style*="border-radius"][style*="background"]:not(.bg-blob):not(#boot *) {
-      -webkit-backdrop-filter: blur(18px) saturate(140%);
-      backdrop-filter: blur(18px) saturate(140%);
-      -webkit-box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
-              box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+              box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
     }
     /* Inputs e textareas dentro de cards: sem blur duplo (mais legível) */
     input[style*="background"], textarea[style*="background"], select[style*="background"] {
