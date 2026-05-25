@@ -1,7 +1,7 @@
 {
-  "name": "Maestro — CMMS por voz",
+  "name": "Maestro — CMMS rápido pra manutenção",
   "short_name": "Maestro",
-  "description": "Manutenção (MRO, frota, oficina, agro) operada por voz. Almoxarifado, OS e equipamentos.",
+  "description": "CMMS rápido para equipes de manutenção (MRO, frota, oficina, agro). OS, almoxarifado, equipamentos. Scan de QR, voz e digitação.",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",

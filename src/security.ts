@@ -54,7 +54,10 @@ const CSP = [
   `style-src 'self' 'unsafe-inline' ${FONTS}`,
   `font-src 'self' data: ${FONTS}`,
   // SVG inline (granulação) + ícone via data: + imagens próprias
+  // blob: necessário pro preview da câmera do scanner QR
   "img-src 'self' data: blob:",
+  // Câmera do scanner usa MediaStream → preview vai num <video> com src=blob:
+  "media-src 'self' blob:",
   // fetch só para nossa própria origem → bloqueia exfiltração via XSS
   "connect-src 'self'",
   // Nada de form action externa
@@ -101,10 +104,11 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
   res.setHeader("X-Content-Type-Options", "nosniff");
   // Não vaza URL completa pra cross-origin (privacidade)
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  // Negar todas as APIs sensíveis que não usamos
+  // Negar APIs sensíveis que não usamos. CÂMERA permitida pra origem
+  // própria (scanner QR/barcode de peças e equipamentos).
   res.setHeader(
     "Permissions-Policy",
-    "camera=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()"
+    "camera=(self), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()"
   );
   // Cross-Origin-Opener-Policy: isola contexto da janela (defesa Spectre)
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");

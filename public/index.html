@@ -17,8 +17,8 @@
   <link rel="manifest" href="/manifest.webmanifest"/>
   <meta name="application-name" content="Maestro"/>
   <meta name="apple-mobile-web-app-title" content="Maestro"/>
-  <meta name="description" content="CMMS por voz para PME — almoxarifado, OS e equipamentos. Instalável em iOS, Android e PC."/>
-  <title>Maestro · Manutenção por voz</title>
+  <meta name="description" content="CMMS rápido para equipes de manutenção — OS, almoxarifado, equipamentos. Scan de QR, voz e digitação. Instalável em iOS, Android e PC."/>
+  <title>Maestro · CMMS rápido para manutenção</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -151,7 +151,14 @@
   <script src="data.js"></script>
   <script src="api.js"></script>
   <script src="confetti.js"></script>
+  <!-- Scanner QR/Barcode (MIT, ~120KB) — usa câmera do device. Funciona
+       no Chrome/Edge (Android+desktop) e Safari iOS 11+. CSP permite
+       a câmera só pra mesma origem via Permissions-Policy. -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
+  <!-- Gerador de QR pra IMPRIMIR etiquetas das peças/equipamentos (~13KB) -->
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
   <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="scanner.jsx"></script>
   <script type="text/babel" src="screens.jsx"></script>
   <script type="text/babel" src="app.jsx"></script>
   <script>

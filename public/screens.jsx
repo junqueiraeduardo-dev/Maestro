@@ -98,10 +98,10 @@ function widgetPerfil(perfil) {
     'Produtor rural': { icon: 'sprout', titulo: 'Campo & Frota', frase: 'Tratores, colheitadeiras e insumos sob controle.' },
     'Empresário': { icon: 'briefcase', titulo: 'Visão do negócio', frase: 'Custos, ordens e estoque num lugar só.' },
     'Dono de loja / oficina': { icon: 'car', titulo: 'Sua oficina', frase: 'Peças e serviços organizados e rápidos.' },
-    'Mecânico / Operador': { icon: 'wrench', titulo: 'Mão na massa', frase: 'Ache peças e registre serviços por voz.' },
+    'Mecânico / Operador': { icon: 'wrench', titulo: 'Mão na massa', frase: 'Ache peças e registre serviços rapidinho.' },
     'Gestor de manutenção': { icon: 'clipboard', titulo: 'Manutenção', frase: 'Indicadores e ordens sempre em dia.' },
   };
-  return W[perfil] || { icon: 'settings', titulo: perfil || 'Bem-vindo', frase: 'Seu estoque e manutenção por voz.' };
+  return W[perfil] || { icon: 'settings', titulo: perfil || 'Bem-vindo', frase: 'Seu estoque e manutenção sem atrito.' };
 }
 
 function HomeScreen({ nav, openMic, onLogout }) {
@@ -1078,6 +1078,14 @@ function PartsScreen({ nav, openMic }) {
   const [sheet, setSheet] = useState(null);
   const [verTudo, setVerTudo] = useState(false); // ignora filtro de perfil
   const [flash, flashNode] = useFlash();
+  const [scanOpen, setScanOpen] = useState(false);
+
+  function onScanPeca(codigo) {
+    setScanOpen(false);
+    // Joga o código no campo de busca → useEffect chama API com debounce
+    setQ(codigo);
+    flash(`Escaneado: ${codigo}`);
+  }
 
   function carregarTodos() {
     API.pecaSearch('', verTudo)
@@ -1126,19 +1134,33 @@ function PartsScreen({ nav, openMic }) {
         }/>
 
       <div style={{ padding: '16px 16px 0' }}>
-        <div style={{
-          background: M.surface, border: `1px solid ${M.border}`,
-          borderRadius: 12, padding: '14px 16px',
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <Icon name="search" size={20} color={M.textDim}/>
-          <input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar peça por nome ou SKU"
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{
+            flex: 1, background: M.surface, border: `1px solid ${M.border}`,
+            borderRadius: 12, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12, minWidth: 0,
+          }}>
+            <Icon name="search" size={20} color={M.textDim}/>
+            <input value={q} onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nome ou SKU"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                color: M.text, fontSize: 15, fontFamily: 'Inter, sans-serif',
+                minWidth: 0,
+              }}/>
+            {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', color: M.textDim, cursor: 'pointer', padding: 0, flexShrink: 0 }}><Icon name="x" size={18}/></button>}
+          </div>
+          {/* Botão SCAN — atalho rápido pra mão suja/fábrica barulhenta */}
+          <button onClick={() => setScanOpen(true)}
+            title="Escanear QR/código de barras"
             style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: M.text, fontSize: 15, fontFamily: 'Inter, sans-serif',
-            }}/>
-          {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', color: M.textDim, cursor: 'pointer', padding: 0 }}><Icon name="x" size={18}/></button>}
+              width: 52, flexShrink: 0,
+              background: M.surface, border: `1px solid ${M.amber}66`,
+              borderRadius: 12, color: M.amber, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <Icon name="camera" size={22} strokeWidth={2.2}/>
+          </button>
         </div>
 
         {(() => {
@@ -1250,6 +1272,10 @@ function PartsScreen({ nav, openMic }) {
           onSaved={() => { setSheet(null); flash('Peça atualizada'); recarregarBusca(); }}
           onDeleted={() => { setSheet(null); flash('Peça excluída'); recarregarBusca(); }}/>
       )}
+      {scanOpen && (
+        <ScannerSheet titulo="Escanear peça"
+          onScan={onScanPeca} onClose={() => setScanOpen(false)}/>
+      )}
     </div>
   );
 }
@@ -1308,6 +1334,7 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
   const [universal, setUniversal] = useState(peca ? peca.perfil === 'TODOS' : false);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState(null);
+  const [verQr, setVerQr] = useState(false);
 
   const inputStyle = {
     width: '100%', background: M.bg, border: `1px solid ${M.border}`,
@@ -1474,6 +1501,13 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
                 fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
               }}>Excluir peça</button>
             )}
+            {editando && (
+              <button onClick={() => setVerQr(true)} style={{
+                marginTop: 6, background: 'transparent', border: `1px solid ${M.amber}55`,
+                color: M.amber, borderRadius: 10, padding: '12px 0',
+                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              }}>📱 Ver QR pra imprimir e colar</button>
+            )}
             {editando && window.API.role() !== 'pai' && (
               <div style={{ fontSize: 11.5, color: M.textMute, textAlign: 'center', marginTop: 4 }}>
                 Só o administrador pode excluir.
@@ -1482,6 +1516,10 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
           </div>
         </div>
       </div>
+      {verQr && (
+        <QrDisplaySheet codigo={sku} titulo="QR DA PEÇA" subtitulo={nome}
+          onClose={() => setVerQr(false)}/>
+      )}
     </>
   );
 }
@@ -1744,6 +1782,31 @@ function OsDetailScreen({ nav, params }) {
   const [form, setForm] = useState(null); // null | 'peca' | 'nota'
   const [busy, setBusy] = useState(false);
   const [flash, flashNode] = useFlash();
+  const [scanOpen, setScanOpen] = useState(false);
+
+  // Scan da peça: busca pelo SKU lido e adiciona à OS com qty=1.
+  // Se SKU não existe, mostra erro pra usuário cadastrar primeiro.
+  function onScanPeca(codigo) {
+    setScanOpen(false);
+    setBusy(true);
+    API.pecaSearch(codigo)
+      .then(r => {
+        const acha = (r.pecas || []).find(p => (p.sku || '').toUpperCase() === codigo.toUpperCase());
+        if (!acha) {
+          setBusy(false);
+          flash(`Peça ${codigo} não encontrada no estoque`);
+          return;
+        }
+        return API.osAddPeca(os.codigo, {
+          sku: acha.sku, nome: acha.nome, qtd: 1,
+        }).then(() => {
+          setBusy(false);
+          flash(`+ 1× ${acha.nome}`);
+          carregar();
+        });
+      })
+      .catch(e => { setBusy(false); flash(e.message || 'Falha'); });
+  }
 
   function carregar() {
     setErro(null);
@@ -1960,6 +2023,8 @@ function OsDetailScreen({ nav, params }) {
           background: M.bg, borderTop: `1px solid ${M.border}`,
           padding: '10px 12px', display: 'flex', gap: 8, zIndex: 20,
         }}>
+          <Btn variant="ghost" size="sm" icon="camera"
+            onClick={() => setScanOpen(true)}>Scan</Btn>
           <Btn variant="ghost" size="sm" icon="package" onClick={() => setForm('peca')}>Peça</Btn>
           <Btn variant="ghost" size="sm" icon="message" onClick={() => setForm('nota')}>Nota</Btn>
           <div style={{ flex: 1 }}>
@@ -1972,6 +2037,11 @@ function OsDetailScreen({ nav, params }) {
       {form && (
         <OsActionForm kind={form} busy={busy}
           onClose={() => setForm(null)} onSubmit={enviarForm}/>
+      )}
+
+      {scanOpen && (
+        <ScannerSheet titulo="Escanear peça consumida"
+          onScan={onScanPeca} onClose={() => setScanOpen(false)}/>
       )}
     </div>
   );
@@ -2064,6 +2134,7 @@ function EquipListScreen({ nav }) {
   const [todos, setTodos] = useState(null);
   const [erro, setErro] = useState(null);
   const [verTudo, setVerTudo] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const [novo, setNovo] = useState(false);
   function carregar() {
@@ -2073,6 +2144,19 @@ function EquipListScreen({ nav }) {
       .catch(e => setErro(e.message || 'Falha ao carregar.'));
   }
   useEffect(carregar, [verTudo]);
+
+  // Scan → procura equipamento pelo código → navega pra ficha
+  function onScanEquip(codigo) {
+    setScanOpen(false);
+    const acha = (todos || []).find(e =>
+      (e.id || '').toUpperCase() === codigo.toUpperCase());
+    if (acha) {
+      nav.push('equip-detail', { id: acha.id });
+    } else {
+      // Não tá na lista carregada? Tenta abrir mesmo assim (backend retorna 404)
+      nav.push('equip-detail', { id: codigo });
+    }
+  }
 
   const types = ['todos', ...new Set((todos || []).map(e => e.tipo).filter(Boolean))];
   const filtered = (todos || []).filter(e =>
@@ -2097,16 +2181,27 @@ function EquipListScreen({ nav }) {
         }/>
 
       <div style={{ padding: '12px 16px 8px' }}>
-        <div style={{
-          background: M.surface, border: `1px solid ${M.border}`,
-          borderRadius: 12, padding: '12px 14px',
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <Icon name="search" size={18} color={M.textDim}/>
-          <input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome ou placa"
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: M.text, fontSize: 14, fontFamily: 'Inter, sans-serif' }}/>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{
+            flex: 1, background: M.surface, border: `1px solid ${M.border}`,
+            borderRadius: 12, padding: '12px 14px',
+            display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
+          }}>
+            <Icon name="search" size={18} color={M.textDim}/>
+            <input value={q} onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nome ou placa"
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                color: M.text, fontSize: 14, fontFamily: 'Inter, sans-serif', minWidth: 0 }}/>
+          </div>
+          <button onClick={() => setScanOpen(true)} title="Escanear código"
+            style={{
+              width: 48, flexShrink: 0,
+              background: M.surface, border: `1px solid ${M.amber}66`,
+              borderRadius: 12, color: M.amber, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <Icon name="camera" size={20} strokeWidth={2.2}/>
+          </button>
         </div>
       </div>
 
@@ -2193,6 +2288,10 @@ function EquipListScreen({ nav }) {
         <EquipForm
           onClose={() => setNovo(false)}
           onCreated={(eq) => { setNovo(false); nav.push('equip-detail', { id: eq.id }); }}/>
+      )}
+      {scanOpen && (
+        <ScannerSheet titulo="Escanear equipamento"
+          onScan={onScanEquip} onClose={() => setScanOpen(false)}/>
       )}
     </div>
   );
@@ -2318,6 +2417,7 @@ function EquipDetailScreen({ nav, params }) {
   const [erro, setErro] = useState(null);
   const [savingStatus, setSavingStatus] = useState(false);
   const [flash, flashNode] = useFlash();
+  const [verQr, setVerQr] = useState(false);
   const statusLabel = { operacional: 'Operacional', manutencao: 'Em manutenção', parado: 'Parado' };
 
   function carregar() {
@@ -2498,7 +2598,16 @@ function EquipDetailScreen({ nav, params }) {
             fontSize: 14, fontWeight: 700, cursor: savingStatus ? 'wait' : 'pointer',
           }}>Excluir equipamento</button>
         )}
+        <button onClick={() => setVerQr(true)} style={{
+          marginTop: 8, background: 'transparent', border: `1px solid ${M.amber}55`,
+          color: M.amber, borderRadius: 10, padding: '12px 0',
+          fontSize: 14, fontWeight: 700, cursor: 'pointer',
+        }}>📱 Ver QR pra imprimir e colar</button>
       </div>
+      {verQr && d && d.equip && (
+        <QrDisplaySheet codigo={d.equip.id} titulo="QR DO EQUIPAMENTO"
+          subtitulo={d.equip.nome} onClose={() => setVerQr(false)}/>
+      )}
     </div>
   );
 }

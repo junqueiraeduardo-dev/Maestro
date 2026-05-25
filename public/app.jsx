@@ -875,7 +875,7 @@ function Login({ onOk }) {
         </div>
       </div>
       <div style={{ marginTop: 24, fontSize: 11, color: M.textMute, letterSpacing: 1 }}>
-        MAESTRO · CMMS POR VOZ
+        MAESTRO · CMMS RÁPIDO PRA MANUTENÇÃO
       </div>
     </div>
   );
@@ -1009,24 +1009,24 @@ function Onboarding({ onClose }) {
   const [step, setStep] = useS(0);
   const slides = [
     {
-      icon: "mic",
+      icon: "box",
       cor: M.amber,
-      titulo: "Comece falando",
-      texto: "Toque no microfone amarelo no rodapé e diga \"onde está o rolamento 6205\" ou \"tira 2 correias\". O Maestro entende e responde por voz.",
-      dica: "Funciona melhor no Chrome (Android/PC) e Safari (iOS 16+).",
+      titulo: "Cadastre suas peças",
+      texto: "Em Almoxarifado, toque no + pra adicionar SKU, nome, quantidade e onde fica. Cada peça ganha um QR pra você imprimir e colar na prateleira.",
+      dica: "Você cadastra digitando, falando ou copiando de planilha. O que for mais rápido pra você.",
     },
     {
-      icon: "box",
+      icon: "camera",
       cor: M.green,
-      titulo: "Cadastre uma peça",
-      texto: "Em Almoxarifado, toque no + pra adicionar SKU, nome, quantidade e onde fica. Depois, é só usar a voz para buscar e dar baixa no estoque.",
-      dica: "Você pode importar várias peças de uma vez no menu.",
+      titulo: "Escaneia ou fala",
+      texto: "Apontou a câmera no QR da peça/equipamento e ele aparece na tela. Ou fala \"tira 2 correias\" no microfone amarelo. Ou digita normalmente. Os 3 caminhos funcionam.",
+      dica: "Voz funciona melhor no Chrome (Android/PC) e Safari (iOS 16+).",
     },
     {
       icon: "wrench",
       cor: "#60A5FA",
       titulo: "Abra uma OS",
-      texto: "Em Ordens de Serviço, registre uma manutenção: equipamento, prioridade, descrição. Conforme consumir peças, baixe pela voz — fica tudo amarrado.",
+      texto: "Em Ordens de Serviço, registre uma manutenção: equipamento, prioridade, descrição. Conforme consumir peças, escaneia ou fala — fica tudo amarrado.",
       dica: "Convide até 25 usuários da equipe no plano Premium.",
     },
   ];
