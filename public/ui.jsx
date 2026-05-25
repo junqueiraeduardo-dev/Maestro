@@ -3,12 +3,18 @@
 // =========================================================================
 // Design tokens (mirror the spec)
 // =========================================================================
+// Paleta GLASSMORPHISM: superfícies translúcidas pra os blobs animados do
+// fundo aparecerem por trás. backdrop-filter aplicado globalmente em todos
+// os cards via [style*="border-radius"][style*="background"] no index.html.
 const M = {
-  bg:        '#0F1117',   // levemente mais quente que cinza-puro: dá vida ao dark
-  surface:   '#161B22',
-  surface2:  '#1B222C',
-  border:    '#1E2A3A',
-  borderHi:  '#2A3A50',
+  bg:        '#0F1117',
+  // Translúcido: rgba escuro com alpha baixo deixa os blobs vazarem.
+  // Combinado com backdrop-filter blur, gera o efeito de vidro fosco.
+  surface:   'rgba(22, 27, 34, 0.55)',
+  surface2:  'rgba(27, 34, 44, 0.62)',
+  // Bordas brancas sutis tipo "edge highlight" de vidro real.
+  border:    'rgba(255, 255, 255, 0.10)',
+  borderHi:  'rgba(255, 255, 255, 0.18)',
   amber:     '#F59E0B',
   amberDim:  '#B4730A',
   green:     '#10B981',

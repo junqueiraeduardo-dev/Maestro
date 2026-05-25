@@ -492,15 +492,26 @@ function App({ onLogout, plano }) {
     }}>
       {plano && plano.plan === "trial" && (
         <div style={{
-          flexShrink: 0, background: "#3B2A0E", color: M.amber,
+          flexShrink: 0, background: "rgba(59, 42, 14, 0.7)", color: M.amber,
           borderBottom: `1px solid ${M.border}`,
-          padding: "8px 14px", fontSize: 12.5, fontWeight: 600,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "8px 14px 6px", fontSize: 12.5, fontWeight: 600,
         }}>
-          <Icon name="clock" size={14}/>
-          Teste grátis · {plano.dias} dia{plano.dias === 1 ? "" : "s"} restante{plano.dias === 1 ? "" : "s"}
-          <span style={{ opacity: 0.5 }}>·</span>
-          <span style={{ color: M.text }}>Premium R$ 39/mês</span>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            marginBottom: 5,
+          }}>
+            <Icon name="clock" size={14}/>
+            Teste grátis · <AnimatedNumber value={plano.dias}/> dia{plano.dias === 1 ? "" : "s"} restante{plano.dias === 1 ? "" : "s"}
+            <span style={{ opacity: 0.5 }}>·</span>
+            <span style={{ color: M.text }}>Premium R$ 39/mês</span>
+          </div>
+          {/* Barra de progresso animada: % do trial JÁ USADO (mais vermelho
+              conforme acaba). 7d = 100%. */}
+          <ProgressBar
+            pct={Math.max(0, Math.min(100, ((7 - plano.dias) / 7) * 100))}
+            color={plano.dias <= 2 ? M.red : plano.dias <= 4 ? M.amber : M.green}
+            height={3}
+            bg="rgba(255,255,255,0.08)"/>
         </div>
       )}
       <InstallBanner/>

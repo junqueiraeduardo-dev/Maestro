@@ -105,6 +105,67 @@
     }
     body { font-family: 'Inter', system-ui, sans-serif; color: #F1F5F9; }
     #root { height: 100%; width: 100%; position: relative; z-index: 2; }
+
+    /* ===================================================================
+       GLASSMORPHISM — backdrop-filter aplicado em TODOS os elementos com
+       inline-style contendo border-radius + background (= todos os cards
+       e botões do Maestro). Sem refator de componente individual.
+
+       NOTE: M.surface/surface2 viraram rgba semi-transparentes em ui.jsx;
+       o blur abaixo borra o que está atrás (blobs animados), criando
+       efeito de vidro fosco. Borda branca sutil = edge highlight de vidro.
+       =================================================================== */
+    [style*="border-radius"][style*="background"]:not(.bg-blob):not(#boot *) {
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+              box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    /* Inputs e textareas dentro de cards: sem blur duplo (mais legível) */
+    input[style*="background"], textarea[style*="background"], select[style*="background"] {
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    /* ENTRADA ESCALONADA — todos os cards animam fade+slide-up ao montar.
+       O delay é calculado pela posição do elemento entre seus irmãos via
+       :nth-child, gerando o stagger natural sem prop em cada componente. */
+    @keyframes maestro-card-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.985); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):not(#boot *):not(button) {
+      animation: maestro-card-in .55s cubic-bezier(.22,.9,.3,1.05) both;
+    }
+    /* Stagger até o 8º filho (depois disso usa o último delay sempre) */
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(1)  { animation-delay: 0ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(2)  { animation-delay: 60ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(3)  { animation-delay: 120ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(4)  { animation-delay: 180ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(5)  { animation-delay: 240ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(6)  { animation-delay: 300ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(7)  { animation-delay: 360ms; }
+    [style*="border-radius"][style*="background"]:not(.bg-blob):nth-child(n+8){ animation-delay: 400ms; }
+
+    /* HOVER — botões e cards "respondem" ao mouse no desktop.
+       Mantém :active scale .97 (feedback tátil) que já existe no <button>. */
+    @media (hover: hover) and (pointer: fine) {
+      button[style*="border-radius"]:not(:disabled):hover,
+      [style*="border-radius"][style*="cursor"]:not(:disabled):hover {
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.28),
+                    inset 0 1px 0 rgba(255,255,255,0.15),
+                    0 0 0 1px rgba(245,158,11,0.18);
+        transition: transform .18s ease, box-shadow .18s ease;
+      }
+    }
+
+    /* Reduce motion: sem animações de entrada nem hover */
+    @media (prefers-reduced-motion: reduce) {
+      [style*="border-radius"][style*="background"] {
+        animation: none !important;
+      }
+    }
     ::-webkit-scrollbar { width: 0; height: 0; }
     /* sem setas (spinner) nos campos numéricos */
     input[type=number] { -moz-appearance: textfield; appearance: textfield; }
@@ -236,6 +297,7 @@
   <!-- Gerador de QR pra IMPRIMIR etiquetas das peças/equipamentos (~13KB) -->
   <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
   <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="anim.jsx"></script>
   <script type="text/babel" src="scanner.jsx"></script>
   <script type="text/babel" src="screens.jsx"></script>
   <script type="text/babel" src="app.jsx"></script>

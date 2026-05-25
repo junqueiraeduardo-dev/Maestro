@@ -253,16 +253,26 @@ function HomeScreen({ nav, openMic, onLogout }) {
 
       <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <ModuleCard icon="box" title="Almoxarifado"
-          badge={{ text: st ? txt(st.pecas, 'peça', 'peças') : '…', tone: 'neutral' }}
+          badge={st
+            ? { num: st.pecas, label: st.pecas === 1 ? 'peça' : 'peças', tone: 'neutral' }
+            : { text: '…', tone: 'neutral' }}
           onClick={() => nav.go('parts')} />
         <ModuleCard icon="wrench" title="Ordens de Serviço"
-          badge={{ text: st ? txt(st.osAb, 'aberta', 'abertas') : '…', tone: st && st.osAb ? 'amber' : 'neutral' }}
+          badge={st
+            ? { num: st.osAb, label: st.osAb === 1 ? 'aberta' : 'abertas',
+                tone: st.osAb ? 'amber' : 'neutral' }
+            : { text: '…', tone: 'neutral' }}
           onClick={() => nav.go('os')} />
         <ModuleCard icon="truck" title="Equipamentos"
-          badge={{ text: st ? txt(st.equip, 'ativo', 'ativos') : '…', tone: 'neutral' }}
+          badge={st
+            ? { num: st.equip, label: st.equip === 1 ? 'ativo' : 'ativos', tone: 'neutral' }
+            : { text: '…', tone: 'neutral' }}
           onClick={() => nav.go('equip')} />
         <ModuleCard icon="list-checks" title="Inspeção do Dia"
-          badge={{ text: st ? txt(st.pend, 'pendente', 'pendentes') : '…', tone: st && st.pend ? 'red' : 'neutral' }}
+          badge={st
+            ? { num: st.pend, label: st.pend === 1 ? 'pendente' : 'pendentes',
+                tone: st.pend ? 'red' : 'neutral' }
+            : { text: '…', tone: 'neutral' }}
           onClick={() => nav.push('inspecao')} />
       </div>
 
@@ -1060,7 +1070,14 @@ function ModuleCard({ icon, title, badge, onClick }) {
             border: `1px solid ${badgePalette.border}`,
             fontSize: 11, fontWeight: 600, padding: '4px 8px',
             borderRadius: 6, letterSpacing: 0.2,
-          }}>{badge.text}</span>
+          }}>
+            {/* Contador animado 0→N quando badge.num for número (vanilla,
+                easeOutQuad). badge.text fica como fallback (placeholder
+                "…" durante o load, ou string sem número). */}
+            {typeof badge.num === 'number'
+              ? <><AnimatedNumber value={badge.num}/>&nbsp;{badge.label}</>
+              : badge.text}
+          </span>
         </div>
       </div>
     </Card>
