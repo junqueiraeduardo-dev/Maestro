@@ -26,7 +26,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; padding: 0; height: 100%;
-      background: #0a0f1e; overscroll-behavior: none;
+      background: #05070d; overscroll-behavior: none; /* preto profundo */
     }
 
     /* ===================================================================
@@ -41,33 +41,36 @@
     }
     .bg-blob {
       position: absolute; border-radius: 50%;
-      filter: blur(90px); opacity: 0.85;
+      filter: blur(110px); opacity: 0.38;     /* sutil — glow nas bordas */
       will-change: transform;
-      mix-blend-mode: screen; /* cores se somam onde se cruzam, vibra mais */
+      mix-blend-mode: screen;
     }
-    .bg-blob-1 { /* azul escuro — Tailwind blue-800 */
-      top: -10%; left: -15%;
+    /* Paleta harmonizada com o âmbar de Maestro: azul-noite + teal escuro
+       + ferrugem (queimado) + indigo. Cores DESSATURADAS pra preto
+       continuar dominante; blobs aparecem como brilhos sutis nos cantos. */
+    .bg-blob-1 { /* azul-noite profundo */
+      top: -12%; left: -15%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #1e40af 0%, transparent 65%);
-      animation: blob-orbit-1 26s ease-in-out infinite;
+      background: radial-gradient(circle, #1e3a8a 0%, transparent 70%);
+      animation: blob-orbit-1 28s ease-in-out infinite;
     }
-    .bg-blob-2 { /* teal — entre cyan e green */
-      top: 35%; right: -20%;
+    .bg-blob-2 { /* teal escuro */
+      top: 35%; right: -22%;
       width: 60vmax; height: 60vmax;
-      background: radial-gradient(circle, #0d9488 0%, transparent 65%);
-      animation: blob-orbit-2 30s ease-in-out infinite;
+      background: radial-gradient(circle, #115e59 0%, transparent 70%);
+      animation: blob-orbit-2 32s ease-in-out infinite;
     }
-    .bg-blob-3 { /* laranja queimado */
-      bottom: -15%; left: 25%;
+    .bg-blob-3 { /* ferrugem (laranja queimado dessaturado) */
+      bottom: -18%; left: 25%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #c2410c 0%, transparent 65%);
-      animation: blob-orbit-3 34s ease-in-out infinite;
+      background: radial-gradient(circle, #9a3412 0%, transparent 70%);
+      animation: blob-orbit-3 36s ease-in-out infinite;
     }
-    .bg-blob-4 { /* roxo */
+    .bg-blob-4 { /* indigo profundo (mais escuro que roxo) */
       top: 15%; left: 25%;
       width: 50vmax; height: 50vmax;
-      background: radial-gradient(circle, #6d28d9 0%, transparent 65%);
-      animation: blob-orbit-4 38s ease-in-out infinite;
+      background: radial-gradient(circle, #3730a3 0%, transparent 70%);
+      animation: blob-orbit-4 40s ease-in-out infinite;
     }
     @keyframes blob-orbit-1 {
       0%, 100% { transform: translate(0, 0) scale(1); }
@@ -89,7 +92,7 @@
     }
     /* Mobile: blur menor pra não cozinhar GPU */
     @media (max-width: 768px) {
-      .bg-blob { filter: blur(70px); opacity: 0.45; }
+      .bg-blob { filter: blur(80px); opacity: 0.32; }
     }
     /* Acessibilidade: usuário sensível a movimento → blobs estáticos */
     @media (prefers-reduced-motion: reduce) {

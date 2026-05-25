@@ -6,19 +6,15 @@
 // Paleta GLASSMORPHISM: superfícies translúcidas pra os blobs animados do
 // fundo aparecerem por trás. backdrop-filter aplicado globalmente em todos
 // os cards via [style*="border-radius"][style*="background"] no index.html.
+// Paleta GLASSMORPHISM com FOCO EM PRETO — cards bem escuros, blobs
+// coloridos só pra dar profundidade nas bordas. Cores dos blobs viraram
+// "glow sutil", não "fundo dominante".
 const M = {
-  // bg AGORA também é rgba (alpha alto pra ainda dar fundo). Sem isso,
-  // os ~20 lugares que usam `background: M.bg` ficavam OPACOS e tapavam
-  // os blobs — o usuário viu cards sem efeito glass por causa disso.
-  bg:        'rgba(15, 17, 23, 0.5)',
-  // Mais transparente que antes (0.55 → 0.28) pra glass ficar evidente.
-  // Texto continua legível por causa do blur pesado atrás (lê como vidro
-  // fosco, não como vidro transparente).
-  surface:   'rgba(22, 27, 34, 0.28)',
-  surface2:  'rgba(27, 34, 44, 0.38)',
-  // Bordas mais visíveis (0.10 → 0.18) — edge highlight de vidro real.
-  border:    'rgba(255, 255, 255, 0.18)',
-  borderHi:  'rgba(255, 255, 255, 0.28)',
+  bg:        'rgba(10, 12, 18, 0.6)',         // fundo de regiões: preto translúcido
+  surface:   'rgba(14, 16, 22, 0.55)',        // cards: preto-fosco vidro escuro
+  surface2:  'rgba(20, 22, 30, 0.65)',        // segundo nível: levemente mais claro
+  border:    'rgba(255, 255, 255, 0.10)',     // edge highlight discreto
+  borderHi:  'rgba(255, 255, 255, 0.16)',
   amber:     '#F59E0B',
   amberDim:  '#B4730A',
   green:     '#10B981',
