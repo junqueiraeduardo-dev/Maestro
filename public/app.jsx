@@ -481,11 +481,12 @@ function App({ onLogout, plano }) {
   return (
     <div style={{
       // Preenche a tela inteira (mesmo design no mobile e no PC).
-      // O conteúdo das telas internas tem seu próprio maxWidth pra leitura
-      // boa em monitor wide — só o "shell" externo ocupa tudo.
+      // Background TRANSPARENTE pra os blobs animados (no <body>) aparecerem
+      // por trás. Cards/superfícies internas (M.surface) continuam opacos —
+      // próximo step do glassmorphism será convertê-los pra vidro.
       position: "fixed", inset: 0,
       display: "flex", flexDirection: "column",
-      background: M.bg, overflow: "hidden",
+      background: "transparent", overflow: "hidden",
       paddingTop: "env(safe-area-inset-top)",
       paddingBottom: "env(safe-area-inset-bottom)",
     }}>
@@ -503,7 +504,7 @@ function App({ onLogout, plano }) {
         </div>
       )}
       <InstallBanner/>
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: M.bg,
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: "transparent",
         WebkitOverflowScrolling: "touch" }}>
         {/* Sem maxWidth: conteúdo ocupa a tela inteira em qualquer viewport.
             Mobile usa o espaço todo (igual antes); desktop também — cards
@@ -690,7 +691,7 @@ function Login({ onOk }) {
 
   return (
     <div style={{
-      position: "fixed", inset: 0, background: M.bg, overflowY: "auto",
+      position: "fixed", inset: 0, background: "transparent", overflowY: "auto",
       display: "flex", flexDirection: "column", alignItems: "center",
       padding: "40px 24px", paddingTop: "max(40px, env(safe-area-inset-top))",
     }}>

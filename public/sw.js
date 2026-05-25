@@ -8,7 +8,7 @@
 // IMPORTANTE: bumpa este valor a cada deploy que mexer em arquivos do shell
 // (app.jsx, screens.jsx, ui.jsx, index.html). Sem bump, browser serve
 // versão cacheada e usuário não vê a mudança.
-const VERSION = "v11-2026-05-22-scanner-qr";
+const VERSION = "v12-2026-05-22-blob-bg";
 const SHELL = "maestro-shell-" + VERSION;
 const RUNTIME = "maestro-runtime-" + VERSION;
 
