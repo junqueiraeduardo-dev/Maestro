@@ -60,24 +60,66 @@ function unb64url(s: string): string {
 
 // ---------------------------------------------------------------------------
 // Hash de senha do CLIENTE (scrypt — built-in, sem dependência externa).
-// Formato armazenado: "saltHex:hashHex". Verifica constant-time.
+//
+// VERSÕES (formato armazenado):
+//   v1 (legado) "saltHex:hashHex"        scrypt N=2^14 (default), sem pepper
+//   v2 (atual)  "v2:saltHex:hashHex"     scrypt N=2^16, com PASSWORD_PEPPER
+//
+// PEPPER: segredo extra concatenado à senha antes do scrypt, vindo só do
+// env (NÃO do DB). Defesa adicional contra leak de banco: atacante com o
+// DB ainda precisa do env do Render pra brute-force ser efetivo.
+//
+// MIGRAÇÃO: verSenha aceita ambos formatos. Quando user loga com sucesso
+// em hash v1, entrarHandler re-hash em v2 (migração lazy, transparente).
+//
+// CUSTO: scrypt N=2^16 ~ 50-100ms/hash. Aceitável: cadastro/login têm rate
+// limit (3-6 req/min/IP). DoS via hashing custaria mais ao atacante que ao
+// servidor.
 // ---------------------------------------------------------------------------
-function hashSenha(senha: string): string {
+const SCRYPT_V2_N = 1 << 16;                          // 65536
+const SCRYPT_V2_MAXMEM = 128 * 1024 * 1024;           // 128 MB (default 32 não basta pra N=2^16)
+const PEPPER = process.env.PASSWORD_PEPPER || "";     // env opcional; sem ele
+                                                       // a defesa cai pra "só" v2 (N maior)
+
+function hashSenhaV2(senha: string): string {
   const salt = crypto.randomBytes(16);
-  const hash = crypto.scryptSync(senha, salt, 32);
-  return `${salt.toString("hex")}:${hash.toString("hex")}`;
+  const hash = crypto.scryptSync(senha + PEPPER, salt, 32, {
+    N: SCRYPT_V2_N, maxmem: SCRYPT_V2_MAXMEM,
+  });
+  return `v2:${salt.toString("hex")}:${hash.toString("hex")}`;
 }
+
+function hashSenha(senha: string): string {
+  return hashSenhaV2(senha);
+}
+
 function verSenha(senha: string, armazenado: string | null): boolean {
   if (!armazenado) return false;
-  const [saltHex, wantHex] = armazenado.split(":");
-  if (!saltHex || !wantHex) return false;
   try {
+    // v2: scrypt N=2^16 + pepper
+    if (armazenado.startsWith("v2:")) {
+      const [, saltHex, wantHex] = armazenado.split(":");
+      if (!saltHex || !wantHex) return false;
+      const have = crypto.scryptSync(senha + PEPPER, Buffer.from(saltHex, "hex"), 32, {
+        N: SCRYPT_V2_N, maxmem: SCRYPT_V2_MAXMEM,
+      });
+      const want = Buffer.from(wantHex, "hex");
+      return have.length === want.length && crypto.timingSafeEqual(have, want);
+    }
+    // v1 (legado): scrypt default, sem pepper
+    const [saltHex, wantHex] = armazenado.split(":");
+    if (!saltHex || !wantHex) return false;
     const have = crypto.scryptSync(senha, Buffer.from(saltHex, "hex"), 32);
     const want = Buffer.from(wantHex, "hex");
     return have.length === want.length && crypto.timingSafeEqual(have, want);
   } catch {
     return false;
   }
+}
+
+/** True se hash é v1 (precisa migrar pra v2 no próximo login bem-sucedido). */
+function precisaMigrarHash(armazenado: string | null): boolean {
+  return !!armazenado && !armazenado.startsWith("v2:");
 }
 
 /** Token Premium (sem expiração) — derivado da senha do plano. */
@@ -345,6 +387,16 @@ export async function entrarHandler(req: Request, res: Response) {
       // (O flag `semConta` antigo virou só uma sugestão de UX no front; sem
       // info do servidor, o front oferece "cadastre-se" como opção neutra.)
       return res.status(401).json({ erro: "E-mail ou senha incorretos." });
+    }
+
+    // MIGRAÇÃO LAZY v1→v2: usuário acabou de provar que sabe a senha.
+    // Aproveita pra re-hash em v2 (scrypt N=2^16 + pepper). Best-effort
+    // (não bloqueia login se falhar). Próximos logins já são v2.
+    if (precisaMigrarHash(u.senha_hash)) {
+      const novoHash = hashSenhaV2(senha);
+      supabase.from("trials").update({ senha_hash: novoHash }).eq("email", email)
+        .then(undefined, (e: any) =>
+          console.warn("[auth] migração v1→v2:", e?.message ?? e));
     }
 
     const expMs = new Date(u.expires_at).getTime();

@@ -23,6 +23,7 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import { supabase } from "./config/supabase";
 import { emailValido } from "./auth";
+import { encryptString, decryptString } from "./services/crypto";
 
 // Quanto tempo a chave em texto vive na tabela (apenas pra entrega na tela).
 // Reduzido pra 24h: janela suficiente pro cliente copiar/usar; minimiza
@@ -297,9 +298,9 @@ export async function payWebhook(req: Request, res: Response) {
       status: "ativa",
       valido_ate: validoAte.toISOString(),
       mp_payment_id: mpId,
-      // Chave em texto p/ entrega na tela (TTL 7d). Apaga sozinha lazy
-      // quando o GET /api/pay/chave vê que `chave_temp_until` passou.
-      chave_temp: chave,
+      // Chave CIFRADA (AES-256-GCM, key derivada de ACCESS_PASSWORD) p/
+      // entrega na tela. Dump do DB sem env é inútil. TTL 24h.
+      chave_temp: encryptString(chave),
       chave_temp_until: chaveTempUntil.toISOString(),
     });
     if (error) {
@@ -405,9 +406,25 @@ export async function payChave(req: Request, res: Response) {
       });
     }
 
+    // Decifra a chave (rows novas vêm cifradas AES; legadas vêm plaintext
+    // e o decryptString passa direto).
+    const chaveDecifrada = decryptString(data.chave_temp);
+    if (!chaveDecifrada) {
+      // ACCESS_PASSWORD foi rotacionada OU dado corrompido. Lazy cleanup:
+      // apaga campo pra cliente usar "Recuperar minha chave" via hash.
+      await supabase
+        .from("assinaturas")
+        .update({ chave_temp: null, chave_temp_until: null })
+        .eq("mp_payment_id", paymentId);
+      return res.status(410).json({
+        erro: "Chave não pode ser recuperada nesta tela. Use 'Recuperar minha chave' no login com seu e-mail e o número do pagamento.",
+        rotacionada: true,
+      });
+    }
+
     const planoNome = PLANOS[data.plano]?.nome || "Maestro Premium";
     return res.json({
-      chave: data.chave_temp,
+      chave: chaveDecifrada,
       email: data.email,
       plano: data.plano,
       planoNome,
