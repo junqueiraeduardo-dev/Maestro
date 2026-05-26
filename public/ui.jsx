@@ -15,8 +15,12 @@ const M = {
   surface2:  'rgba(20, 22, 30, 0.65)',        // segundo nível: levemente mais claro
   border:    'rgba(255, 255, 255, 0.10)',     // edge highlight discreto
   borderHi:  'rgba(255, 255, 255, 0.16)',
-  amber:     '#F59E0B',
-  amberDim:  '#B4730A',
+  // "amber" virou CIANO elétrico (#06b6d4 / cyan-500 Tailwind).
+  // Nome mantido pra evitar refator em ~200 referências; semanticamente
+  // agora é "cor de destaque". Contrasta com o bg roxo-preto + se
+  // diferencia de SaaS genéricos (laranja é overused).
+  amber:     '#06b6d4',
+  amberDim:  '#0e7490',
   green:     '#10B981',
   red:       '#EF4444',
   redDim:    '#8C2A2A',
@@ -365,7 +369,7 @@ function MicFAB({ state, onPress }) {
           width: 64, height: 64, borderRadius: '50%',
           background: isThinking
             ? `conic-gradient(${M.amber} 0%, ${M.amber}55 50%, ${M.amber} 100%)`
-            : `radial-gradient(circle at 35% 30%, #FFC76A 0%, ${M.amber} 60%, ${M.amberDim} 100%)`,
+            : `radial-gradient(circle at 35% 30%, #67e8f9 0%, ${M.amber} 60%, ${M.amberDim} 100%)`,
           border: `3px solid ${M.bg}`,
           color: '#fff', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

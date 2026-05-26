@@ -259,7 +259,7 @@ function QrDisplaySheet({ codigo, titulo, subtitulo, onClose }) {
       ${subtitulo ? `<div class="nome">${subtitulo}</div>` : ''}
       <button class="no-print" onclick="window.print()" style="
         margin-top:24px;padding:10px 24px;font-size:14px;cursor:pointer;
-        background:#F59E0B;color:#000;border:none;border-radius:8px;font-weight:bold;
+        background:#06b6d4;color:#000;border:none;border-radius:8px;font-weight:bold;
       ">Imprimir</button>
       <script>setTimeout(()=>window.print(),300);</script>
       </body></html>

@@ -26,7 +26,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; padding: 0; height: 100%;
-      background: #05070d; overscroll-behavior: none; /* preto profundo */
+      background: #04030a; overscroll-behavior: none; /* preto puro c/ tinge roxo */
     }
 
     /* ===================================================================
@@ -41,35 +41,34 @@
     }
     .bg-blob {
       position: absolute; border-radius: 50%;
-      filter: blur(110px); opacity: 0.38;     /* sutil — glow nas bordas */
+      filter: blur(110px); opacity: 0.42;     /* sutil — glow nas bordas */
       will-change: transform;
       mix-blend-mode: screen;
     }
-    /* Paleta harmonizada com o âmbar de Maestro: azul-noite + teal escuro
-       + ferrugem (queimado) + indigo. Cores DESSATURADAS pra preto
-       continuar dominante; blobs aparecem como brilhos sutis nos cantos. */
-    .bg-blob-1 { /* azul-noite profundo */
+    /* Paleta MONOCROMÁTICA ROXO+PRETO: 4 tons de roxo/indigo/violeta.
+       Sem warm colors. Preto domina. */
+    .bg-blob-1 { /* roxo profundo (purple-900) */
       top: -12%; left: -15%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #1e3a8a 0%, transparent 70%);
+      background: radial-gradient(circle, #4c1d95 0%, transparent 70%);
       animation: blob-orbit-1 28s ease-in-out infinite;
     }
-    .bg-blob-2 { /* teal escuro */
+    .bg-blob-2 { /* violeta (violet-800) */
       top: 35%; right: -22%;
       width: 60vmax; height: 60vmax;
-      background: radial-gradient(circle, #115e59 0%, transparent 70%);
+      background: radial-gradient(circle, #5b21b6 0%, transparent 70%);
       animation: blob-orbit-2 32s ease-in-out infinite;
     }
-    .bg-blob-3 { /* ferrugem (laranja queimado dessaturado) */
+    .bg-blob-3 { /* plum (purple-950) */
       bottom: -18%; left: 25%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #9a3412 0%, transparent 70%);
+      background: radial-gradient(circle, #3b0764 0%, transparent 70%);
       animation: blob-orbit-3 36s ease-in-out infinite;
     }
-    .bg-blob-4 { /* indigo profundo (mais escuro que roxo) */
+    .bg-blob-4 { /* indigo profundo (indigo-900) */
       top: 15%; left: 25%;
       width: 50vmax; height: 50vmax;
-      background: radial-gradient(circle, #3730a3 0%, transparent 70%);
+      background: radial-gradient(circle, #312e81 0%, transparent 70%);
       animation: blob-orbit-4 40s ease-in-out infinite;
     }
     @keyframes blob-orbit-1 {
@@ -158,7 +157,7 @@
         transform: translateY(-1px) scale(1.02);
         box-shadow: 0 8px 32px rgba(0,0,0,0.28),
                     inset 0 1px 0 rgba(255,255,255,0.15),
-                    0 0 0 1px rgba(245,158,11,0.18);
+                    0 0 0 1px rgba(6,182,212,0.18);
         transition: transform .18s ease, box-shadow .18s ease;
       }
     }
@@ -178,10 +177,10 @@
     /* Feedback tátil global: todo clique "afunda" */
     button:not(:disabled):active { transform: scale(0.97); filter: brightness(0.94); }
     input, select, textarea { font-family: inherit; transition: border-color .18s ease, box-shadow .25s ease; }
-    /* Glow âmbar ao focar — sensação tátil/produto, não site */
+    /* Glow ciano ao focar — sensação tátil/produto, não site */
     input:focus, select:focus, textarea:focus {
-      border-color: #F59E0B !important;
-      box-shadow: 0 0 0 4px rgba(245,158,11,0.12);
+      border-color: #06b6d4 !important;
+      box-shadow: 0 0 0 4px rgba(6,182,212,0.18);
     }
     /* shimmer global (skeleton) */
     @keyframes maestro-shimmer {
@@ -253,7 +252,7 @@
       background: #0F1117; z-index: 9999;
     }
     #boot .mono {
-      width: 72px; height: 72px; border-radius: 10px; background: #F59E0B;
+      width: 72px; height: 72px; border-radius: 10px; background: #06b6d4;
       padding: 18px 13px; display: flex; align-items: center;
       justify-content: space-between; gap: 4px;
     }

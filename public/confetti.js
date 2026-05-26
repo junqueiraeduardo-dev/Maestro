@@ -8,7 +8,7 @@
  *  - paleta da identidade Maestro (âmbar + dourado + verde)
  */
 (function () {
-  const COLORS = ["#F59E0B", "#FBBF24", "#FCD34D", "#22C55E", "#F1F5F9"];
+  const COLORS = ["#06b6d4", "#22d3ee", "#a5f3fc", "#22C55E", "#F1F5F9"];
 
   function spawn({ duration = 2500, particles = 140, origin = { x: 0.5, y: 0.45 } } = {}) {
     const canvas = document.createElement("canvas");

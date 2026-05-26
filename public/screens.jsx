@@ -2493,7 +2493,7 @@ function EquipDetailScreen({ nav, params }) {
         {/* placeholder stripes */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: `repeating-linear-gradient(45deg, transparent 0 10px, rgba(245,158,11,0.05) 10px 20px)`,
+          backgroundImage: `repeating-linear-gradient(45deg, transparent 0 10px, rgba(6,182,212,0.05) 10px 20px)`,
         }}/>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',

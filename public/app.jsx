@@ -253,7 +253,7 @@ function VoiceSheet({ phase, transcript, resp, onClose }) {
           </div>
           {novoCadastro && (
             <div style={{
-              marginTop: 14, padding: 10, background: "rgba(245,158,11,0.08)",
+              marginTop: 14, padding: 10, background: "rgba(6,182,212,0.08)",
               border: `1px solid ${M.amber}44`, borderRadius: 8,
               fontSize: 12, color: M.amber, lineHeight: 1.5,
             }}>
@@ -714,7 +714,7 @@ function Login({ onOk }) {
         {convite && (
           <div style={{
             marginBottom: 14, padding: "12px 14px",
-            background: "rgba(245,158,11,0.10)", border: `1px solid ${M.amber}66`,
+            background: "rgba(6,182,212,0.10)", border: `1px solid ${M.amber}66`,
             borderRadius: 10, fontSize: 13, color: M.amber, lineHeight: 1.5,
             display: "flex", alignItems: "center", gap: 10,
           }}>
@@ -813,7 +813,7 @@ function Login({ onOk }) {
         {modo === "premium" && recuperando && (
           <form onSubmit={recuperarChave}>
             <div style={{
-              padding: "12px 14px", background: "rgba(245,158,11,0.08)",
+              padding: "12px 14px", background: "rgba(6,182,212,0.08)",
               border: `1px solid ${M.amber}44`, borderRadius: 10,
               fontSize: 12.5, color: M.amber, lineHeight: 1.5, marginBottom: 14,
             }}>
@@ -920,7 +920,7 @@ function PriceToggle({ periodo, onChange }) {
           width: "calc(50% - 4px)",
           background: M.amber, borderRadius: 999,
           transition: "left .35s cubic-bezier(.34,1.56,.64,1)",
-          boxShadow: "0 2px 8px rgba(245,158,11,0.35)",
+          boxShadow: "0 2px 8px rgba(6,182,212,0.35)",
         }}/>
         <button type="button" onClick={() => onChange("mensal")}
           style={{
@@ -947,7 +947,7 @@ function PriceToggle({ periodo, onChange }) {
           {!isAnual && (
             <span style={{
               fontSize: 10, fontWeight: 800, color: M.amber,
-              background: "rgba(245,158,11,0.15)",
+              background: "rgba(6,182,212,0.15)",
               padding: "2px 6px", borderRadius: 6,
               letterSpacing: 0.3,
             }}>−25%</span>
@@ -1107,7 +1107,7 @@ function Onboarding({ onClose }) {
         padding: "14px 40px", borderRadius: 12,
         background: M.amber, color: "#0E1117", border: "none",
         fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: 0.3,
-        boxShadow: "0 8px 24px rgba(245,158,11,0.3)",
+        boxShadow: "0 8px 24px rgba(6,182,212,0.3)",
       }}>{ultima ? "Começar a usar" : "Próximo"}</button>
     </div>
   );
@@ -1451,10 +1451,10 @@ function PremiumCelebration({ onClose }) {
         {/* CHAVE — bloco grande, monospace, fácil de ler e copiar */}
         <div style={{
           width: "100%", maxWidth: 380, marginTop: 6, padding: "16px 18px",
-          background: "rgba(245,158,11,0.10)",
+          background: "rgba(6,182,212,0.10)",
           border: `2px solid ${M.amber}`, borderRadius: 12,
           animation: "maestro-rise .5s ease .65s both",
-          boxShadow: "0 8px 24px rgba(245,158,11,0.2)",
+          boxShadow: "0 8px 24px rgba(6,182,212,0.2)",
         }}>
           <div style={{
             fontSize: 10.5, letterSpacing: 2, color: M.amber, fontWeight: 700,
@@ -1522,7 +1522,7 @@ function PremiumCelebration({ onClose }) {
           padding: "14px 24px", borderRadius: 12,
           background: M.amber, color: "#0E1117", border: "none",
           fontWeight: 800, fontSize: 15, cursor: entrando ? "wait" : "pointer",
-          letterSpacing: 0.3, boxShadow: "0 8px 24px rgba(245,158,11,0.35)",
+          letterSpacing: 0.3, boxShadow: "0 8px 24px rgba(6,182,212,0.35)",
           animation: "maestro-rise .5s ease .85s both",
           opacity: entrando ? 0.7 : 1,
         }}>
@@ -1531,7 +1531,7 @@ function PremiumCelebration({ onClose }) {
 
         <div style={{
           marginTop: 12, padding: "10px 14px", borderRadius: 10,
-          background: "rgba(245,158,11,0.08)", border: `1px solid ${M.amber}44`,
+          background: "rgba(6,182,212,0.08)", border: `1px solid ${M.amber}44`,
           fontSize: 12, color: M.amber, fontWeight: 600,
           animation: "maestro-rise .5s ease .9s both",
           display: "flex", alignItems: "center", gap: 8,
@@ -1546,7 +1546,7 @@ function PremiumCelebration({ onClose }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 9000,
-      background: "radial-gradient(ellipse at center, rgba(245,158,11,0.18), rgba(15,17,23,0.92) 60%)",
+      background: "radial-gradient(ellipse at center, rgba(6,182,212,0.18), rgba(15,17,23,0.92) 60%)",
       animation: "maestro-fade-in .35s ease both",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "32px 20px", textAlign: "center",
@@ -1556,13 +1556,13 @@ function PremiumCelebration({ onClose }) {
       <div style={{ position: "relative", width: 110, height: 110, marginBottom: 18, flexShrink: 0 }}>
         <div style={{
           position: "absolute", inset: 0, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(251,191,36,0.6), transparent 65%)",
+          background: "radial-gradient(circle, rgba(34,211,238,0.6), transparent 65%)",
           animation: "maestro-halo 1.6s ease-out infinite",
         }}/>
         <div style={{
           position: "absolute", inset: 0, borderRadius: "50%",
-          background: "linear-gradient(135deg, #FBBF24 0%, #F59E0B 55%, #B45309 100%)",
-          boxShadow: "0 12px 40px rgba(245,158,11,0.45), inset 0 2px 8px rgba(255,255,255,0.4)",
+          background: "linear-gradient(135deg, #22d3ee 0%, #06b6d4 55%, #155e75 100%)",
+          boxShadow: "0 12px 40px rgba(6,182,212,0.45), inset 0 2px 8px rgba(255,255,255,0.4)",
           display: "flex", alignItems: "center", justifyContent: "center",
           animation: "maestro-badge-pop .9s cubic-bezier(.34,1.56,.64,1) both",
           overflow: "hidden",
