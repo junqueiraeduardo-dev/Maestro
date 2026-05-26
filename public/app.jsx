@@ -867,7 +867,7 @@ function Login({ onOk }) {
             preco={periodoPlano === "anual" ? "R$ 1.341" : "R$ 149"}
             periodo={periodoPlano === "anual" ? "/ano (≈ R$ 112/mês)" : "/mês"}
             badge={periodoPlano === "anual" ? "−25%" : null}
-            cor=M.purple destaque
+            cor={M.purple} destaque
             animKey={periodoPlano}
             itens={[
               "Tudo do Premium",
@@ -1574,7 +1574,7 @@ function PremiumCelebration({ onClose }) {
             animation: "maestro-sheen 2.2s ease-in-out infinite",
             animationDelay: ".8s",
           }}/>
-          <Icon name="check" size={50} color=M.bgSolid/>
+          <Icon name="check" size={50} color={M.bgSolid}/>
         </div>
       </div>
 
