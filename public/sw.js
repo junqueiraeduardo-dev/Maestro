@@ -8,7 +8,7 @@
 // IMPORTANTE: bumpa este valor a cada deploy que mexer em arquivos do shell
 // (app.jsx, screens.jsx, ui.jsx, index.html). Sem bump, browser serve
 // versão cacheada e usuário não vê a mudança.
-const VERSION = "v15-2026-05-25-purple-cyan";
+const VERSION = "v16-2026-05-26-tokens-unified";
 const SHELL = "maestro-shell-" + VERSION;
 const RUNTIME = "maestro-runtime-" + VERSION;
 
