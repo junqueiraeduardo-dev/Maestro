@@ -10,20 +10,41 @@
 // coloridos só pra dar profundidade nas bordas. Cores dos blobs viraram
 // "glow sutil", não "fundo dominante".
 const M = {
+  // PRETO BASE (opaco) — único valor canônico. Antes existiam #0E1117 e
+  // #0F1117 espalhados (typo histórico). Tudo agora vem por este token.
+  // Tom é "preto com 2% de violeta" pra casar com os blobs roxos do bg.
+  bgSolid:   '#0B0D14',
+
   bg:        'rgba(10, 12, 18, 0.6)',         // fundo de regiões: preto translúcido
   surface:   'rgba(14, 16, 22, 0.55)',        // cards: preto-fosco vidro escuro
   surface2:  'rgba(20, 22, 30, 0.65)',        // segundo nível: levemente mais claro
   border:    'rgba(255, 255, 255, 0.10)',     // edge highlight discreto
   borderHi:  'rgba(255, 255, 255, 0.16)',
-  // "amber" virou CIANO elétrico (#06b6d4 / cyan-500 Tailwind).
-  // Nome mantido pra evitar refator em ~200 referências; semanticamente
-  // agora é "cor de destaque". Contrasta com o bg roxo-preto + se
-  // diferencia de SaaS genéricos (laranja é overused).
+
+  // ACCENT 1 — ciano elétrico (cyan-500).
+  // "amber" virou CIANO; nome mantido pra evitar refator de ~200 referências.
+  // Semanticamente agora é "cor de destaque primária".
   amber:     '#06b6d4',
   amberDim:  '#0e7490',
+  // Soft variants — substituem o "#3B2A0E" marrom queimado que sobrou da
+  // paleta laranja antiga. Ciano translúcido em vez de marrom + ciano (que
+  // era visualmente quebrado).
+  amberSoft:    'rgba(6, 182, 212, 0.12)',
+  amberBorder:  'rgba(6, 182, 212, 0.30)',
+
+  // ACCENT 2 — violeta (violet-400). Cor secundária da paleta "roxo+preto"
+  // anunciada nos blobs do fundo. Usada em badges Equipe, plano anual,
+  // qualquer coisa que precise se distinguir do ciano sem ser verde/vermelho.
+  purple:        '#A78BFA',
+  purpleDim:     '#7C3AED',
+  purpleSoft:    'rgba(167, 139, 250, 0.14)',
+  purpleBorder:  'rgba(167, 139, 250, 0.36)',
+
   green:     '#10B981',
+  greenSoft: 'rgba(16, 185, 129, 0.12)',
   red:       '#EF4444',
   redDim:    '#8C2A2A',
+  redSoft:   'rgba(239, 68, 68, 0.12)',
   text:      '#F1F5F9',
   textDim:   '#94A3B8',
   textMute:  '#64748B',
@@ -106,18 +127,20 @@ function StatusDot({ status, size = 12, withRing = false }) {
 // Tag / Badge
 // =========================================================================
 function Tag({ children, tone = 'neutral', mono = false, size = 'sm' }) {
+  // Fundos translúcidos casam com os blobs roxos por trás (glassmorphism).
+  // Border sutil dá o "edge highlight" característico da paleta.
   const palette = {
-    neutral: { bg: '#1E2A3A',  fg: M.text },
-    amber:   { bg: '#3B2A0E',  fg: M.amber },
-    green:   { bg: '#0E2B23',  fg: M.green },
-    red:     { bg: '#2B1318',  fg: '#FCA5A5' },
-    ghost:   { bg: 'transparent', fg: M.textDim, border: `1px solid ${M.border}` },
+    neutral: { bg: 'rgba(148, 163, 184, 0.10)', fg: M.text,    border: `1px solid ${M.border}` },
+    amber:   { bg: M.amberSoft,                 fg: M.amber,   border: `1px solid ${M.amberBorder}` },
+    purple:  { bg: M.purpleSoft,                fg: M.purple,  border: `1px solid ${M.purpleBorder}` },
+    green:   { bg: M.greenSoft,                 fg: M.green,   border: `1px solid rgba(16,185,129,0.30)` },
+    red:     { bg: M.redSoft,                   fg: '#FCA5A5', border: `1px solid rgba(239,68,68,0.30)` },
+    ghost:   { bg: 'transparent',               fg: M.textDim, border: `1px solid ${M.border}` },
   }[tone];
   const sz = size === 'lg' ? { fs: 13, py: 6, px: 10 } : { fs: 11, py: 4, px: 8 };
   return (
     <span style={{
-      background: palette.bg, color: palette.fg,
-      border: palette.border || 'none',
+      background: palette.bg, color: palette.fg, border: palette.border,
       fontSize: sz.fs, fontWeight: 600, padding: `${sz.py}px ${sz.px}px`,
       borderRadius: 6, letterSpacing: 0.2, lineHeight: 1,
       fontFamily: mono ? "'JetBrains Mono', monospace" : 'Inter, sans-serif',
@@ -174,7 +197,7 @@ function Card({ children, padding = 16, onClick, style, accentColor }) {
 function Btn({ children, variant = 'primary', onClick, icon, full = false, size = 'md', disabled }) {
   const sz = size === 'lg' ? { h: 56, fs: 17, px: 20 } : size === 'sm' ? { h: 36, fs: 13, px: 12 } : { h: 48, fs: 15, px: 16 };
   const styles = {
-    primary:    { bg: M.amber,    fg: '#0E1117', border: 'none' },
+    primary:    { bg: M.amber,    fg: M.bgSolid, border: 'none' },
     destruct:   { bg: M.red,      fg: '#fff',    border: 'none' },
     ghost:      { bg: 'transparent', fg: M.text, border: `1px solid ${M.border}` },
     'ghost-amber': { bg: 'transparent', fg: M.amber, border: `1px solid ${M.amber}55` },
@@ -242,6 +265,22 @@ function SectionHeader({ children, right }) {
 // =========================================================================
 // Top app bar (per screen)
 // =========================================================================
+// Botão "+" do TopBar — extraído porque aparece em 4+ telas com o mesmo
+// shape. Centraliza a paleta (amber padrão; tone="purple" pra contexto
+// admin/secundário). Aceita `title` (tooltip) e `icon` (default 'plus').
+function TopBarPlusButton({ onClick, tone = 'amber', title, icon = 'plus' }) {
+  const bg = tone === 'purple' ? M.purple : M.amber;
+  return (
+    <button onClick={onClick} title={title} style={{
+      width: 40, height: 40, borderRadius: 10, background: bg, border: 'none',
+      color: M.bgSolid, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <Icon name={icon} size={22} strokeWidth={2.4}/>
+    </button>
+  );
+}
+
 function TopBar({ title, onBack, right, mono = false, subtitle }) {
   return (
     <div style={{
@@ -421,7 +460,7 @@ function Toast({ toast }) {
   if (!toast) return null;
   const tone = toast.tone || 'success';
   const palette = {
-    success: { bg: '#0F2E25', fg: M.green,  border: M.green,  icon: 'check' },
+    success: { bg: M.greenSoft, fg: M.green, border: M.green, icon: 'check' },
     error:   { bg: '#2E1418', fg: '#FCA5A5', border: M.red,   icon: 'alert' },
     warn:    { bg: '#2E2410', fg: M.amber,  border: M.amber, icon: 'alert' },
   }[tone];
@@ -562,7 +601,7 @@ function Logo({ size = 32, animated = false, word = false, wordColor }) {
         {LOGO_BARS.map((h, i) => (
           <span key={i} style={{
             flex: 1, height: `${h}%`,
-            background: '#0E1117', borderRadius: Math.max(1, size * 0.04),
+            background: M.bgSolid, borderRadius: Math.max(1, size * 0.04),
             transformOrigin: 'center',
             animation: animated ? 'maestro-logo 1.1s ease-in-out infinite' : 'none',
             animationDelay: animated ? `${i * 0.18}s` : undefined,
@@ -698,7 +737,7 @@ function Stamp({ children, cor = M.green, rot = -6 }) {
 }
 
 Object.assign(window, {
-  M, Icon, StatusDot, Tag, Card, Btn, SectionHeader, TopBar,
+  M, Icon, StatusDot, Tag, Card, Btn, SectionHeader, TopBar, TopBarPlusButton,
   BottomTabBar, MicFAB, EmptyState, Toast, BottomSheet, Waveform, Logo,
   AnimatedList, CountUp, RouteFade, Stamp, Skeleton, SkeletonList, TABS,
 });

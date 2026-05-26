@@ -27,7 +27,7 @@ function useFlash() {
   const node = msg ? (
     <div style={{
       position: 'absolute', left: 16, right: 16, bottom: 92, zIndex: 30,
-      background: '#0F2E25', color: M.green, border: `1px solid ${M.green}55`,
+      background: M.greenSoft, color: M.green, border: `1px solid rgba(16,185,129,0.30)`,
       borderLeft: `3px solid ${M.green}`, borderRadius: 10,
       padding: '12px 14px', fontSize: 13, fontWeight: 600,
       boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
@@ -210,7 +210,7 @@ function HomeScreen({ nav, openMic, onLogout }) {
             let txt = null, cor = null;
             if (r === 'pai' && p.plan === 'premium') { txt = 'PREMIUM'; cor = M.green; }
             else if (r === 'pai') { txt = 'ADMIN'; cor = M.amber; }
-            else if (r === 'filho') { txt = 'EQUIPE'; cor = '#60A5FA'; }
+            else if (r === 'filho') { txt = 'EQUIPE'; cor = M.purple; }
             else if (p.plan === 'trial') { txt = `TRIAL ${p.dias}D`; cor = M.amber; }
             if (!txt) return null;
             return <><span style={{ opacity: 0.4 }}>·</span>
@@ -230,13 +230,13 @@ function HomeScreen({ nav, openMic, onLogout }) {
           const w = widgetPerfil(perfil);
           return (
             <div style={{
-              background: `linear-gradient(135deg, #3B2A0E, ${M.surface2})`,
-              border: `1px solid ${M.border}`, borderRadius: 16,
+              background: `linear-gradient(135deg, ${M.amberSoft}, ${M.surface2})`,
+              border: `1px solid ${M.amberBorder}`, borderRadius: 16,
               padding: 18, display: 'flex', alignItems: 'center', gap: 16,
             }}>
               <div style={{
                 width: 60, height: 60, borderRadius: 14, flexShrink: 0,
-                background: M.bg, border: `1px solid ${M.amber}55`,
+                background: M.bg, border: `1px solid ${M.amberBorder}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: M.amber,
               }}>
@@ -281,8 +281,8 @@ function HomeScreen({ nav, openMic, onLogout }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
               width: 56, height: 56, borderRadius: 12,
-              background: 'linear-gradient(135deg, #3B2A0E, #1B222C)',
-              border: `1px solid ${M.border}`,
+              background: `linear-gradient(135deg, ${M.amberSoft}, ${M.surface2})`,
+              border: `1px solid ${M.amberBorder}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: M.amber,
             }}>
@@ -305,10 +305,10 @@ function HomeScreen({ nav, openMic, onLogout }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{
                 width: 56, height: 56, borderRadius: 12,
-                background: 'linear-gradient(135deg, #2B1318, #1B222C)',
-                border: `1px solid ${M.border}`,
+                background: `linear-gradient(135deg, ${M.purpleSoft}, ${M.surface2})`,
+                border: `1px solid ${M.purpleBorder}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: M.amber,
+                color: M.purple,
               }}>
                 <Icon name="user" size={28}/>
               </div>
@@ -524,7 +524,7 @@ function UserMenuSheet({ onClose, onLogout }) {
       borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'center',
     }}>
       <div style={{
-        width: 36, height: 36, borderRadius: 9, flexShrink: 0,
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
         background: M.bg, color: danger ? M.red : M.amber,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}><Icon name={icon} size={18}/></div>
@@ -762,7 +762,7 @@ function UserMenuSheet({ onClose, onLogout }) {
                             <button onClick={() => copiarLinkConvite(c.codigo)}
                               title="Copiar link"
                               style={{
-                                background: M.amber, color: '#0E1117', border: 'none',
+                                background: M.amber, color: M.bgSolid, border: 'none',
                                 borderRadius: 8, padding: '6px 10px',
                                 fontWeight: 700, fontSize: 12, cursor: 'pointer',
                               }}>
@@ -828,7 +828,7 @@ function UserMenuSheet({ onClose, onLogout }) {
                 <a href="mailto:junqueiraeduardo2@gmail.com?subject=Maestro%20-%20Suporte"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12,
-                    padding: '10px 14px', background: M.amber, color: '#0E1117',
+                    padding: '10px 14px', background: M.amber, color: M.bgSolid,
                     borderRadius: 10, fontWeight: 700, fontSize: 13.5,
                     textDecoration: 'none',
                   }}>
@@ -998,13 +998,13 @@ function WorkspacePicker({ onSwitched }) {
             return (
               <button key={w.id} onClick={() => trocar(w.id)} style={{
                 width: '100%', textAlign: 'left', cursor: on ? 'default' : 'pointer',
-                background: on ? '#3B2A0E' : M.surface2,
-                border: `1px solid ${on ? M.amber : M.border}`,
+                background: on ? M.amberSoft : M.surface2,
+                border: `1px solid ${on ? M.amberBorder : M.border}`,
                 borderRadius: 12, padding: 14,
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
                 <div style={{
-                  width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                  width: 32, height: 32, borderRadius: 10, flexShrink: 0,
                   background: M.bg, color: on ? M.amber : M.textDim,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}><Icon name="pin" size={16}/></div>
@@ -1045,9 +1045,10 @@ function WorkspacePicker({ onSwitched }) {
 
 function ModuleCard({ icon, title, badge, onClick }) {
   const badgePalette = {
-    neutral: { bg: '#0E1117', fg: M.textDim, border: M.border },
-    amber:   { bg: '#3B2A0E', fg: M.amber,   border: '#3B2A0E' },
-    red:     { bg: '#2B1318', fg: '#FCA5A5', border: '#2B1318' },
+    neutral: { bg: 'rgba(148, 163, 184, 0.10)', fg: M.textDim, border: M.border },
+    amber:   { bg: M.amberSoft,                 fg: M.amber,   border: M.amberBorder },
+    purple:  { bg: M.purpleSoft,                fg: M.purple,  border: M.purpleBorder },
+    red:     { bg: M.redSoft,                   fg: '#FCA5A5', border: 'rgba(239,68,68,0.30)' },
   }[badge.tone];
   return (
     <Card onClick={onClick} padding={16} style={{ minHeight: 124 }}>
@@ -1096,6 +1097,7 @@ function PartsScreen({ nav, openMic }) {
   const [verTudo, setVerTudo] = useState(false); // ignora filtro de perfil
   const [flash, flashNode] = useFlash();
   const [scanOpen, setScanOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   function onScanPeca(codigo) {
     setScanOpen(false);
@@ -1140,15 +1142,7 @@ function PartsScreen({ nav, openMic }) {
   return (
     <div data-screen-label="02 Almoxarifado" style={{ paddingBottom: 120 }}>
       <TopBar title="ALMOXARIFADO" onBack={() => nav.go('home')}
-        right={
-          <button onClick={() => setSheet('nova')} style={{
-            width: 40, height: 40, borderRadius: 10, background: M.amber, border: 'none',
-            color: '#0E1117', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name="plus" size={22} strokeWidth={2.4}/>
-          </button>
-        }/>
+        right={<TopBarPlusButton onClick={() => setSheet('nova')} title="Cadastrar peça"/>}/>
 
       <div style={{ padding: '16px 16px 0' }}>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1201,6 +1195,10 @@ function PartsScreen({ nav, openMic }) {
             </div>
           );
         })()}
+
+        <DataToolbar
+          onImport={() => setImportOpen(true)}
+          onExport={() => dispararExport('pecas', null, flash)}/>
 
         <div style={{ marginTop: 16 }}>
           {/* Loader inicial */}
@@ -1292,6 +1290,14 @@ function PartsScreen({ nav, openMic }) {
       {scanOpen && (
         <ScannerSheet titulo="Escanear peça"
           onScan={onScanPeca} onClose={() => setScanOpen(false)}/>
+      )}
+      {importOpen && (
+        <ImportSheet tipo="pecas"
+          onClose={() => setImportOpen(false)}
+          onDone={(r) => {
+            flash(`Importadas ${r.criados} peça(s)`);
+            recarregarBusca();
+          }}/>
       )}
     </div>
   );
@@ -1549,6 +1555,7 @@ function OsListScreen({ nav }) {
   const [lista, setLista] = useState(null); // null = carregando
   const [erro, setErro] = useState(null);
   const [novo, setNovo] = useState(false);
+  const [flash, flashNode] = useFlash();
   const tabs = [
     { id: 'abertas',    label: 'Abertas',      filter: 'aberta' },
     { id: 'andamento',  label: 'Em andamento', filter: 'andamento' },
@@ -1569,15 +1576,7 @@ function OsListScreen({ nav }) {
   return (
     <div data-screen-label="03 OS — Lista" style={{ paddingBottom: 120 }}>
       <TopBar title="ORDENS DE SERVIÇO" onBack={() => nav.go('home')}
-        right={
-          <button onClick={() => setNovo(true)} style={{
-            width: 40, height: 40, borderRadius: 10, background: M.amber, border: 'none',
-            color: '#0E1117', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name="plus" size={22} strokeWidth={2.4}/>
-          </button>
-        }/>
+        right={<TopBarPlusButton onClick={() => setNovo(true)} title="Abrir OS"/>}/>
 
       <div style={{
         display: 'flex', borderBottom: `1px solid ${M.border}`,
@@ -1598,10 +1597,10 @@ function OsListScreen({ nav }) {
             }}>
               {t.label}
               <span style={{
-                background: active ? '#3B2A0E' : M.border,
+                background: active ? M.amberSoft : M.border,
                 color: active ? M.amber : M.textDim,
                 fontSize: 11, fontWeight: 700,
-                borderRadius: 999, padding: '2px 7px',
+                borderRadius: 999, padding: '2px 8px',
                 fontFamily: "'JetBrains Mono', monospace",
               }}>{lista ? count : '·'}</span>
             </button>
@@ -1618,6 +1617,12 @@ function OsListScreen({ nav }) {
       )}
       {lista && (
         <div style={{ padding: '16px' }}>
+          {filtered.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <DataToolbar
+                onExport={() => dispararExport('os', { status: tabs.find(t => t.id === tab).filter }, flash)}/>
+            </div>
+          )}
           <AnimatedList gap={10}>
             {filtered.map(o => (
               <OsCard key={o.id} os={o} onClick={() => nav.push('os-detail', { id: o.id })}/>
@@ -1639,6 +1644,7 @@ function OsListScreen({ nav }) {
             nav.push('os-detail', { id: os.id }); // a lista recarrega ao voltar
           }}/>
       )}
+      {flashNode}
     </div>
   );
 }
@@ -1679,7 +1685,7 @@ function NewOsSheet({ onClose, onCreated }) {
         <button key={o.v} onClick={() => set(o.v)} style={{
           flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
           background: val === o.v ? M.amber : 'transparent',
-          color: val === o.v ? '#0E1117' : M.textDim,
+          color: val === o.v ? M.bgSolid : M.textDim,
           border: `1px solid ${val === o.v ? M.amber : M.border}`,
           fontWeight: 700, fontSize: 13,
         }}>{o.l}</button>
@@ -1970,7 +1976,7 @@ function OsDetailScreen({ nav, params }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{
                 width: 56, height: 56, borderRadius: 12,
-                background: running && !concluida ? '#0E2B23' : M.surface2,
+                background: running && !concluida ? M.greenSoft : M.surface2,
                 border: `1px solid ${running && !concluida ? M.green + '44' : M.border}`,
                 color: running && !concluida ? M.green : M.textDim,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1991,7 +1997,7 @@ function OsDetailScreen({ nav, params }) {
                 <button onClick={() => setRunning(r => !r)} style={{
                   width: 44, height: 44, borderRadius: 10,
                   background: running ? '#2E2410' : M.amber,
-                  color: running ? M.amber : '#0E1117',
+                  color: running ? M.amber : M.bgSolid,
                   border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
@@ -2152,6 +2158,8 @@ function EquipListScreen({ nav }) {
   const [erro, setErro] = useState(null);
   const [verTudo, setVerTudo] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [flash, flashNode] = useFlash();
 
   const [novo, setNovo] = useState(false);
   function carregar() {
@@ -2187,15 +2195,7 @@ function EquipListScreen({ nav }) {
   return (
     <div data-screen-label="05 Equipamentos — Lista" style={{ paddingBottom: 120 }}>
       <TopBar title="EQUIPAMENTOS" onBack={() => nav.go('home')}
-        right={
-          <button onClick={() => setNovo(true)} style={{
-            width: 40, height: 40, borderRadius: 10, background: M.amber, border: 'none',
-            color: '#0E1117', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name="plus" size={22} strokeWidth={2.4}/>
-          </button>
-        }/>
+        right={<TopBarPlusButton onClick={() => setNovo(true)} title="Cadastrar equipamento"/>}/>
 
       <div style={{ padding: '12px 16px 8px' }}>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -2244,6 +2244,12 @@ function EquipListScreen({ nav }) {
         );
       })()}
 
+      <div style={{ padding: '0 16px' }}>
+        <DataToolbar
+          onImport={() => setImportOpen(true)}
+          onExport={() => dispararExport('equipamentos', null, flash)}/>
+      </div>
+
       <div style={{ padding: '4px 12px 8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {types.map(t => {
@@ -2251,7 +2257,7 @@ function EquipListScreen({ nav }) {
             return (
               <button key={t} onClick={() => setType(t)} style={{
                 background: active ? M.amber : M.surface,
-                color: active ? '#0E1117' : M.textDim,
+                color: active ? M.bgSolid : M.textDim,
                 border: `1px solid ${active ? M.amber : M.border}`,
                 borderRadius: 999, padding: '8px 14px',
                 fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
@@ -2310,6 +2316,15 @@ function EquipListScreen({ nav }) {
         <ScannerSheet titulo="Escanear equipamento"
           onScan={onScanEquip} onClose={() => setScanOpen(false)}/>
       )}
+      {importOpen && (
+        <ImportSheet tipo="equipamentos"
+          onClose={() => setImportOpen(false)}
+          onDone={(r) => {
+            flash(`Importados ${r.criados} equipamento(s)`);
+            carregar();
+          }}/>
+      )}
+      {flashNode}
     </div>
   );
 }
@@ -2487,7 +2502,7 @@ function EquipDetailScreen({ nav, params }) {
     <div data-screen-label="06 Equipamento — Detalhe" style={{ paddingBottom: 110 }}>
       {/* Custom header w/ photo placeholder */}
       <div style={{ position: 'relative', height: 200,
-        background: `linear-gradient(180deg, #1B222C 0%, ${M.bg} 100%)`,
+        background: `linear-gradient(180deg, ${M.surface2} 0%, ${M.bg} 100%)`,
         overflow: 'hidden',
       }}>
         {/* placeholder stripes */}
@@ -2596,7 +2611,7 @@ function EquipDetailScreen({ nav, params }) {
                       flex: 1, padding: '10px 0', borderRadius: 10,
                       cursor: savingStatus ? 'wait' : 'pointer',
                       background: on ? o.c : 'transparent',
-                      color: on ? '#0E1117' : M.textDim,
+                      color: on ? M.bgSolid : M.textDim,
                       border: `1px solid ${on ? o.c : M.border}`,
                       fontWeight: 700, fontSize: 12.5,
                     }}>{o.l}</button>
@@ -2780,7 +2795,7 @@ function DashScreen({ nav }) {
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: 8,
-                      background: '#2B1318', color: M.red,
+                      background: M.redSoft, color: M.red,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
                       <Icon name="alert" size={18}/>
@@ -2948,7 +2963,7 @@ function ChecklistSheet({ equip, onClose, onSaved }) {
                   <button onClick={() => set(i, { ok: true })} style={{
                     flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer',
                     background: x.ok ? M.green : 'transparent',
-                    color: x.ok ? '#0E1117' : M.textDim,
+                    color: x.ok ? M.bgSolid : M.textDim,
                     border: `1px solid ${x.ok ? M.green : M.border}`,
                     fontWeight: 700, fontSize: 13,
                   }}>OK</button>
@@ -3070,8 +3085,411 @@ function GestaoScreen({ nav }) {
   );
 }
 
+// =========================================================================
+// DATA TOOLS — exportar CSV e importar planilha
+// Cliente PME no Brasil já tem peças no Excel. Sem isso o cadastro inicial
+// de 200 SKUs leva meia tarde digitando e o cliente desiste.
+// =========================================================================
+
+// Barra discreta com 1 ou 2 botões "Exportar CSV" e "Importar planilha".
+function DataToolbar({ onExport, onImport, exportLabel, importLabel }) {
+  const btn = {
+    flex: 1, padding: '10px 12px', borderRadius: 10,
+    background: M.surface, border: `1px solid ${M.border}`, color: M.textDim,
+    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  };
+  return (
+    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+      {onImport && (
+        <button onClick={onImport} style={btn} title="Importar peças/equipamentos de uma planilha CSV">
+          <Icon name="box" size={14}/> {importLabel || 'Importar planilha'}
+        </button>
+      )}
+      {onExport && (
+        <button onClick={onExport} style={btn} title="Baixar CSV pro contador ou backup">
+          <Icon name="arrow-down-r" size={14}/> {exportLabel || 'Exportar CSV'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// CSV parser sem dependências — RFC 4180-lite. Suporta:
+//   • separador ; (Excel pt-BR) ou , (Google Sheets) — auto-detecta
+//   • campos entre aspas com ; , quebra de linha e "" interno
+//   • CRLF e LF, BOM UTF-8 já removido antes
+function _parseCSV(texto) {
+  const sample = texto.slice(0, 1000);
+  const nSemi = (sample.match(/;/g) || []).length;
+  const nComma = (sample.match(/,/g) || []).length;
+  // tab também é comum (paste do Excel): se for o vencedor, usa
+  const nTab = (sample.match(/\t/g) || []).length;
+  let sep = ';';
+  if (nTab > nSemi && nTab > nComma) sep = '\t';
+  else if (nComma > nSemi) sep = ',';
+
+  const linhas = [];
+  let campo = '', linha = [], inQuotes = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (inQuotes) {
+      if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else campo += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === sep) { linha.push(campo); campo = ''; }
+      else if (c === '\r') { /* ignora — \n encerra */ }
+      else if (c === '\n') { linha.push(campo); linhas.push(linha); campo = ''; linha = []; }
+      else campo += c;
+    }
+  }
+  if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
+  if (linhas.length === 0) return { header: [], rows: [] };
+  return {
+    header: linhas[0].map(s => s.trim()),
+    rows: linhas.slice(1),
+  };
+}
+
+// "Pontos de Reposição" → "pontosdereposicao" — pra casar com aliases.
+function _slug(s) {
+  return String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '').trim();
+}
+
+const _ALIAS_PECAS = {
+  sku:                ['sku', 'codigo', 'cod', 'ref', 'referencia'],
+  nome:               ['nome', 'descricao', 'item', 'peca', 'produto'],
+  quantidade:         ['quantidade', 'qtd', 'qtde', 'estoque', 'qntd', 'quant'],
+  localizacao_fisica: ['localizacao', 'localizacaofisica', 'local', 'loc', 'prateleira', 'endereco'],
+  categoria:          ['categoria', 'cat', 'grupo', 'familia'],
+  sinonimos:          ['sinonimos', 'sinonimo', 'tags', 'apelido', 'apelidos'],
+  preco:              ['preco', 'valor', 'precounitario', 'precoun', 'unitario', 'precounit'],
+  ponto_reposicao:    ['pontodereposicao', 'pontoreposicao', 'minimo', 'estoqueminimo', 'min'],
+  segmento:           ['segmento'],
+  tutorial_url:       ['tutorial', 'url', 'manual', 'link', 'tutorialurl', 'video'],
+  perfil:             ['perfil', 'profissao'],
+};
+const _ALIAS_EQUIP = {
+  codigo: ['codigo', 'cod', 'id', 'ref'],
+  nome:   ['nome', 'descricao', 'equipamento'],
+  modelo: ['modelo'],
+  ano:    ['ano'],
+  placa:  ['placa'],
+  tipo:   ['tipo', 'categoria'],
+  status: ['status', 'situacao'],
+  perfil: ['perfil', 'profissao'],
+};
+
+function _mapearLinhas(rows, header, tipo) {
+  const aliases = tipo === 'pecas' ? _ALIAS_PECAS : _ALIAS_EQUIP;
+  const colMap = {}; // colIdx → campoCanonico
+  header.forEach((h, idx) => {
+    const s = _slug(h);
+    if (!s) return;
+    for (const campo in aliases) {
+      if (aliases[campo].includes(s)) { colMap[idx] = campo; break; }
+    }
+  });
+  const exigidas = tipo === 'pecas' ? ['sku', 'nome'] : ['codigo', 'nome'];
+  const valoresMap = Object.values(colMap);
+  const temChaves = exigidas.every(c => valoresMap.includes(c));
+  if (!temChaves) {
+    return { itens: [], colMap, faltam: exigidas.filter(c => !valoresMap.includes(c)) };
+  }
+  const itens = rows
+    .filter(l => l.some(c => c && c.trim()))
+    .map(l => {
+      const obj = {};
+      for (const idx in colMap) {
+        const v = (l[idx] || '').trim();
+        if (v) obj[colMap[idx]] = v;
+      }
+      return obj;
+    });
+  return { itens, colMap, faltam: [] };
+}
+
+// Modal full-screen pra importar. Lê CSV no browser, valida no servidor.
+function ImportSheet({ tipo, onClose, onDone }) {
+  const [step, setStep] = useState('pick'); // pick | preview | sending | done
+  const [itens, setItens] = useState([]);
+  const [colMap, setColMap] = useState({});
+  const [headerRaw, setHeaderRaw] = useState([]);
+  const [erro, setErro] = useState(null);
+  const [resultado, setResultado] = useState(null);
+  const fileRef = React.useRef(null);
+
+  const titulo = tipo === 'pecas' ? 'Importar peças' : 'Importar equipamentos';
+  const colunasObrig = tipo === 'pecas' ? 'SKU e Nome' : 'Código e Nome';
+  const colunasOpc = tipo === 'pecas'
+    ? '(também aceita: Quantidade, Localização, Categoria, Preço, Ponto de Reposição, Sinônimos)'
+    : '(também aceita: Modelo, Ano, Placa, Tipo, Status)';
+
+  function escolherArquivo(file) {
+    setErro(null);
+    if (!file) return;
+    if (file.size > 2_000_000) {
+      setErro('Arquivo maior que 2 MB. Quebre em arquivos menores.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const texto = String(reader.result || '').replace(/^﻿/, '');
+        if (!texto.trim()) { setErro('Arquivo vazio.'); return; }
+        const { header, rows } = _parseCSV(texto);
+        if (!header.length) { setErro('Não consegui identificar o cabeçalho.'); return; }
+        const { itens, colMap, faltam } = _mapearLinhas(rows, header, tipo);
+        if (faltam.length) {
+          setErro('Faltam colunas obrigatórias: ' + faltam.join(', ') +
+            '. A 1ª linha do arquivo precisa ter títulos como "' + colunasObrig + '".');
+          return;
+        }
+        if (itens.length === 0) {
+          setErro('Nenhuma linha de dados encontrada.');
+          return;
+        }
+        if (itens.length > 500) {
+          setErro('Encontrei ' + itens.length + ' linhas. O limite por importação é 500. Quebre o arquivo.');
+          return;
+        }
+        setHeaderRaw(header);
+        setColMap(colMap);
+        setItens(itens);
+        setStep('preview');
+      } catch (e) {
+        setErro(e.message || 'Falha ao ler o arquivo.');
+      }
+    };
+    reader.onerror = () => setErro('Erro ao ler o arquivo.');
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function importar() {
+    setStep('sending');
+    setErro(null);
+    const fn = tipo === 'pecas' ? API.importPecas : API.importEquipamentos;
+    fn(itens)
+      .then(r => { setResultado(r); setStep('done'); })
+      .catch(e => { setErro(e.message || 'Falha ao importar.'); setStep('preview'); });
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9000,
+      background: 'rgba(15,17,23,0.96)',
+      display: 'flex', flexDirection: 'column',
+      padding: '24px 20px', overflowY: 'auto',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+        <button onClick={onClose} style={{
+          background: 'transparent', border: 'none', color: M.textDim,
+          cursor: 'pointer', padding: 4, display: 'flex',
+        }}>
+          <Icon name="x" size={22}/>
+        </button>
+        <div style={{ fontSize: 18, fontWeight: 700, color: M.text }}>{titulo}</div>
+      </div>
+
+      {step === 'pick' && (
+        <div style={{ maxWidth: 520, margin: '0 auto', width: '100%' }}>
+          <div style={{
+            padding: 16, background: M.surface, border: `1px solid ${M.border}`,
+            borderRadius: 12, fontSize: 13.5, color: M.textDim, lineHeight: 1.55, marginBottom: 16,
+          }}>
+            <div style={{ color: M.text, fontWeight: 700, marginBottom: 6 }}>Como deve ser o arquivo</div>
+            • Formato <b style={{ color: M.amber }}>.CSV</b> (no Excel: Arquivo → Salvar Como → CSV UTF-8).<br/>
+            • A <b>1ª linha</b> deve ter os títulos das colunas. Obrigatório ter <b>{colunasObrig}</b>.<br/>
+            • {colunasOpc}<br/>
+            • Limite: <b>500 linhas</b> por arquivo. Acentuação OK.
+          </div>
+          {erro && (
+            <div style={{
+              padding: '10px 14px', background: 'rgba(239,68,68,0.10)',
+              border: `1px solid ${M.red}55`, borderRadius: 10,
+              color: M.red, fontSize: 13, marginBottom: 14,
+            }}>{erro}</div>
+          )}
+          <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain"
+            onChange={(e) => escolherArquivo(e.target.files && e.target.files[0])}
+            style={{ display: 'none' }}/>
+          <button onClick={() => fileRef.current && fileRef.current.click()} style={{
+            width: '100%', padding: '16px', borderRadius: 12, border: `2px dashed ${M.amber}66`,
+            background: 'rgba(6,182,212,0.05)', color: M.amber,
+            fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          }}>
+            <Icon name="box" size={18}/> Escolher arquivo CSV
+          </button>
+        </div>
+      )}
+
+      {step === 'preview' && (
+        <div style={{ maxWidth: 720, margin: '0 auto', width: '100%' }}>
+          <div style={{
+            padding: 14, background: M.surface, border: `1px solid ${M.border}`,
+            borderRadius: 12, marginBottom: 14,
+          }}>
+            <div style={{ fontSize: 13, color: M.textDim, marginBottom: 6 }}>Colunas reconhecidas:</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {headerRaw.map((h, i) => {
+                const mapped = colMap[i];
+                return (
+                  <span key={i} style={{
+                    fontSize: 11.5, padding: '4px 8px', borderRadius: 6,
+                    background: mapped ? 'rgba(34,197,94,0.12)' : M.surface2,
+                    color: mapped ? M.green : M.textMute,
+                    border: `1px solid ${mapped ? M.green + '44' : M.border}`,
+                  }}>
+                    {h || '(vazio)'}{mapped ? ' → ' + mapped : ' (ignorada)'}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{
+            fontSize: 13, color: M.text, fontWeight: 700, marginBottom: 8,
+          }}>Pré-visualização ({itens.length} {itens.length === 1 ? 'linha' : 'linhas'})</div>
+          <div style={{
+            background: M.surface, border: `1px solid ${M.border}`, borderRadius: 12,
+            overflow: 'hidden', marginBottom: 14,
+          }}>
+            {itens.slice(0, 5).map((it, i) => (
+              <div key={i} style={{
+                padding: '10px 14px', fontSize: 12.5, color: M.textDim,
+                borderBottom: i < Math.min(itens.length - 1, 4) ? `1px solid ${M.border}` : 'none',
+                lineHeight: 1.6, fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {Object.entries(it).slice(0, 4).map(([k, v]) =>
+                  <span key={k} style={{ marginRight: 14 }}>
+                    <b style={{ color: M.amber }}>{k}</b>={v}
+                  </span>
+                )}
+              </div>
+            ))}
+            {itens.length > 5 && (
+              <div style={{ padding: '8px 14px', fontSize: 12, color: M.textMute, fontStyle: 'italic' }}>
+                … e mais {itens.length - 5} linha(s)
+              </div>
+            )}
+          </div>
+          {erro && (
+            <div style={{
+              padding: '10px 14px', background: 'rgba(239,68,68,0.10)',
+              border: `1px solid ${M.red}55`, borderRadius: 10,
+              color: M.red, fontSize: 13, marginBottom: 14,
+            }}>{erro}</div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => { setStep('pick'); setItens([]); setErro(null); }} style={{
+              flex: 1, padding: 14, borderRadius: 12, background: M.surface,
+              border: `1px solid ${M.border}`, color: M.textDim,
+              fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            }}>Voltar</button>
+            <button onClick={importar} style={{
+              flex: 2, padding: 14, borderRadius: 12, background: M.amber,
+              border: 'none', color: M.bgSolid,
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}>Importar {itens.length} {itens.length === 1 ? 'linha' : 'linhas'}</button>
+          </div>
+          <div style={{
+            fontSize: 11, color: M.textMute, textAlign: 'center', marginTop: 10, lineHeight: 1.5,
+          }}>
+            Registros duplicados (SKU/Código já existente) serão pulados — não geram erro.
+          </div>
+        </div>
+      )}
+
+      {step === 'sending' && (
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{
+            width: 34, height: 34, margin: '0 auto 16px', borderRadius: '50%',
+            border: `3px solid ${M.border}`, borderTopColor: M.amber,
+            animation: 'maestro-spin .8s linear infinite',
+          }}/>
+          <div style={{ fontSize: 14, color: M.textDim }}>Enviando…</div>
+        </div>
+      )}
+
+      {step === 'done' && resultado && (
+        <div style={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
+          <div style={{ textAlign: 'center', padding: '20px 0 30px' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', margin: '0 auto 14px',
+              background: M.greenSoft, color: M.green,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="check" size={28} strokeWidth={2.4}/>
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: M.text }}>Importação concluída</div>
+          </div>
+          <div style={{
+            background: M.surface, border: `1px solid ${M.border}`, borderRadius: 12,
+            padding: 16, marginBottom: 16,
+          }}>
+            <Linha icon="check" color={M.green} label="Criados" valor={resultado.criados}/>
+            {resultado.duplicados > 0 && (
+              <Linha icon="alert" color={M.textDim} label="Duplicados (já existiam)" valor={resultado.duplicados}/>
+            )}
+            {resultado.erros && resultado.erros.length > 0 && (
+              <Linha icon="alert" color={M.red} label="Linhas com erro" valor={resultado.erros.length}/>
+            )}
+          </div>
+          {resultado.erros && resultado.erros.length > 0 && (
+            <div style={{
+              background: M.surface2, border: `1px solid ${M.red}44`, borderRadius: 10,
+              padding: 12, marginBottom: 16, maxHeight: 200, overflowY: 'auto',
+            }}>
+              <div style={{ fontSize: 12, color: M.red, fontWeight: 700, marginBottom: 8 }}>
+                Primeiros erros:
+              </div>
+              {resultado.erros.slice(0, 20).map((e, i) => (
+                <div key={i} style={{ fontSize: 12, color: M.textDim, marginBottom: 4 }}>
+                  Linha {e.linha}: {e.motivo}
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={() => { onDone && onDone(resultado); onClose(); }} style={{
+            width: '100%', padding: 14, borderRadius: 12, background: M.amber,
+            border: 'none', color: M.bgSolid,
+            fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          }}>Pronto</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Linha({ icon, color, label, valor }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0',
+    }}>
+      <Icon name={icon} size={16} color={color}/>
+      <span style={{ flex: 1, fontSize: 13, color: M.textDim }}>{label}</span>
+      <span style={{
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 16, fontWeight: 700, color: color,
+      }}>{valor}</span>
+    </div>
+  );
+}
+
+// Wrapper que faz o download direto via API.exportCSV e mostra um toast de erro.
+// Recebe `flash` (do hook useFlash da tela) pra notificar quando termina.
+function dispararExport(tipo, filtros, flash) {
+  flash && flash('Gerando CSV…');
+  API.exportCSV(tipo, filtros)
+    .then(() => flash && flash('CSV baixado'))
+    .catch(e => flash && flash('Falha: ' + (e.message || 'erro')));
+}
+
 Object.assign(window, {
   HomeScreen, PartsScreen, OsListScreen, OsDetailScreen,
   EquipListScreen, EquipDetailScreen, DashScreen, InspecaoScreen,
-  GestaoScreen,
+  GestaoScreen, DataToolbar, ImportSheet, dispararExport,
 });

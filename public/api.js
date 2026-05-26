@@ -180,6 +180,32 @@
     pecaDelete: function (sku) { return req("DELETE", "/api/pecas/" + encodeURIComponent(sku)); },
     inspecoesHoje: function () { return req("GET", "/api/inspecoes"); },
     inspecaoCreate: function (payload) { return req("POST", "/api/inspecoes", payload); },
+    // ---- Export CSV (download direto, com auth via header) ----
+    // `tipo` = "pecas" | "equipamentos" | "os" | "movimentos"
+    // Faz fetch autenticado, recebe blob, dispara download. Não abre nova aba
+    // (browser não enviaria o Authorization). Aceita filtros opcionais (status/desde).
+    exportCSV: function (tipo, filtros) {
+      var url = "/api/export/" + encodeURIComponent(tipo) + ".csv" + qs(filtros || {});
+      return fetch(url, { method: "GET", headers: authHeaders(false) })
+        .then(function (r) {
+          if (r.status === 401) { clearToken(); location.reload(); throw new Error("Sessão expirada."); }
+          if (!r.ok) throw new Error("Erro " + r.status);
+          // nome do arquivo vem no Content-Disposition; fallback pra "tipo-data.csv"
+          var dispo = r.headers.get("Content-Disposition") || "";
+          var m = /filename="?([^";]+)"?/.exec(dispo);
+          var nome = m ? m[1] : "maestro-" + tipo + ".csv";
+          return r.blob().then(function (b) {
+            var href = URL.createObjectURL(b);
+            var a = document.createElement("a");
+            a.href = href; a.download = nome;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(href); a.remove(); }, 0);
+          });
+        });
+    },
+    // ---- Importação em lote (array JSON; o CSV é parseado no browser) ----
+    importPecas: function (itens) { return req("POST", "/api/import/pecas", { itens: itens }); },
+    importEquipamentos: function (itens) { return req("POST", "/api/import/equipamentos", { itens: itens }); },
     atividade: function () { return req("GET", "/api/atividade"); },
     // Marketplace: busca pelo nome da peça no Mercado Livre (link externo).
     // Nenhum dado nosso é compartilhado — só uma URL de busca pública.

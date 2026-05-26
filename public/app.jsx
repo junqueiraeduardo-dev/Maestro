@@ -143,7 +143,7 @@ function VoiceSheet({ phase, transcript, resp, onClose }) {
         }}>
           <div style={{
             width: 44, height: 44, borderRadius: "50%", margin: "0 auto 14px",
-            background: "#0E2B23", color: M.green,
+            background: M.greenSoft, color: M.green,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}><Icon name="check" size={24} strokeWidth={2.4}/></div>
           <div style={{
@@ -227,7 +227,7 @@ function VoiceSheet({ phase, transcript, resp, onClose }) {
         }}>
           <div style={{
             width: 44, height: 44, borderRadius: "50%", margin: "0 auto 14px",
-            background: "#0E2B23", color: M.green,
+            background: M.greenSoft, color: M.green,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}><Icon name="check" size={24} strokeWidth={2.4}/></div>
           <div style={{
@@ -492,8 +492,8 @@ function App({ onLogout, plano }) {
     }}>
       {plano && plano.plan === "trial" && (
         <div style={{
-          flexShrink: 0, background: "rgba(59, 42, 14, 0.7)", color: M.amber,
-          borderBottom: `1px solid ${M.border}`,
+          flexShrink: 0, background: M.amberSoft, color: M.amber,
+          borderBottom: `1px solid ${M.amberBorder}`,
           padding: "8px 14px 6px", fontSize: 12.5, fontWeight: 600,
         }}>
           <div style={{
@@ -694,7 +694,7 @@ function Login({ onOk }) {
     <button type="button" onClick={() => { setModo(id); setErro(null); }} style={{
       flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer",
       background: modo === id ? M.amber : "transparent",
-      color: modo === id ? "#0E1117" : M.textDim,
+      color: modo === id ? M.bgSolid : M.textDim,
       border: `1px solid ${modo === id ? M.amber : M.border}`,
       fontWeight: 700, fontSize: 13,
     }}>{children}</button>
@@ -867,7 +867,7 @@ function Login({ onOk }) {
             preco={periodoPlano === "anual" ? "R$ 1.341" : "R$ 149"}
             periodo={periodoPlano === "anual" ? "/ano (≈ R$ 112/mês)" : "/mês"}
             badge={periodoPlano === "anual" ? "−25%" : null}
-            cor="#60A5FA" destaque
+            cor=M.purple destaque
             animKey={periodoPlano}
             itens={[
               "Tudo do Premium",
@@ -886,8 +886,9 @@ function Login({ onOk }) {
           </div>
         </div>
       </div>
-      <div style={{ marginTop: 24, fontSize: 11, color: M.textMute, letterSpacing: 1 }}>
-        MAESTRO · CMMS RÁPIDO PRA MANUTENÇÃO
+      <div style={{ marginTop: 24, fontSize: 11, color: M.textMute, letterSpacing: 1, textAlign: 'center', lineHeight: 1.7 }}>
+        MAESTRO · MANUTENÇÃO POR VOZ<br/>
+        <span style={{ color: M.amber }}>OFICINA · FROTA · AGRO</span>
       </div>
     </div>
   );
@@ -926,7 +927,7 @@ function PriceToggle({ periodo, onChange }) {
           style={{
             position: "relative", zIndex: 1,
             padding: "8px 0", border: "none", background: "transparent",
-            color: !isAnual ? "#0E1117" : M.textDim,
+            color: !isAnual ? M.bgSolid : M.textDim,
             fontWeight: 700, fontSize: 13, cursor: "pointer",
             transition: "color .25s ease",
             borderRadius: 999,
@@ -937,7 +938,7 @@ function PriceToggle({ periodo, onChange }) {
           style={{
             position: "relative", zIndex: 1,
             padding: "8px 0", border: "none", background: "transparent",
-            color: isAnual ? "#0E1117" : M.textDim,
+            color: isAnual ? M.bgSolid : M.textDim,
             fontWeight: 700, fontSize: 13, cursor: "pointer",
             transition: "color .25s ease",
             borderRadius: 999,
@@ -1036,7 +1037,7 @@ function Onboarding({ onClose }) {
     },
     {
       icon: "wrench",
-      cor: "#60A5FA",
+      cor: M.purple,
       titulo: "Abra uma OS",
       texto: "Em Ordens de Serviço, registre uma manutenção: equipamento, prioridade, descrição. Conforme consumir peças, escaneia ou fala — fica tudo amarrado.",
       dica: "Convide até 25 usuários da equipe no plano Premium.",
@@ -1105,7 +1106,7 @@ function Onboarding({ onClose }) {
 
       <button onClick={avancar} style={{
         padding: "14px 40px", borderRadius: 12,
-        background: M.amber, color: "#0E1117", border: "none",
+        background: M.amber, color: M.bgSolid, border: "none",
         fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: 0.3,
         boxShadow: "0 8px 24px rgba(6,182,212,0.3)",
       }}>{ultima ? "Começar a usar" : "Próximo"}</button>
@@ -1181,16 +1182,16 @@ function InstallBanner() {
   return (
     <>
       <div style={{
-        flexShrink: 0, background: "#0E2233", color: M.text,
-        borderBottom: `1px solid ${M.border}`,
+        flexShrink: 0, background: M.amberSoft, color: M.text,
+        borderBottom: `1px solid ${M.amberBorder}`,
         padding: "10px 14px", fontSize: 13,
         display: "flex", alignItems: "center", gap: 10,
       }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 7, background: M.amber, flexShrink: 0,
+          width: 28, height: 28, borderRadius: 8, background: M.amber, flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <Icon name="check" size={16} color="#0E1117"/>
+          <Icon name="check" size={16} color={M.bgSolid}/>
         </div>
         <div style={{ flex: 1, lineHeight: 1.3 }}>
           <div style={{ fontWeight: 700 }}>Instale o Maestro</div>
@@ -1200,7 +1201,7 @@ function InstallBanner() {
         </div>
         {(hasPrompt || isIOS()) && (
           <button onClick={instalar} style={{
-            background: M.amber, color: "#0E1117", border: "none",
+            background: M.amber, color: M.bgSolid, border: "none",
             padding: "8px 14px", borderRadius: 8, fontWeight: 700, fontSize: 12.5,
             cursor: "pointer",
           }}>Instalar</button>
@@ -1402,7 +1403,7 @@ function PremiumCelebration({ onClose }) {
           </div>
           <button onClick={() => location.reload()} style={{
             marginTop: 22, padding: "12px 28px", borderRadius: 10,
-            background: M.amber, color: "#0E1117", border: "none",
+            background: M.amber, color: M.bgSolid, border: "none",
             fontWeight: 700, fontSize: 14, cursor: "pointer",
           }}>Atualizar</button>
         </div>
@@ -1484,7 +1485,7 @@ function PremiumCelebration({ onClose }) {
           <button onClick={copiar} style={{
             flex: "1 1 100px", padding: "12px 14px", borderRadius: 10,
             background: copiado ? M.green : M.surface2,
-            color: copiado ? "#0E1117" : M.text,
+            color: copiado ? M.bgSolid : M.text,
             border: `1px solid ${copiado ? M.green : M.border}`,
             fontWeight: 700, fontSize: 13, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
@@ -1520,7 +1521,7 @@ function PremiumCelebration({ onClose }) {
         <button onClick={entrarAgora} disabled={entrando} style={{
           marginTop: 12, width: "100%", maxWidth: 380,
           padding: "14px 24px", borderRadius: 12,
-          background: M.amber, color: "#0E1117", border: "none",
+          background: M.amber, color: M.bgSolid, border: "none",
           fontWeight: 800, fontSize: 15, cursor: entrando ? "wait" : "pointer",
           letterSpacing: 0.3, boxShadow: "0 8px 24px rgba(6,182,212,0.35)",
           animation: "maestro-rise .5s ease .85s both",
@@ -1573,7 +1574,7 @@ function PremiumCelebration({ onClose }) {
             animation: "maestro-sheen 2.2s ease-in-out infinite",
             animationDelay: ".8s",
           }}/>
-          <Icon name="check" size={50} color="#0E1117"/>
+          <Icon name="check" size={50} color=M.bgSolid/>
         </div>
       </div>
 
@@ -1598,7 +1599,8 @@ function PagamentoPendenteOuFalha({ status, onClose }) {
     }}>
       <div style={{
         width: 80, height: 80, borderRadius: "50%",
-        background: status === "pending" ? "#3B2A0E" : "#3A1212",
+        background: status === "pending" ? M.amberSoft : M.redSoft,
+        border: `1px solid ${status === "pending" ? M.amberBorder : 'rgba(239,68,68,0.30)'}`,
         display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18,
       }}>
         <Icon name="clock" size={40} color={status === "pending" ? M.amber : M.red}/>

@@ -11,6 +11,8 @@ import { osRouter } from "./routes/osRoutes";
 import { catalogRouter } from "./routes/catalogRoutes";
 import { workspaceRouter } from "./routes/workspaceRoutes";
 import { equipeRouter, validarConvite } from "./routes/equipeRoutes";
+import { exportRouter } from "./routes/exportRoutes";
+import { importRouter } from "./routes/importRoutes";
 import { workspaceMw } from "./workspace";
 import { loginHandler, trialHandler, entrarHandler, requireAuth, excluirContaHandler } from "./auth";
 import { payPlanos, payCheckout, payWebhook, payChave } from "./pay";
@@ -29,6 +31,10 @@ app.use(securityHeaders);
 // então não precisa de CORS pra nada. Webhook do MP é server-to-server (não
 // passa por browser), então CORS também não se aplica. Remover = mais seguro.
 
+// Body parser maior SÓ pras rotas de importação em lote (até 500 linhas
+// de planilha cabem confortavelmente em 512 KB). Tem que vir ANTES do
+// parser global menor — o segundo vê req._body=true e não relê o stream.
+app.use("/api/import", express.json({ limit: "512kb" }));
 app.use(express.json({ limit: "16kb" })); // payload de voz é minúsculo
 
 // Cache-Control no-store em TUDO de /api/*. Mata cache de tokens/chaves
@@ -115,6 +121,8 @@ app.use("/api", osRouter);
 app.use("/api", catalogRouter);
 app.use("/api", workspaceRouter);
 app.use("/api", equipeRouter);
+app.use("/api", exportRouter);
+app.use("/api", importRouter);
 
 // Frontend estático (público) - será criado no próximo passo
 app.use(

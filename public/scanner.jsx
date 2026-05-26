@@ -166,7 +166,7 @@ function ScannerSheet({ titulo, onScan, onClose, modoTexto }) {
               <button type="submit" disabled={textoManual.trim().length < 2}
                 style={{
                   marginTop: 14, width: '100%', padding: '14px 20px',
-                  background: M.amber, color: '#0E1117', border: 'none',
+                  background: M.amber, color: M.bgSolid, border: 'none',
                   borderRadius: 12, fontWeight: 800, fontSize: 15,
                   cursor: textoManual.trim().length < 2 ? 'not-allowed' : 'pointer',
                   opacity: textoManual.trim().length < 2 ? 0.5 : 1,
@@ -309,7 +309,7 @@ function QrDisplaySheet({ codigo, titulo, subtitulo, onClose }) {
         <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
           <button onClick={imprimir} style={{
             flex: 1, padding: '12px 14px', borderRadius: 10,
-            background: M.amber, color: '#0E1117', border: 'none',
+            background: M.amber, color: M.bgSolid, border: 'none',
             fontWeight: 700, fontSize: 13, cursor: 'pointer',
           }}>📄 Imprimir</button>
           <button onClick={baixar} style={{
