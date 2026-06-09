@@ -15,6 +15,7 @@ import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { supabase } from "./config/supabase";
 import { validarChaveAssinatura } from "./pay";
+import { enviarEmail } from "./mailer";
 
 export const TRIAL_DIAS = 30;
 
@@ -416,6 +417,173 @@ export async function entrarHandler(req: Request, res: Response) {
   } catch (err: any) {
     console.error("[auth] entrar:", err?.message ?? err);
     return res.status(500).json({ erro: "Falha ao entrar." });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// RESET DE SENHA — "esqueci minha senha" via link mágico por e-mail.
+//
+// Token STATELESS de USO ÚNICO, sem tabela nova: a chave do HMAC inclui o
+// `senha_hash` ATUAL do usuário. Ao redefinir a senha, o hash muda e o mesmo
+// link deixa de validar (técnica do password-reset token do Django).
+// Validade curta embutida no payload (`exp`).
+// ---------------------------------------------------------------------------
+const RESET_TTL_MS = 30 * 60_000; // 30 minutos
+
+/** Chave do HMAC ligada ao hash atual: trocar a senha invalida links antigos. */
+function resetKey(pw: string, senhaHash: string): string {
+  return `${pw}|reset|${sha256(senhaHash).toString("hex")}`;
+}
+
+function makeResetToken(
+  pw: string,
+  email: string,
+  senhaHash: string,
+  expMs: number
+): string {
+  const payload = b64url(JSON.stringify({ e: email, exp: expMs }));
+  return `r.${payload}.${hmacHex(resetKey(pw, senhaHash), payload)}`;
+}
+
+/** Valida assinatura (contra o hash atual) + expiração. Retorna payload ou null. */
+function readResetToken(
+  pw: string,
+  token: string,
+  senhaHash: string
+): { e: string; exp: number } | null {
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts[0] !== "r") return null;
+  const sig = hmacHex(resetKey(pw, senhaHash), parts[1]);
+  if (!safeEqual(Buffer.from(parts[2], "utf8"), Buffer.from(sig, "utf8")))
+    return null;
+  try {
+    const p = JSON.parse(unb64url(parts[1]));
+    if (
+      p &&
+      typeof p.e === "string" &&
+      typeof p.exp === "number" &&
+      p.exp > Date.now()
+    )
+      return p;
+  } catch {
+    /* payload inválido */
+  }
+  return null;
+}
+
+/** Lê o e-mail do payload SEM validar assinatura — só para localizar a conta. */
+function emailDoPayloadReset(token: string): string | null {
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts[0] !== "r") return null;
+  try {
+    const p = JSON.parse(unb64url(parts[1]));
+    const e = typeof p?.e === "string" ? p.e.trim().toLowerCase() : "";
+    return e && emailValido(e) ? e : null;
+  } catch {
+    return null;
+  }
+}
+
+// POST /api/senha/esqueci — gera o link mágico e envia por e-mail.
+// Resposta SEMPRE genérica (anti-enumeração): nunca revela se o e-mail existe.
+export async function esqueciSenhaHandler(req: Request, res: Response) {
+  const pw = process.env.ACCESS_PASSWORD;
+  if (!pw)
+    return res.status(503).json({ erro: "Servidor sem ACCESS_PASSWORD." });
+
+  const email = String(req.body?.email ?? "")
+    .trim()
+    .toLowerCase()
+    .slice(0, 160);
+  const resposta = {
+    ok: true,
+    msg: "Se houver uma conta com esse e-mail, enviamos um link para redefinir a senha.",
+  };
+  if (!email || !emailValido(email)) return res.json(resposta);
+
+  try {
+    const { data: u } = await supabase
+      .from("trials")
+      .select("senha_hash")
+      .eq("email", email)
+      .maybeSingle();
+
+    // Só gera/envia se a conta existe E tem senha. Senão, mesma resposta.
+    if (u && u.senha_hash) {
+      const expMs = Date.now() + RESET_TTL_MS;
+      const token = makeResetToken(pw, email, u.senha_hash, expMs);
+      const base = (process.env.APP_URL || "").replace(/\/+$/, "");
+      const link = `${base}/?reset=${encodeURIComponent(token)}`;
+      const corpo = `Recebemos um pedido para redefinir a senha da sua conta Maestro.
+
+Para criar uma nova senha, abra o link abaixo (válido por 30 minutos):
+
+    ${link}
+
+Se você não pediu isso, ignore este e-mail — sua senha continua a mesma.`;
+      // Fire-and-forget: não esperamos o envio pra responder (anti-timing).
+      enviarEmail(email, "Redefinir sua senha — Maestro", corpo)
+        .then((enviado) => {
+          // DEV/fallback: sem SMTP, loga o link pra permitir testar o fluxo.
+          if (!enviado)
+            console.log(`[reset] link (dev) para ${email}: ${link}`);
+        })
+        .catch((e) => console.warn("[reset] envio:", e?.message ?? e));
+    }
+    return res.json(resposta);
+  } catch (err: any) {
+    console.error("[auth] esqueci:", err?.message ?? err);
+    // Mesmo em erro: resposta genérica (não vaza estado do banco).
+    return res.json(resposta);
+  }
+}
+
+// POST /api/senha/redefinir — troca a senha usando o token do link mágico.
+export async function redefinirSenhaHandler(req: Request, res: Response) {
+  const pw = process.env.ACCESS_PASSWORD;
+  if (!pw)
+    return res.status(503).json({ erro: "Servidor sem ACCESS_PASSWORD." });
+
+  const token = String(req.body?.token ?? "");
+  const senha = String(req.body?.senha ?? "");
+  const erroGenerico = "Link inválido ou expirado. Peça um novo.";
+
+  if (!token || !senha)
+    return res.status(400).json({ erro: "Informe o link e a nova senha." });
+  if (senha.length < 6)
+    return res
+      .status(400)
+      .json({ erro: "A nova senha precisa ter pelo menos 6 caracteres." });
+
+  const email = emailDoPayloadReset(token);
+  if (!email) return res.status(400).json({ erro: erroGenerico });
+
+  try {
+    const { data: u } = await supabase
+      .from("trials")
+      .select("senha_hash")
+      .eq("email", email)
+      .maybeSingle();
+    if (!u || !u.senha_hash)
+      return res.status(400).json({ erro: erroGenerico });
+
+    // Valida o token contra o hash ATUAL — se a senha já mudou, o link morreu.
+    if (!readResetToken(pw, token, u.senha_hash))
+      return res.status(400).json({ erro: erroGenerico });
+
+    const { error } = await supabase
+      .from("trials")
+      .update({ senha_hash: hashSenha(senha) })
+      .eq("email", email);
+    if (error) throw error;
+
+    return res.json({
+      ok: true,
+      msg: "Senha redefinida! Agora é só entrar com a nova senha.",
+    });
+  } catch (err: any) {
+    console.error("[auth] redefinir:", err?.message ?? err);
+    return res.status(500).json({ erro: "Falha ao redefinir a senha." });
   }
 }
 

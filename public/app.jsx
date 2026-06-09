@@ -561,6 +561,16 @@ function lerConviteURL() {
   } catch (_) { return null; }
 }
 
+// Link mágico de reset de senha: ?reset=r.<payload>.<hmac64>. Valida o shape
+// mínimo aqui; o servidor valida assinatura/expiração de verdade.
+function lerResetURL() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const t = (p.get("reset") || "").trim();
+    return /^r\.[A-Za-z0-9_-]+\.[a-f0-9]{64}$/.test(t) ? t : null;
+  } catch (_) { return null; }
+}
+
 function Login({ onOk }) {
   const ls = (k, d) => { try { return localStorage.getItem(k) || d; } catch (_) { return d; } };
   const [nome, setNome] = useS(() => ls("maestro_nome", ""));
@@ -684,6 +694,22 @@ function Login({ onOk }) {
       });
   }
 
+  // "Esqueci minha senha" (modo entrar) — pede o link mágico por e-mail.
+  const [esqueceu, setEsqueceu] = useS(false);
+  const [resetMsg, setResetMsg] = useS(null);
+  const [resetBusy, setResetBusy] = useS(false);
+  function pedirReset(e) {
+    if (e) e.preventDefault();
+    if (!emailOk()) { setErro("Informe um e-mail válido."); return; }
+    setResetBusy(true); setErro(null); setResetMsg(null);
+    window.API.esqueciSenha(email.trim())
+      .then((j) => {
+        setResetMsg(j && j.msg ? j.msg : "Se houver conta com esse e-mail, enviamos um link.");
+        setResetBusy(false);
+      })
+      .catch((err) => { setErro((err && err.message) || "Falha ao pedir o link."); setResetBusy(false); });
+  }
+
   const field = {
     width: "100%", background: M.surface, border: `1px solid ${M.border}`,
     borderRadius: 12, padding: "14px 16px", color: M.text,
@@ -732,7 +758,7 @@ function Login({ onOk }) {
           <Tab id="premium">Premium</Tab>
         </div>
 
-        {modo === "entrar" && (
+        {modo === "entrar" && !esqueceu && (
           <form onSubmit={entrar}>
             <input type="email" value={email} inputMode="email" autoFocus
               onChange={(e) => setEmail(e.target.value)} placeholder="Seu e-mail"
@@ -744,13 +770,45 @@ function Login({ onOk }) {
             {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
             <Btn variant="primary" full icon="check" disabled={busy}
               onClick={entrar}>{busy ? "Entrando…" : "Entrar"}</Btn>
-            <div style={{ fontSize: 11.5, color: M.textMute, textAlign: "center", marginTop: 12 }}>
+            <div style={{ textAlign: "center", marginTop: 12 }}>
+              <button type="button" onClick={() => { setEsqueceu(true); setErro(null); setResetMsg(null); }}
+                style={{ background: "none", border: "none", color: M.textDim, cursor: "pointer", padding: 0, fontSize: 12.5, fontWeight: 600 }}>
+                Esqueci minha senha →
+              </button>
+            </div>
+            <div style={{ fontSize: 11.5, color: M.textMute, textAlign: "center", marginTop: 10 }}>
               Não tem conta?{" "}
               <button type="button" onClick={() => { setModo("cadastrar"); setErro(null); }}
                 style={{ background: "none", border: "none", color: M.amber, cursor: "pointer", padding: 0, fontWeight: 700 }}>
                 Cadastre-se
               </button>
             </div>
+          </form>
+        )}
+
+        {modo === "entrar" && esqueceu && (
+          <form onSubmit={pedirReset}>
+            <div style={{
+              padding: "12px 14px", background: "rgba(6,182,212,0.08)",
+              border: `1px solid ${M.amber}44`, borderRadius: 10,
+              fontSize: 12.5, color: M.amber, lineHeight: 1.5, marginBottom: 14,
+            }}>
+              Informe o e-mail da sua conta. Enviaremos um <b>link</b> para você
+              criar uma nova senha (válido por 30 minutos).
+            </div>
+            <input type="email" value={email} inputMode="email" autoFocus
+              onChange={(e) => setEmail(e.target.value)} placeholder="Seu e-mail"
+              style={{ ...field, borderColor: erro ? M.red : M.border }}/>
+            {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
+            {resetMsg && <div style={{ fontSize: 13, color: M.green, margin: "2px 0 12px", textAlign: "center", lineHeight: 1.5 }}>{resetMsg}</div>}
+            <Btn variant="primary" full icon="check" disabled={resetBusy}
+              onClick={pedirReset}>{resetBusy ? "Enviando…" : "Enviar link de redefinição"}</Btn>
+            <button type="button" onClick={() => { setEsqueceu(false); setErro(null); setResetMsg(null); }}
+              style={{
+                marginTop: 12, width: "100%", background: "transparent",
+                border: "none", color: M.textDim, cursor: "pointer",
+                fontSize: 12.5, padding: 8,
+              }}>← Voltar para o login</button>
           </form>
         )}
 
@@ -1616,10 +1674,99 @@ function PagamentoPendenteOuFalha({ status, onClose }) {
   );
 }
 
+// Tela do link mágico (?reset=token): define uma nova senha.
+function RedefinirSenha({ token }) {
+  const [senha, setSenha] = useS("");
+  const [senha2, setSenha2] = useS("");
+  const [busy, setBusy] = useS(false);
+  const [erro, setErro] = useS(null);
+  const [ok, setOk] = useS(false);
+
+  function limparResetURL() {
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("reset");
+      window.history.replaceState({}, "", u.pathname + (u.search || "") + u.hash);
+    } catch (_) {}
+  }
+  function salvar(e) {
+    if (e) e.preventDefault();
+    if (!senha || senha.length < 6) { setErro("Crie uma senha de pelo menos 6 caracteres."); return; }
+    if (senha !== senha2) { setErro("As senhas não conferem."); return; }
+    setBusy(true); setErro(null);
+    window.API.redefinirSenha(token, senha)
+      .then(() => { limparResetURL(); setOk(true); setBusy(false); })
+      .catch((err) => { setErro((err && err.message) || "Link inválido ou expirado."); setBusy(false); });
+  }
+  function irLogin() { limparResetURL(); location.reload(); }
+
+  const field = {
+    width: "100%", background: M.surface, border: `1px solid ${M.border}`,
+    borderRadius: 12, padding: "14px 16px", color: M.text,
+    fontSize: 16, fontFamily: "Inter, sans-serif", outline: "none",
+    marginBottom: 12,
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "transparent", overflowY: "auto",
+      display: "flex", flexDirection: "column", alignItems: "center",
+      padding: "40px 24px", paddingTop: "max(40px, env(safe-area-inset-top))",
+    }}>
+      <div style={{ marginBottom: 22 }}><Logo size={56} word/></div>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        {ok ? (
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              padding: "16px", background: "rgba(34,197,94,0.10)",
+              border: `1px solid ${M.green}55`, borderRadius: 12,
+              color: M.green, fontSize: 14, lineHeight: 1.6, marginBottom: 16,
+            }}>
+              <Icon name="check" size={22}/><br/>
+              Senha redefinida com sucesso! Agora é só entrar com a nova senha.
+            </div>
+            <Btn variant="primary" full icon="check" onClick={irLogin}>Ir para o login</Btn>
+          </div>
+        ) : (
+          <form onSubmit={salvar}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: M.text, textAlign: "center", marginBottom: 6 }}>
+              Criar nova senha
+            </div>
+            <div style={{ fontSize: 12.5, color: M.textDim, textAlign: "center", marginBottom: 16, lineHeight: 1.5 }}>
+              Defina uma nova senha para a sua conta. Este link é de uso único.
+            </div>
+            <input type="password" value={senha} autoFocus
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Nova senha (mín. 6 caracteres)"
+              style={field}/>
+            <input type="password" value={senha2}
+              onChange={(e) => setSenha2(e.target.value)}
+              placeholder="Confirme a nova senha"
+              style={{ ...field, borderColor: erro ? M.red : M.border }}/>
+            {erro && <div style={{ fontSize: 13, color: M.red, margin: "2px 0 12px", textAlign: "center" }}>{erro}</div>}
+            <Btn variant="primary" full icon="check" disabled={busy}
+              onClick={salvar}>{busy ? "Salvando…" : "Redefinir senha"}</Btn>
+            <button type="button" onClick={irLogin}
+              style={{
+                marginTop: 12, width: "100%", background: "transparent",
+                border: "none", color: M.textDim, cursor: "pointer",
+                fontSize: 12.5, padding: 8,
+              }}>← Cancelar e voltar ao login</button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Root() {
+  const [resetToken] = useS(() => lerResetURL());
   const [authed, setAuthed] = useS(window.API.isAuthed());
   const [payStatus, setPayStatus] = useS(() => lerStatusPagamento());
   function fecharPay() { limparStatusURL(); setPayStatus(null); }
+
+  // Link mágico de reset tem prioridade sobre login/app.
+  if (resetToken) return <RedefinirSenha token={resetToken}/>;
 
   return (
     <>

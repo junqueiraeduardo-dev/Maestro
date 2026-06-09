@@ -14,7 +14,7 @@ import { equipeRouter, validarConvite } from "./routes/equipeRoutes";
 import { exportRouter } from "./routes/exportRoutes";
 import { importRouter } from "./routes/importRoutes";
 import { workspaceMw } from "./workspace";
-import { loginHandler, trialHandler, entrarHandler, requireAuth, excluirContaHandler } from "./auth";
+import { loginHandler, trialHandler, entrarHandler, requireAuth, excluirContaHandler, esqueciSenhaHandler, redefinirSenhaHandler } from "./auth";
 import { payPlanos, payCheckout, payWebhook, payChave } from "./pay";
 import { securityHeaders, apiNoCache, limitePorIp, limitePorEmail } from "./security";
 
@@ -86,6 +86,16 @@ app.post("/api/entrar",
   limitePorIp("entrar", 60_000, 6),
   limitePorEmail("entrar", 60_000, 5),
   entrarHandler);
+// Reset de senha (link mágico). Públicos: a pessoa esqueceu a senha, não tem token.
+//  /api/senha/esqueci   pede o link → 5/min por IP + 3/h por e-mail (anti-spam de envio)
+//  /api/senha/redefinir troca a senha com o token do link → 10/min por IP
+app.post("/api/senha/esqueci",
+  limitePorIp("esqueci", 60_000, 5),
+  limitePorEmail("esqueci", 3_600_000, 3),
+  esqueciSenhaHandler);
+app.post("/api/senha/redefinir",
+  limitePorIp("redefinir", 60_000, 10),
+  redefinirSenhaHandler);
 app.get("/api/pay/planos", payPlanos);
 app.post("/api/pay/checkout",
   limitePorIp("checkout", 60_000, 5),

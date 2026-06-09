@@ -137,6 +137,33 @@
         });
       });
     },
+    // Esqueci minha senha: pede o link mágico por e-mail.
+    // Resposta SEMPRE genérica (o servidor não revela se o e-mail existe).
+    esqueciSenha: function (email) {
+      return fetch("/api/senha/esqueci", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j && j.erro ? j.erro : "Falha ao pedir o link.");
+          return j;
+        });
+      });
+    },
+    // Redefinir a senha usando o token do link mágico (?reset=...).
+    redefinirSenha: function (token, senha) {
+      return fetch("/api/senha/redefinir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token, senha: senha }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j && j.erro ? j.erro : "Falha ao redefinir a senha.");
+          return j;
+        });
+      });
+    },
     // Lê o plano a partir do token (sem ida ao servidor)
     plan: function () {
       var t = getToken();
