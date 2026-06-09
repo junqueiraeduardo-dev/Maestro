@@ -506,9 +506,9 @@ function App({ onLogout, plano }) {
             <span style={{ color: M.text }}>Premium R$ 39/mês</span>
           </div>
           {/* Barra de progresso animada: % do trial JÁ USADO (mais vermelho
-              conforme acaba). 7d = 100%. */}
+              conforme acaba). 30d = 100%. */}
           <ProgressBar
-            pct={Math.max(0, Math.min(100, ((7 - plano.dias) / 7) * 100))}
+            pct={Math.max(0, Math.min(100, ((30 - plano.dias) / 30) * 100))}
             color={plano.dias <= 2 ? M.red : plano.dias <= 4 ? M.amber : M.green}
             height={3}
             bg="rgba(255,255,255,0.08)"/>
@@ -844,9 +844,9 @@ function Login({ onOk }) {
           <PriceToggle periodo={periodoPlano} onChange={setPeriodoPlano}/>
 
           <PlanoCard
-            nome="Free · Teste grátis" preco="R$ 0" periodo="por 7 dias"
+            nome="Free · Teste grátis" preco="R$ 0" periodo="por 30 dias"
             cor={M.textDim}
-            itens={["Acesso completo a tudo", "Sem cartão de crédito", "Bloqueia após 7 dias"]}/>
+            itens={["Acesso completo a tudo", "Sem cartão de crédito", "Bloqueia após 30 dias"]}/>
 
           <PlanoCard
             nome="Premium"

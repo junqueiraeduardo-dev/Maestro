@@ -16,7 +16,7 @@ import { Request, Response, NextFunction } from "express";
 import { supabase } from "./config/supabase";
 import { validarChaveAssinatura } from "./pay";
 
-export const TRIAL_DIAS = 7;
+export const TRIAL_DIAS = 30;
 
 /**
  * Validação de e-mail estrita. A regex permissiva /.+@.+\..+/ aceitava
