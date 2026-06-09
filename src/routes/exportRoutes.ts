@@ -37,14 +37,24 @@ function dataBR(iso: string | null | undefined): string {
  * Escapa um valor CSV. Strings que contêm ; " ou nova linha viram "...",
  * com aspas duplicadas. Valores nulos/undefined viram string vazia.
  * Número segue como está (Excel BR usa vírgula decimal — convertemos).
+ *
+ * DEFESA CSV-INJECTION (OWASP): células que começam com = + - @ \t \r são
+ * interpretadas como FÓRMULA pelo Excel/Sheets/LibreOffice (ex.: nome de peça
+ * "=cmd|'/c calc'!A1" abriria um processo na máquina de quem abrisse o CSV).
+ * Prefixamos uma aspa simples — o app de planilha mostra o texto literal e
+ * NÃO executa. Aplicado só em strings (números são seguros).
  */
+function neutralizaFormula(s: string): string {
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
 function csvCell(v: unknown): string {
   if (v == null) return "";
   if (typeof v === "number") {
     // Excel BR: decimal com vírgula. Não envolvemos em aspas — fica numérico.
     return String(v).replace(".", ",");
   }
-  const s = String(v);
+  const s = neutralizaFormula(String(v));
   if (/[;"\r\n]/.test(s)) {
     return '"' + s.replace(/"/g, '""') + '"';
   }

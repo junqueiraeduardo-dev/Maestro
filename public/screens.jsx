@@ -361,7 +361,7 @@ function NotificationsSheet({ st, nav, onClose }) {
     st.baixas.forEach(p => itens.push({
       cor: M.amber, ic: 'cart', t: `Estoque baixo: ${p.nome}`,
       d: `${p.sku} · ${p.qtd} em estoque${p.ponto ? ' (mín. ' + p.ponto + ')' : ''} · toque para comprar`,
-      go: () => { onClose(); window.open(window.API.mlBusca(p.nome, p.cat), '_blank'); },
+      go: () => { onClose(); window.open(window.API.mlBusca(p.nome, p.cat), '_blank', 'noopener,noreferrer'); },
     }));
   }
   return (

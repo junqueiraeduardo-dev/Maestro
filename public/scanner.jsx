@@ -237,33 +237,50 @@ function QrDisplaySheet({ codigo, titulo, subtitulo, onClose }) {
     } catch (_) {}
   }, [codigo]);
 
+  // Escapa HTML pra impedir XSS — `subtitulo` vem do nome da peça (input do
+  // usuário) e `codigo` é sanitizado mas defesa em profundidade. Antes,
+  // nome com `<script>` rodava no contexto da janela about:blank (mesma
+  // origem do app → acessava `window.opener` e tokens do localStorage).
+  function escHTML(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   function imprimir() {
+    // 'noopener' aqui é parâmetro do window.open (na verdade ignorado por
+    // alguns browsers via 3º arg) — repassamos w.opener=null por garantia
+    // pra impedir que a janela impressa toque no app.
     const w = window.open('', '_blank', 'noopener');
     if (!w) return;
+    try { w.opener = null; } catch (_) {}
     const dataUrl = canvasRef.current ? canvasRef.current.toDataURL('image/png') : '';
-    w.document.write(`
-      <!DOCTYPE html><html><head><title>QR - ${codigo}</title>
-      <style>
-        body { font-family: sans-serif; text-align: center; padding: 40px; }
-        img { width: 240px; height: 240px; }
-        .codigo { font-family: monospace; font-size: 18px; font-weight: bold;
-                  letter-spacing: 2px; margin-top: 12px; }
-        .nome { color: #555; font-size: 14px; margin-top: 4px; }
-        @media print {
-          body { padding: 0; }
-          .no-print { display: none; }
-        }
-      </style></head><body>
-      <img src="${dataUrl}" alt="QR ${codigo}"/>
-      <div class="codigo">${codigo}</div>
-      ${subtitulo ? `<div class="nome">${subtitulo}</div>` : ''}
-      <button class="no-print" onclick="window.print()" style="
-        margin-top:24px;padding:10px 24px;font-size:14px;cursor:pointer;
-        background:#06b6d4;color:#000;border:none;border-radius:8px;font-weight:bold;
-      ">Imprimir</button>
-      <script>setTimeout(()=>window.print(),300);</script>
-      </body></html>
-    `);
+    const cod = escHTML(codigo);
+    const sub = escHTML(subtitulo);
+    const img = escHTML(dataUrl);
+    // dataUrl é data:image/png... — sem necessidade de escape adicional
+    // porque escHTML já trata aspas; CSP da janela about:blank herda do app.
+    w.document.write(
+      '<!DOCTYPE html><html><head><meta charset="utf-8"/>'
+      + '<title>QR - ' + cod + '</title>'
+      + '<style>'
+      +   'body { font-family: sans-serif; text-align: center; padding: 40px; }'
+      +   'img { width: 240px; height: 240px; }'
+      +   '.codigo { font-family: monospace; font-size: 18px; font-weight: bold;'
+      +             'letter-spacing: 2px; margin-top: 12px; }'
+      +   '.nome { color: #555; font-size: 14px; margin-top: 4px; }'
+      +   '@media print { body { padding: 0; } .no-print { display: none; } }'
+      + '</style></head><body>'
+      + '<img src="' + img + '" alt="QR ' + cod + '"/>'
+      + '<div class="codigo">' + cod + '</div>'
+      + (sub ? '<div class="nome">' + sub + '</div>' : '')
+      + '<button class="no-print" onclick="window.print()" style="'
+      +   'margin-top:24px;padding:10px 24px;font-size:14px;cursor:pointer;'
+      +   'background:#06b6d4;color:#000;border:none;border-radius:8px;font-weight:bold;'
+      + '">Imprimir</button>'
+      + '<scr' + 'ipt>setTimeout(function(){window.print();},300);</scr' + 'ipt>'
+      + '</body></html>'
+    );
     w.document.close();
   }
 
