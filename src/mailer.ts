@@ -1,45 +1,29 @@
 /**
- * src/mailer.ts — envio de e-mail transacional via Gmail SMTP (nodemailer).
+ * src/mailer.ts — envio de e-mail transacional via Brevo (API HTTP).
  *
- * Custo zero: usa a própria conta Gmail do dono com uma "Senha de app"
- * (myaccount.google.com/apppasswords). Configura por env:
- *   GMAIL_USER           e-mail da conta (ex.: voce@gmail.com)
- *   GMAIL_APP_PASSWORD   senha de app de 16 chars (NÃO a senha normal)
- *   MAIL_FROM (opcional) remetente exibido; default "Maestro <GMAIL_USER>"
+ * POR QUE HTTP (e não SMTP/nodemailer): o Render BLOQUEIA portas SMTP de saída
+ * (25/465/587) como política anti-spam — qualquer SMTP dá "Connection timeout".
+ * A API HTTP da Brevo fala na 443, que é liberada.
  *
- * FALHA ABERTA EM DEV: sem credencial OU sem o pacote `nodemailer` instalado,
- * `enviarEmail` apenas loga e retorna false — o fluxo que depende dele (reset
- * de senha) não quebra. Quem chama é responsável por, em dev, logar o link.
+ * Custo zero: plano grátis da Brevo (300 e-mails/dia). Sem domínio próprio —
+ * basta verificar UM remetente (single sender) no painel da Brevo.
  *
- * `nodemailer` é carregado por import DINÂMICO: o app sobe normalmente mesmo
- * que o pacote ainda não esteja instalado (o transporter só é exigido quando
- * há credencial configurada).
+ * Config por env:
+ *   BREVO_API_KEY      chave da API (Brevo → SMTP & API → API Keys)
+ *   MAIL_SENDER        e-mail do remetente VERIFICADO na Brevo
+ *                      (ex.: junqueiraeduardo2@gmail.com)
+ *   MAIL_SENDER_NAME   (opcional) nome de exibição; default "Maestro"
+ *
+ * FALHA ABERTA: sem BREVO_API_KEY/MAIL_SENDER, só loga e retorna false — o
+ * fluxo de reset não quebra (quem chama loga o link em dev).
  */
-import type { Transporter } from "nodemailer";
+const httpFetch: any = (globalThis as any).fetch;
 
-let transporter: Transporter | null = null;
-let cargaTentada = false;
-
-async function getTransporter(): Promise<Transporter | null> {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;        // sem credencial → fallback
-  if (transporter) return transporter;
-  if (cargaTentada) return null;          // já falhou em carregar; não re-tenta
-  cargaTentada = true;
-  try {
-    const { createTransport } = await import("nodemailer");
-    transporter = createTransport({ service: "gmail", auth: { user, pass } });
-    return transporter;
-  } catch (e: any) {
-    console.warn("[mailer] nodemailer indisponível:", e?.message ?? e);
-    return null;
-  }
-}
+const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 
 /**
- * Envia um e-mail. Retorna true se entregou ao SMTP, false se caiu no fallback
- * (sem credencial/pacote) ou se o envio falhou. Nunca lança.
+ * Envia um e-mail via Brevo. Retorna true se a API aceitou (HTTP 2xx), false
+ * se faltou config, a API recusou ou houve erro de rede. Nunca lança.
  */
 export async function enviarEmail(
   para: string,
@@ -47,19 +31,46 @@ export async function enviarEmail(
   texto: string,
   html?: string
 ): Promise<boolean> {
-  const t = await getTransporter();
-  // From SEMPRE a conta Gmail autenticada (o Gmail reescreve/rejeita qualquer
-  // outro endereço). NÃO usar MAIL_FROM aqui: essa env é do envio via Resend
-  // em pay.ts — reaproveitá-la mandaria um remetente inválido pro Gmail.
-  const from = `Maestro <${process.env.GMAIL_USER || "no-reply@maestro.app"}>`;
-  if (!t) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.MAIL_SENDER || process.env.GMAIL_USER;
+  const senderName = process.env.MAIL_SENDER_NAME || "Maestro";
+  if (!apiKey || !senderEmail) {
     console.warn(
-      `[mailer] SMTP não configurado — e-mail NÃO enviado (assunto="${assunto}").`
+      `[mailer] Brevo não configurado (BREVO_API_KEY/MAIL_SENDER) — e-mail NÃO enviado (assunto="${assunto}").`
     );
     return false;
   }
   try {
-    await t.sendMail({ from, to: para, subject: assunto, text: texto, html });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    let resp: any;
+    try {
+      resp = await httpFetch(BREVO_URL, {
+        method: "POST",
+        headers: {
+          "api-key": apiKey,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: para }],
+          subject: assunto,
+          textContent: texto,
+          ...(html ? { htmlContent: html } : {}),
+        }),
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!resp.ok) {
+      const corpo = await resp.text().catch(() => "");
+      console.error(
+        `[mailer] Brevo recusou (HTTP ${resp.status}): ${String(corpo).slice(0, 300)}`
+      );
+      return false;
+    }
     return true;
   } catch (e: any) {
     console.error("[mailer] falha ao enviar:", e?.message ?? e);
