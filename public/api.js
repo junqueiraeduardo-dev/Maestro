@@ -98,11 +98,11 @@
       });
     },
     // Cadastrar: cria conta com SENHA própria e inicia teste grátis.
-    cadastrar: function (email, senha) {
+    cadastrar: function (email, senha, nome) {
       return fetch("/api/trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, senha: senha }),
+        body: JSON.stringify({ email: email, senha: senha, nome: nome }),
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok || !j.token) {
@@ -112,7 +112,10 @@
             throw e;
           }
           setToken(j.token);
-          try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
+          try {
+            localStorage.setItem("maestro_role", "trial");
+            if (j.nome) localStorage.setItem("maestro_nome", j.nome);
+          } catch (_) {}
           return j;
         });
       });
@@ -132,7 +135,10 @@
             throw e;
           }
           setToken(j.token);
-          try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
+          try {
+            localStorage.setItem("maestro_role", "trial");
+            if (j.nome) localStorage.setItem("maestro_nome", j.nome);
+          } catch (_) {}
           return j;
         });
       });
@@ -287,11 +293,11 @@
         });
     },
     // Cadastrar trial COM convite (usa o mesmo endpoint /api/trial)
-    cadastrarComConvite: function (email, senha, codigo) {
+    cadastrarComConvite: function (email, senha, codigo, nome) {
       return fetch("/api/trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, senha: senha, convite: codigo }),
+        body: JSON.stringify({ email: email, senha: senha, convite: codigo, nome: nome }),
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok || !j.token) {
@@ -301,7 +307,10 @@
             throw e;
           }
           setToken(j.token);
-          try { localStorage.setItem("maestro_role", "trial"); } catch (_) {}
+          try {
+            localStorage.setItem("maestro_role", "trial");
+            if (j.nome) localStorage.setItem("maestro_nome", j.nome);
+          } catch (_) {}
           return j;
         });
       });

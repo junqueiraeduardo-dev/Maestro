@@ -68,7 +68,7 @@ function ProgressBar({ pct, color, height = 6, bg, duration = 700 }) {
     return () => cancelAnimationFrame(id);
   }, [safe]);
 
-  const cor = color || (typeof M !== 'undefined' ? M.amber : '#06b6d4');
+  const cor = color || (typeof M !== 'undefined' ? M.amber : '#C09333');
   const fundo = bg || 'rgba(255,255,255,0.08)';
   return React.createElement('div', {
     style: {

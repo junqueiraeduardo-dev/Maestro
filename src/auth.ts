@@ -251,6 +251,9 @@ export async function trialHandler(req: Request, res: Response) {
     .toLowerCase()
     .slice(0, 160);
   const senha = String(req.body?.senha ?? "");
+  // Nome do cliente — persistido no banco pra aparecer em QUALQUER aparelho
+  // após login (antes vivia só no localStorage de quem cadastrou). Opcional.
+  const nome = String(req.body?.nome ?? "").trim().slice(0, 80);
   // Código de convite OPCIONAL: se vier, vincula o trial ao workspace do
   // chefe que criou o convite. Senão, cai no workspace "principal".
   const conviteCodigo = String(req.body?.convite ?? "")
@@ -322,6 +325,14 @@ export async function trialHandler(req: Request, res: Response) {
       if (error) throw error;
     }
 
+    // Nome: gravação best-effort e TOLERANTE — se a coluna `nome` ainda não
+    // existir (migração não rodada), o erro é ignorado e o cadastro segue.
+    // Quando a coluna existir, passa a gravar sozinho. Não bloqueia nada.
+    if (nome) {
+      supabase.from("trials").update({ nome }).eq("email", email)
+        .then(undefined, (e: any) => console.warn("[trial] grava nome:", e?.message ?? e));
+    }
+
     // Incrementa contador do convite (best-effort; falha não bloqueia cadastro)
     if (conviteCodigo) {
       supabase.rpc("incrementa_convite", { p_codigo: conviteCodigo })
@@ -334,6 +345,7 @@ export async function trialHandler(req: Request, res: Response) {
       plano: "trial",
       expMs,
       dias,
+      nome: nome || null,
     });
   } catch (err: any) {
     console.error("[auth] cadastrar:", err?.message ?? err);
@@ -374,7 +386,7 @@ export async function entrarHandler(req: Request, res: Response) {
   try {
     const { data: u } = await supabase
       .from("trials")
-      .select("senha_hash, expires_at")
+      .select("*")
       .eq("email", email)
       .maybeSingle();
 
@@ -413,6 +425,7 @@ export async function entrarHandler(req: Request, res: Response) {
       plano: "trial",
       expMs,
       dias,
+      nome: (u as any).nome ?? null,
     });
   } catch (err: any) {
     console.error("[auth] entrar:", err?.message ?? err);

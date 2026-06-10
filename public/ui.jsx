@@ -9,46 +9,84 @@
 // Paleta GLASSMORPHISM com FOCO EM PRETO — cards bem escuros, blobs
 // coloridos só pra dar profundidade nas bordas. Cores dos blobs viraram
 // "glow sutil", não "fundo dominante".
-const M = {
-  // PRETO BASE (opaco) — único valor canônico. Antes existiam #0E1117 e
-  // #0F1117 espalhados (typo histórico). Tudo agora vem por este token.
-  // Tom é "preto com 2% de violeta" pra casar com os blobs roxos do bg.
-  bgSolid:   '#0B0D14',
+// TEMA VINHO + DOURADO (escuro) — extraído EXATO da logo (#35030E + #C09333).
+// Há também um TEMA CLARO (creme + dourado). `M` é resolvido no LOAD pelo
+// localStorage (maestro_tema); o botão ThemeToggle troca e recarrega. Nomes de
+// chave mantidos (compat ~200 refs); "amber" = dourado nos dois temas.
+const M_DARK = {
+  // FUNDO BASE (opaco) — vinho/bordô da logo.
+  bgSolid:   '#35030E',
 
-  bg:        'rgba(10, 12, 18, 0.6)',         // fundo de regiões: preto translúcido
-  surface:   'rgba(14, 16, 22, 0.55)',        // cards: preto-fosco vidro escuro
-  surface2:  'rgba(20, 22, 30, 0.65)',        // segundo nível: levemente mais claro
-  border:    'rgba(255, 255, 255, 0.10)',     // edge highlight discreto
-  borderHi:  'rgba(255, 255, 255, 0.16)',
+  bg:        'rgba(53, 3, 14, 0.6)',          // fundo de regiões: vinho translúcido
+  surface:   'rgba(74, 12, 26, 0.5)',         // cards: vinho-fosco vidro
+  surface2:  'rgba(92, 20, 36, 0.6)',         // segundo nível: vinho um pouco mais claro
+  border:    'rgba(201, 152, 47, 0.18)',      // edge dourado sutil (vidro)
+  borderHi:  'rgba(201, 152, 47, 0.30)',
 
-  // ACCENT 1 — ciano elétrico (cyan-500).
-  // "amber" virou CIANO; nome mantido pra evitar refator de ~200 referências.
-  // Semanticamente agora é "cor de destaque primária".
-  amber:     '#06b6d4',
-  amberDim:  '#0e7490',
-  // Soft variants — substituem o "#3B2A0E" marrom queimado que sobrou da
-  // paleta laranja antiga. Ciano translúcido em vez de marrom + ciano (que
-  // era visualmente quebrado).
-  amberSoft:    'rgba(6, 182, 212, 0.12)',
-  amberBorder:  'rgba(6, 182, 212, 0.30)',
+  // ACCENT 1 — DOURADO da logo. "amber" mantido como nome por compat.
+  amber:     '#C09333',
+  amberDim:  '#8F6E22',
+  amberSoft:    'rgba(192, 147, 51, 0.14)',
+  amberBorder:  'rgba(192, 147, 51, 0.38)',
 
-  // ACCENT 2 — violeta (violet-400). Cor secundária da paleta "roxo+preto"
-  // anunciada nos blobs do fundo. Usada em badges Equipe, plano anual,
-  // qualquer coisa que precise se distinguir do ciano sem ser verde/vermelho.
-  purple:        '#A78BFA',
-  purpleDim:     '#7C3AED',
-  purpleSoft:    'rgba(167, 139, 250, 0.14)',
-  purpleBorder:  'rgba(167, 139, 250, 0.36)',
+  // ACCENT 2 — rosé/vinho claro (destoa do dourado). Badges Equipe, plano anual.
+  purple:        '#E08AA0',
+  purpleDim:     '#B05A72',
+  purpleSoft:    'rgba(224, 138, 160, 0.14)',
+  purpleBorder:  'rgba(224, 138, 160, 0.34)',
 
-  green:     '#10B981',
-  greenSoft: 'rgba(16, 185, 129, 0.12)',
-  red:       '#EF4444',
-  redDim:    '#8C2A2A',
-  redSoft:   'rgba(239, 68, 68, 0.12)',
-  text:      '#F1F5F9',
-  textDim:   '#94A3B8',
-  textMute:  '#64748B',
+  green:     '#34D399',
+  greenSoft: 'rgba(52, 211, 153, 0.14)',
+  red:       '#F87171',
+  redDim:    '#B04A4A',
+  redSoft:   'rgba(248, 113, 113, 0.14)',
+  text:      '#F5EFE3',     // creme claro (sobre vinho)
+  textDim:   '#CBB89A',     // bege médio
+  textMute:  '#9A8B70',     // bege escuro
 };
+
+// TEMA CLARO — creme + dourado/bronze + texto vinho. Mesma identidade, clara.
+const M_LIGHT = {
+  bgSolid:   '#FBF8F2',
+  bg:        'rgba(251, 248, 242, 0.7)',
+  surface:   'rgba(255, 255, 255, 0.78)',
+  surface2:  'rgba(255, 255, 255, 0.92)',
+  border:    'rgba(53, 3, 14, 0.12)',
+  borderHi:  'rgba(53, 3, 14, 0.20)',
+  amber:     '#A9791C',      // dourado/bronze (contraste em fundo claro)
+  amberDim:  '#7E5A12',
+  amberSoft:    'rgba(169, 121, 28, 0.12)',
+  amberBorder:  'rgba(169, 121, 28, 0.34)',
+  purple:        '#8A1A33',  // vinho como accent 2 no claro
+  purpleDim:     '#6B1226',
+  purpleSoft:    'rgba(138, 26, 51, 0.10)',
+  purpleBorder:  'rgba(138, 26, 51, 0.30)',
+  green:     '#0F8A5F',
+  greenSoft: 'rgba(15, 138, 95, 0.12)',
+  red:       '#C0392B',
+  redDim:    '#8E2A20',
+  redSoft:   'rgba(192, 57, 43, 0.10)',
+  text:      '#2A0309',      // vinho quase preto (texto)
+  textDim:   '#6E5258',
+  textMute:  '#A08A8F',
+};
+
+// Tema ativo, lido no LOAD (default escuro).
+function lerTemaMaestro() {
+  try { return localStorage.getItem('maestro_tema') === 'light' ? 'light' : 'dark'; }
+  catch (_) { return 'dark'; }
+}
+const TEMA_ATIVO = lerTemaMaestro();
+const M = TEMA_ATIVO === 'light' ? M_LIGHT : M_DARK;
+
+// Alterna claro/escuro: persiste e recarrega. M é resolvido no load, então o
+// reload garante que TODA a UI + o CSS do index.html troquem de uma vez.
+function trocarTema() {
+  try {
+    localStorage.setItem('maestro_tema', TEMA_ATIVO === 'light' ? 'dark' : 'light');
+  } catch (_) {}
+  location.reload();
+}
 
 // =========================================================================
 // Lucide-style icons (inlined SVG paths; stroke=1.75, round caps)
@@ -99,6 +137,8 @@ function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 2, style 
     'briefcase':   <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></>,
     'car':         <><path d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11"/><rect x="3" y="11" width="18" height="6" rx="1.5"/><circle cx="7.5" cy="17.5" r="1.9"/><circle cx="16.5" cy="17.5" r="1.9"/></>,
     'clipboard':   <><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3.2A1.2 1.2 0 0 1 10.2 2h3.6A1.2 1.2 0 0 1 15 3.2V4"/><path d="M9 11h6"/><path d="M9 15h6"/></>,
+    'sun':         <><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/></>,
+    'moon':        <><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -106,6 +146,26 @@ function Icon({ name, size = 24, color = 'currentColor', strokeWidth = 2, style 
          strokeLinecap="round" strokeLinejoin="round" style={style}>
       {P[name] || <circle cx="12" cy="12" r="9"/>}
     </svg>
+  );
+}
+
+// Botão de alternância de tema (claro/escuro). Mostra o ícone do tema-DESTINO.
+function ThemeToggle({ style }) {
+  const claro = TEMA_ATIVO === 'light';
+  return (
+    <button type="button" onClick={trocarTema}
+      aria-label="Alternar tema claro/escuro"
+      title={claro ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
+      style={{
+        width: 40, height: 40, borderRadius: 12, cursor: 'pointer',
+        background: M.surface, border: `1px solid ${M.borderHi}`,
+        color: M.amber, boxShadow: 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'transform .15s ease, background .2s',
+        ...style,
+      }}>
+      <Icon name={claro ? 'moon' : 'sun'} size={20}/>
+    </button>
   );
 }
 
@@ -328,33 +388,75 @@ const TABS = [
   { id: 'dash',   label: 'Dashboard',    icon: 'chart' },
 ];
 
+// DOCK de navegação (estilo macOS / reactbits): painel flutuante de vidro vinho;
+// no desktop os ícones AUMENTAM conforme o cursor se aproxima (magnificação) e
+// mostram tooltip; no touch (mobile) vira uma barra limpa com o ativo em dourado.
+// O slot central (índice 2) fica reservado para o MicFAB (botão de voz).
 function BottomTabBar({ active, onChange }) {
+  const refs = React.useRef([]);
+  const RANGE = 110, MAX_SCALE = 1.5;   // alcance (px) e escala no pico
+
+  function magnify(e) {
+    const mx = e.clientX;
+    refs.current.forEach((el) => {
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const d = Math.abs(mx - (r.left + r.width / 2));
+      const t = Math.max(0, 1 - d / RANGE);
+      el.style.transform = `translateY(${-12 * t}px) scale(${1 + (MAX_SCALE - 1) * t})`;
+      const tip = el.querySelector('.dock-tip');
+      if (tip) tip.style.opacity = t > 0.5 ? '1' : '0';
+    });
+  }
+  function reset() {
+    refs.current.forEach((el) => {
+      if (!el) return;
+      el.style.transform = 'translateY(0) scale(1)';
+      const tip = el.querySelector('.dock-tip');
+      if (tip) tip.style.opacity = '0';
+    });
+  }
+
   return (
-    <div style={{
-      background: M.surface, borderTop: `1px solid ${M.border}`,
-      padding: '8px 4px 12px',
-      display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end',
-      position: 'relative', flexShrink: 0,
-    }}>
-      {TABS.map((t, i) => {
-        const isActive = t.id === active;
-        const isCenter = i === 2;
-        return (
-          <button key={t.id} onClick={() => onChange(t.id)}
-            style={{
-              flex: 1, background: 'transparent', border: 'none',
-              padding: '6px 0', minHeight: 56, cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              color: isActive ? M.amber : M.textDim,
-              opacity: isCenter ? 0 : 1, pointerEvents: isCenter ? 'none' : 'auto',
-            }}>
-            <Icon name={t.icon} size={24} strokeWidth={isActive ? 2.2 : 1.75}/>
-            <span style={{
-              fontSize: 10.5, fontWeight: isActive ? 700 : 500, letterSpacing: 0.2,
-            }}>{t.label}</span>
-          </button>
-        );
-      })}
+    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '0 16px 14px' }}>
+      <div onMouseMove={magnify} onMouseLeave={reset}
+        style={{
+          display: 'flex', alignItems: 'flex-end', gap: 8,
+          background: M.surface, border: `1px solid ${M.borderHi}`,
+          borderRadius: 24, padding: '10px 16px',
+        }}>
+        {TABS.map((t, i) => {
+          if (i === 2) {
+            // espaço para o botão de microfone (MicFAB flutua por cima)
+            return <div key="mic-slot" style={{ width: 58, flexShrink: 0 }} aria-hidden="true"/>;
+          }
+          const isActive = t.id === active;
+          return (
+            <button key={t.id} onClick={() => onChange(t.id)}
+              ref={(el) => { refs.current[i] = el; }} aria-label={t.label}
+              style={{
+                position: 'relative', width: 46, height: 46, flexShrink: 0,
+                borderRadius: 14, cursor: 'pointer',
+                background: isActive ? M.amberSoft : 'rgba(255,255,255,0.04)',
+                border: isActive ? `1px solid ${M.amberBorder}` : '1px solid transparent',
+                color: isActive ? M.amber : M.textDim,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transformOrigin: 'bottom center', boxShadow: 'none',
+                transition: 'transform .13s ease-out, background .2s, color .2s, border-color .2s',
+              }}>
+              <Icon name={t.icon} size={23} strokeWidth={isActive ? 2.4 : 1.9}/>
+              <span className="dock-tip" style={{
+                position: 'absolute', bottom: '100%', marginBottom: 12, left: '50%',
+                transform: 'translateX(-50%)', whiteSpace: 'nowrap',
+                background: M.bgSolid, color: M.text,
+                border: `1px solid ${M.borderHi}`, borderRadius: 8,
+                padding: '3px 9px', fontSize: 11, fontWeight: 600,
+                opacity: 0, transition: 'opacity .15s', pointerEvents: 'none',
+              }}>{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -408,7 +510,7 @@ function MicFAB({ state, onPress }) {
           width: 64, height: 64, borderRadius: '50%',
           background: isThinking
             ? `conic-gradient(${M.amber} 0%, ${M.amber}55 50%, ${M.amber} 100%)`
-            : `radial-gradient(circle at 35% 30%, #67e8f9 0%, ${M.amber} 60%, ${M.amberDim} 100%)`,
+            : `radial-gradient(circle at 35% 30%, #FCE5B0 0%, ${M.amber} 60%, ${M.amberDim} 100%)`,
           border: `3px solid ${M.bg}`,
           color: '#fff', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

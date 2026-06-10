@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"/>
-  <meta name="theme-color" content="#0B0D14"/>
+  <meta name="theme-color" content="#35030E"/>
+  <script>
+    // Aplica o tema salvo ANTES de renderizar — evita flash do tema errado.
+    (function () {
+      try {
+        if (localStorage.getItem('maestro_tema') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', '#FBF8F2');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -21,12 +33,12 @@
   <title>Maestro · Manutenção por voz para oficina, frota e agro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; padding: 0; height: 100%;
-      background: #04030a; overscroll-behavior: none; /* preto puro c/ tinge roxo */
+      background: #35030E; overscroll-behavior: none; /* EXATO da logo (funde a img) */
     }
 
     /* ===================================================================
@@ -41,34 +53,34 @@
     }
     .bg-blob {
       position: absolute; border-radius: 50%;
-      filter: blur(110px); opacity: 0.42;     /* sutil — glow nas bordas */
+      filter: blur(120px); opacity: 0.28;      /* glow bem sutil (fundo uniforme p/ a logo) */
       will-change: transform;
-      mix-blend-mode: screen;
+      mix-blend-mode: screen;                  /* sobre fundo escuro: clareia de leve */
     }
-    /* Paleta MONOCROMÁTICA ROXO+PRETO: 4 tons de roxo/indigo/violeta.
-       Sem warm colors. Preto domina. */
-    .bg-blob-1 { /* roxo profundo (purple-900) */
+    /* TEMA VINHO+DOURADO: tons de bordô/vinho + um toque de dourado, só pra dar
+       profundidade nas bordas. Vinho domina. */
+    .bg-blob-1 { /* vinho-vermelho */
       top: -12%; left: -15%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #4c1d95 0%, transparent 70%);
+      background: radial-gradient(circle, #7A1228 0%, transparent 70%);
       animation: blob-orbit-1 28s ease-in-out infinite;
     }
-    .bg-blob-2 { /* violeta (violet-800) */
+    .bg-blob-2 { /* bordô */
       top: 35%; right: -22%;
       width: 60vmax; height: 60vmax;
-      background: radial-gradient(circle, #5b21b6 0%, transparent 70%);
+      background: radial-gradient(circle, #5B0A1A 0%, transparent 70%);
       animation: blob-orbit-2 32s ease-in-out infinite;
     }
-    .bg-blob-3 { /* plum (purple-950) */
+    .bg-blob-3 { /* dourado queimado (glow quente) */
       bottom: -18%; left: 25%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #3b0764 0%, transparent 70%);
+      background: radial-gradient(circle, #6E5418 0%, transparent 70%);
       animation: blob-orbit-3 36s ease-in-out infinite;
     }
-    .bg-blob-4 { /* indigo profundo (indigo-900) */
+    .bg-blob-4 { /* vinho escuro */
       top: 15%; left: 25%;
       width: 50vmax; height: 50vmax;
-      background: radial-gradient(circle, #312e81 0%, transparent 70%);
+      background: radial-gradient(circle, #4A0511 0%, transparent 70%);
       animation: blob-orbit-4 40s ease-in-out infinite;
     }
     @keyframes blob-orbit-1 {
@@ -105,7 +117,7 @@
       z-index: 1; opacity: 0.04; mix-blend-mode: overlay;
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
     }
-    body { font-family: 'Inter', system-ui, sans-serif; color: #F1F5F9; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #F5EFE3; }
     #root { height: 100%; width: 100%; position: relative; z-index: 2; }
 
     /* ===================================================================
@@ -120,8 +132,8 @@
     [style*="border-radius"][style*="background"]:not(.bg-blob):not(#boot *) {
       -webkit-backdrop-filter: blur(24px) saturate(160%);
       backdrop-filter: blur(24px) saturate(160%);
-      -webkit-box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
-              box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+      -webkit-box-shadow: 0 8px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
+              box-shadow: 0 8px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
     }
     /* Inputs e textareas dentro de cards: sem blur duplo (mais legível) */
     input[style*="background"], textarea[style*="background"], select[style*="background"] {
@@ -155,9 +167,9 @@
       button[style*="border-radius"]:not(:disabled):hover,
       [style*="border-radius"][style*="cursor"]:not(:disabled):hover {
         transform: translateY(-1px) scale(1.02);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.28),
-                    inset 0 1px 0 rgba(255,255,255,0.15),
-                    0 0 0 1px rgba(6,182,212,0.18);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.1),
+                    0 0 0 1px rgba(192,147,51,0.32);
         transition: transform .18s ease, box-shadow .18s ease;
       }
     }
@@ -249,15 +261,15 @@
     #boot {
       position: fixed; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 18px;
-      background: #0B0D14; z-index: 9999;
+      background: #35030E; z-index: 9999;
     }
     #boot .mono {
-      width: 72px; height: 72px; border-radius: 10px; background: #06b6d4;
+      width: 72px; height: 72px; border-radius: 10px; background: #C09333;
       padding: 18px 13px; display: flex; align-items: center;
       justify-content: space-between; gap: 4px;
     }
     #boot .mono i {
-      flex: 1; background: #0B0D14; border-radius: 2px; transform-origin: center;
+      flex: 1; background: #35030E; border-radius: 2px; transform-origin: center;
       animation: bwave 1.1s ease-in-out infinite;
     }
     #boot .mono i:nth-child(1) { height: 30%;  animation-delay: 0s;    }
@@ -266,9 +278,34 @@
     #boot .mono i:nth-child(4) { height: 100%; animation-delay: .54s;  }
     #boot .mono i:nth-child(5) { height: 30%;  animation-delay: .72s;  }
     #boot .word {
-      font-weight: 800; letter-spacing: 2px; color: #F1F5F9; font-size: 15px;
+      font-weight: 800; letter-spacing: 2px; color: #F5EFE3; font-size: 15px;
     }
     @keyframes bwave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(.35); } }
+
+    /* ============ TEMA CLARO (data-theme="light") ============
+       Sobrescreve só o que é estático no CSS; as cores dos componentes vêm do
+       objeto M (resolvido no load por localStorage). */
+    html[data-theme="light"], html[data-theme="light"] body { background: #FBF8F2; }
+    html[data-theme="light"] body { color: #2A0309; }
+    /* blobs claros e sutis (multiply escurece de leve sobre o creme) */
+    html[data-theme="light"] .bg-blob { opacity: 0.16; mix-blend-mode: multiply; }
+    html[data-theme="light"] .bg-blob-1 { background: radial-gradient(circle, #E9C9A0 0%, transparent 70%); }
+    html[data-theme="light"] .bg-blob-2 { background: radial-gradient(circle, #D8B7C0 0%, transparent 70%); }
+    html[data-theme="light"] .bg-blob-3 { background: radial-gradient(circle, #E7D4A6 0%, transparent 70%); }
+    html[data-theme="light"] .bg-blob-4 { background: radial-gradient(circle, #DCC7CE 0%, transparent 70%); }
+    html[data-theme="light"] body::before { opacity: 0; } /* sem grão no claro */
+    /* glass: sombra clara em vez da escura */
+    html[data-theme="light"] [style*="border-radius"][style*="background"]:not(.bg-blob):not(#boot *) {
+      -webkit-box-shadow: 0 6px 22px rgba(53,3,14,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+              box-shadow: 0 6px 22px rgba(53,3,14,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      html[data-theme="light"] button[style*="border-radius"]:not(:disabled):hover,
+      html[data-theme="light"] [style*="border-radius"][style*="cursor"]:not(:disabled):hover {
+        box-shadow: 0 10px 28px rgba(53,3,14,0.12), inset 0 1px 0 rgba(255,255,255,0.7), 0 0 0 1px rgba(169,121,28,0.3);
+      }
+    }
+    html[data-theme="light"] #boot { background: #FBF8F2; }
   </style>
 </head>
 <body>
@@ -281,10 +318,7 @@
     <span class="bg-blob bg-blob-3"></span>
     <span class="bg-blob bg-blob-4"></span>
   </div>
-  <div id="boot">
-    <div class="mono"><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="word">MAESTRO</div>
-  </div>
+  <div id="boot"></div>
   <div id="root"></div>
   <!-- React/ReactDOM PRODUCTION (minificados, ~45KB cada). Antes carregava
        'development' (~180KB cada) — em 3G/dispositivo modesto o splash

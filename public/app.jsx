@@ -636,8 +636,8 @@ function Login({ onOk }) {
     setBusy(true); setErro(null);
     // Se veio com convite válido, usa endpoint que vincula o workspace.
     const fn = convite && convInfo
-      ? window.API.cadastrarComConvite(email.trim(), senha, convite)
-      : window.API.cadastrar(email.trim(), senha);
+      ? window.API.cadastrarComConvite(email.trim(), senha, convite, nome.trim())
+      : window.API.cadastrar(email.trim(), senha, nome.trim());
     fn
       .then(() => {
         salvarPerfilCompleto();
@@ -732,10 +732,31 @@ function Login({ onOk }) {
       display: "flex", flexDirection: "column", alignItems: "center",
       padding: "40px 24px", paddingTop: "max(40px, env(safe-area-inset-top))",
     }}>
+      <ThemeToggle style={{
+        position: "absolute", top: "max(16px, env(safe-area-inset-top))", right: 16, zIndex: 5,
+      }}/>
       <div style={{
-        marginBottom: 22,
+        marginBottom: 2, width: '100%', maxWidth: 360,
         animation: 'maestro-logo-in .7s cubic-bezier(.34,1.56,.64,1) both',
-      }}><Logo size={56} word/></div>
+      }}>
+        <img src="/logo.png?v=27" alt="Maestro — Gestão de Estoque"
+          style={{ width: '100%', display: 'block', opacity: 0.92 }}/>
+      </div>
+      <div style={{
+        marginBottom: 26, textAlign: 'center',
+        animation: 'maestro-logo-in .7s cubic-bezier(.34,1.56,.64,1) .12s both',
+      }}>
+        <div style={{
+          fontFamily: "'Cinzel', serif", fontWeight: 700,
+          fontSize: 30, letterSpacing: 7, lineHeight: 1, color: M.amber,
+          textShadow: '0 2px 16px rgba(192,147,51,0.35)',
+        }}>MAESTRO</div>
+        <div style={{
+          fontFamily: "'Cinzel', serif", fontWeight: 500,
+          fontSize: 12, letterSpacing: 4, marginTop: 9,
+          color: M.textDim, textTransform: 'uppercase',
+        }}>Gestão de Estoque</div>
+      </div>
       <div style={{ width: "100%", maxWidth: 380 }}>
         {convite && (
           <div style={{
@@ -1620,7 +1641,7 @@ function PremiumCelebration({ onClose }) {
         }}/>
         <div style={{
           position: "absolute", inset: 0, borderRadius: "50%",
-          background: "linear-gradient(135deg, #22d3ee 0%, #06b6d4 55%, #155e75 100%)",
+          background: "linear-gradient(135deg, #E3C57E 0%, #C09333 55%, #8F6E22 100%)",
           boxShadow: "0 12px 40px rgba(6,182,212,0.45), inset 0 2px 8px rgba(255,255,255,0.4)",
           display: "flex", alignItems: "center", justifyContent: "center",
           animation: "maestro-badge-pop .9s cubic-bezier(.34,1.56,.64,1) both",

@@ -529,7 +529,7 @@ function UserMenuSheet({ onClose, onLogout }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}><Icon name={icon} size={18}/></div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: danger ? '#FCA5A5' : M.text }}>{titulo}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: danger ? M.red : M.text }}>{titulo}</div>
         <div style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>{desc}</div>
       </div>
       <Icon name="chevron-r" size={16} color={M.textDim}/>
@@ -590,6 +590,9 @@ function UserMenuSheet({ onClose, onLogout }) {
                 )}
                 {opt('check', 'Ajuda e contato', 'Suporte, privacidade, termos',
                   () => setView('ajuda'))}
+                {opt(TEMA_ATIVO === 'light' ? 'moon' : 'sun',
+                  'Tema: ' + (TEMA_ATIVO === 'light' ? 'claro' : 'escuro'),
+                  'Tocar para alternar claro ↔ escuro', trocarTema)}
                 {opt('arrow-up-r', 'Sair da conta', 'Encerrar sessão neste aparelho',
                   () => { if (confirm('Sair da conta?')) onLogout && onLogout(); }, true)}
                 {opt('x', 'Excluir minha conta', 'Apaga seu cadastro e chave Premium (LGPD)',
@@ -692,7 +695,7 @@ function UserMenuSheet({ onClose, onLogout }) {
                       style={{
                         marginTop: 12, width: '100%', padding: '12px 16px',
                         borderRadius: 10, background: 'transparent',
-                        border: `1px solid ${M.red}66`, color: '#FCA5A5',
+                        border: `1px solid ${M.red}66`, color: M.red,
                         fontWeight: 700, fontSize: 13,
                         cursor: cancelando ? 'wait' : 'pointer',
                       }}>
@@ -871,7 +874,7 @@ function UserMenuSheet({ onClose, onLogout }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{
                 background: 'rgba(239,68,68,0.08)', border: `1px solid ${M.red}44`,
-                borderRadius: 12, padding: 14, color: '#FCA5A5', fontSize: 13.5, lineHeight: 1.5,
+                borderRadius: 12, padding: 14, color: M.red, fontSize: 13.5, lineHeight: 1.5,
               }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, color: M.red }}>
                   Isto é irreversível
@@ -881,13 +884,13 @@ function UserMenuSheet({ onClose, onLogout }) {
                   <li>seu e-mail, nome e senha (hash)</li>
                   <li>sua chave Premium ativa (se houver)</li>
                 </ul>
-                <div style={{ marginTop: 10, fontSize: 12.5, color: '#FCA5A5BB' }}>
+                <div style={{ marginTop: 10, fontSize: 12.5, color: M.redDim }}>
                   Dados operacionais do <b>workspace</b> (peças, OS, equipamentos)
                   PERMANECEM, pois pertencem à empresa, não a você. Se você é o único usuário,
                   ninguém mais terá acesso a eles.
                 </div>
                 {plano.plan !== 'trial' && (
-                  <div style={{ marginTop: 10, fontSize: 12.5, color: '#FCA5A5BB' }}>
+                  <div style={{ marginTop: 10, fontSize: 12.5, color: M.redDim }}>
                     <b>Importante:</b> a cobrança recorrente do Mercado Pago precisa ser
                     cancelada por você no painel do MP. Excluir a conta aqui não cancela
                     o cartão.
@@ -1048,7 +1051,7 @@ function ModuleCard({ icon, title, badge, onClick }) {
     neutral: { bg: 'rgba(148, 163, 184, 0.10)', fg: M.textDim, border: M.border },
     amber:   { bg: M.amberSoft,                 fg: M.amber,   border: M.amberBorder },
     purple:  { bg: M.purpleSoft,                fg: M.purple,  border: M.purpleBorder },
-    red:     { bg: M.redSoft,                   fg: '#FCA5A5', border: 'rgba(239,68,68,0.30)' },
+    red:     { bg: M.redSoft,                   fg: M.red, border: 'rgba(239,68,68,0.30)' },
   }[badge.tone];
   return (
     <Card onClick={onClick} padding={16} style={{ minHeight: 124 }}>
@@ -1520,7 +1523,7 @@ function PartForm({ peca, onClose, onSaved, onDeleted }) {
             {editando && window.API.role() === 'pai' && (
               <button onClick={excluir} disabled={busy} style={{
                 marginTop: 6, background: 'transparent', border: `1px solid ${M.red}55`,
-                color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+                color: M.red, borderRadius: 10, padding: '12px 0',
                 fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
               }}>Excluir peça</button>
             )}
@@ -1996,7 +1999,7 @@ function OsDetailScreen({ nav, params }) {
               {!concluida && (
                 <button onClick={() => setRunning(r => !r)} style={{
                   width: 44, height: 44, borderRadius: 10,
-                  background: running ? '#2E2410' : M.amber,
+                  background: running ? M.redSoft : M.amber,
                   color: running ? M.amber : M.bgSolid,
                   border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2032,7 +2035,7 @@ function OsDetailScreen({ nav, params }) {
         {window.API.role() === 'pai' && (
           <button onClick={excluirOs} disabled={busy} style={{
             background: 'transparent', border: `1px solid ${M.red}55`,
-            color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+            color: M.red, borderRadius: 10, padding: '12px 0',
             fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
           }}>Excluir OS</button>
         )}
@@ -2626,7 +2629,7 @@ function EquipDetailScreen({ nav, params }) {
         {window.API.role() === 'pai' && (
           <button onClick={excluirEquip} disabled={savingStatus} style={{
             background: 'transparent', border: `1px solid ${M.red}55`,
-            color: '#FCA5A5', borderRadius: 10, padding: '12px 0',
+            color: M.red, borderRadius: 10, padding: '12px 0',
             fontSize: 14, fontWeight: 700, cursor: savingStatus ? 'wait' : 'pointer',
           }}>Excluir equipamento</button>
         )}
@@ -2808,7 +2811,7 @@ function DashScreen({ nav }) {
                     </div>
                     <button onClick={() => nav.push('equip-detail', { id: e.id })} style={{
                       background: 'transparent', border: `1px solid ${M.red}66`,
-                      color: '#FCA5A5', borderRadius: 8, padding: '6px 12px',
+                      color: M.red, borderRadius: 8, padding: '6px 12px',
                       cursor: 'pointer', fontSize: 12, fontWeight: 700,
                     }}>Ver</button>
                   </div>

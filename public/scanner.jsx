@@ -276,7 +276,7 @@ function QrDisplaySheet({ codigo, titulo, subtitulo, onClose }) {
       + (sub ? '<div class="nome">' + sub + '</div>' : '')
       + '<button class="no-print" onclick="window.print()" style="'
       +   'margin-top:24px;padding:10px 24px;font-size:14px;cursor:pointer;'
-      +   'background:#06b6d4;color:#000;border:none;border-radius:8px;font-weight:bold;'
+      +   'background:#35030E;color:#C09333;border:none;border-radius:8px;font-weight:bold;'
       + '">Imprimir</button>'
       + '<scr' + 'ipt>setTimeout(function(){window.print();},300);</scr' + 'ipt>'
       + '</body></html>'
