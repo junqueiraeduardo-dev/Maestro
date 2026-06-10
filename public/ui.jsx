@@ -18,8 +18,8 @@ const M_DARK = {
   bgSolid:   '#35030E',
 
   bg:        'rgba(53, 3, 14, 0.6)',          // fundo de regiões: vinho translúcido
-  surface:   'rgba(74, 12, 26, 0.5)',         // cards: vinho-fosco vidro
-  surface2:  'rgba(92, 20, 36, 0.6)',         // segundo nível: vinho um pouco mais claro
+  surface:   'rgba(192, 147, 51, 0.09)',      // cards: dourado suave (vidro) sobre o vinho
+  surface2:  'rgba(192, 147, 51, 0.15)',      // segundo nível: dourado um pouco mais presente
   border:    'rgba(201, 152, 47, 0.18)',      // edge dourado sutil (vidro)
   borderHi:  'rgba(201, 152, 47, 0.30)',
 
@@ -49,8 +49,8 @@ const M_DARK = {
 const M_LIGHT = {
   bgSolid:   '#FBF8F2',
   bg:        'rgba(251, 248, 242, 0.7)',
-  surface:   'rgba(255, 255, 255, 0.78)',
-  surface2:  'rgba(255, 255, 255, 0.92)',
+  surface:   'rgba(247, 238, 214, 0.85)',     // cards: creme-dourado (papel) com leve tinta dourada
+  surface2:  'rgba(250, 244, 226, 0.95)',     // segundo nível: um pouco mais claro
   border:    'rgba(53, 3, 14, 0.12)',
   borderHi:  'rgba(53, 3, 14, 0.20)',
   amber:     '#A9791C',      // dourado/bronze (contraste em fundo claro)
@@ -418,45 +418,47 @@ function BottomTabBar({ active, onChange }) {
   }
 
   return (
-    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '0 16px 14px' }}>
-      <div onMouseMove={magnify} onMouseLeave={reset}
-        style={{
-          display: 'flex', alignItems: 'flex-end', gap: 8,
-          background: M.surface, border: `1px solid ${M.borderHi}`,
-          borderRadius: 24, padding: '10px 16px',
-        }}>
-        {TABS.map((t, i) => {
-          if (i === 2) {
-            // espaço para o botão de microfone (MicFAB flutua por cima)
-            return <div key="mic-slot" style={{ width: 58, flexShrink: 0 }} aria-hidden="true"/>;
-          }
-          const isActive = t.id === active;
-          return (
-            <button key={t.id} onClick={() => onChange(t.id)}
-              ref={(el) => { refs.current[i] = el; }} aria-label={t.label}
-              style={{
-                position: 'relative', width: 46, height: 46, flexShrink: 0,
-                borderRadius: 14, cursor: 'pointer',
-                background: isActive ? M.amberSoft : 'rgba(255,255,255,0.04)',
-                border: isActive ? `1px solid ${M.amberBorder}` : '1px solid transparent',
-                color: isActive ? M.amber : M.textDim,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transformOrigin: 'bottom center', boxShadow: 'none',
-                transition: 'transform .13s ease-out, background .2s, color .2s, border-color .2s',
-              }}>
-              <Icon name={t.icon} size={23} strokeWidth={isActive ? 2.4 : 1.9}/>
-              <span className="dock-tip" style={{
-                position: 'absolute', bottom: '100%', marginBottom: 12, left: '50%',
-                transform: 'translateX(-50%)', whiteSpace: 'nowrap',
-                background: M.bgSolid, color: M.text,
-                border: `1px solid ${M.borderHi}`, borderRadius: 8,
-                padding: '3px 9px', fontSize: 11, fontWeight: 600,
-                opacity: 0, transition: 'opacity .15s', pointerEvents: 'none',
-              }}>{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div onMouseMove={magnify} onMouseLeave={reset}
+      style={{
+        flexShrink: 0, width: '100%',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: 4,
+        background: M.surface, borderTop: `1px solid ${M.borderHi}`,
+        WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+        backdropFilter: 'blur(24px) saturate(160%)',
+        boxShadow: '0 -6px 24px rgba(0,0,0,0.28)',
+        padding: '10px 10px 12px',
+      }}>
+      {TABS.map((t, i) => {
+        if (i === 2) {
+          // espaço para o botão de microfone (MicFAB flutua por cima)
+          return <div key="mic-slot" style={{ width: 58, flexShrink: 0 }} aria-hidden="true"/>;
+        }
+        const isActive = t.id === active;
+        return (
+          <button key={t.id} onClick={() => onChange(t.id)}
+            ref={(el) => { refs.current[i] = el; }} aria-label={t.label}
+            style={{
+              position: 'relative', width: 48, height: 46, flexShrink: 0,
+              borderRadius: 14, cursor: 'pointer',
+              background: isActive ? M.amberSoft : 'transparent',
+              border: isActive ? `1px solid ${M.amberBorder}` : '1px solid transparent',
+              color: isActive ? M.amber : M.textDim,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transformOrigin: 'bottom center', boxShadow: 'none',
+              transition: 'transform .13s ease-out, background .2s, color .2s, border-color .2s',
+            }}>
+            <Icon name={t.icon} size={23} strokeWidth={isActive ? 2.4 : 1.9}/>
+            <span className="dock-tip" style={{
+              position: 'absolute', bottom: '100%', marginBottom: 12, left: '50%',
+              transform: 'translateX(-50%)', whiteSpace: 'nowrap',
+              background: M.bgSolid, color: M.text,
+              border: `1px solid ${M.borderHi}`, borderRadius: 8,
+              padding: '3px 9px', fontSize: 11, fontWeight: 600,
+              opacity: 0, transition: 'opacity .15s', pointerEvents: 'none',
+            }}>{t.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

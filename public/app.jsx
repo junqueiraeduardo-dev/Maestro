@@ -1804,10 +1804,10 @@ function Root() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
 
-// remove a tela de boot assim que o React monta
+// remove a tela neutra de boot assim que o React monta (sem intro)
 const boot = document.getElementById("boot");
 if (boot) {
-  boot.style.transition = "opacity .25s ease";
+  boot.style.transition = "opacity .2s ease";
   boot.style.opacity = "0";
-  setTimeout(() => boot.remove(), 300);
+  setTimeout(() => boot.remove(), 220);
 }

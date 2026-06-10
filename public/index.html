@@ -257,30 +257,11 @@
     /* Números tabulares — alinham peso visual em listas/KPIs */
     .num { font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
     .display { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -0.01em; }
-    /* tela de carregamento enquanto o Babel compila os .jsx no cliente */
+    /* Tela neutra da cor do fundo enquanto o Babel compila os .jsx (sem intro):
+       cobre a tela e some assim que o React monta. */
     #boot {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 18px;
-      background: #35030E; z-index: 9999;
+      position: fixed; inset: 0; z-index: 9999; background: #35030E;
     }
-    #boot .mono {
-      width: 72px; height: 72px; border-radius: 10px; background: #C09333;
-      padding: 18px 13px; display: flex; align-items: center;
-      justify-content: space-between; gap: 4px;
-    }
-    #boot .mono i {
-      flex: 1; background: #35030E; border-radius: 2px; transform-origin: center;
-      animation: bwave 1.1s ease-in-out infinite;
-    }
-    #boot .mono i:nth-child(1) { height: 30%;  animation-delay: 0s;    }
-    #boot .mono i:nth-child(2) { height: 100%; animation-delay: .18s;  }
-    #boot .mono i:nth-child(3) { height: 55%;  animation-delay: .36s;  }
-    #boot .mono i:nth-child(4) { height: 100%; animation-delay: .54s;  }
-    #boot .mono i:nth-child(5) { height: 30%;  animation-delay: .72s;  }
-    #boot .word {
-      font-weight: 800; letter-spacing: 2px; color: #F5EFE3; font-size: 15px;
-    }
-    @keyframes bwave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(.35); } }
 
     /* ============ TEMA CLARO (data-theme="light") ============
        Sobrescreve só o que é estático no CSS; as cores dos componentes vêm do

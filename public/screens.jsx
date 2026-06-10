@@ -146,8 +146,12 @@ function HomeScreen({ nav, openMic, onLogout }) {
         padding: '18px 16px 8px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <Logo size={30} word/>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+          <img src="/logo.png?v=27" alt="Maestro" style={{ height: 32, display: 'block', flexShrink: 0 }}/>
+          <span style={{ fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: 15, letterSpacing: 1.5, color: M.amber }}>MAESTRO</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle/>
           <button onClick={() => setNotif(true)} style={{
             position: 'relative', width: 40, height: 40, borderRadius: 10,
             background: M.surface, border: `1px solid ${M.border}`,
