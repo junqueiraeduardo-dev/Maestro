@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"/>
-  <meta name="theme-color" content="#35030E"/>
+  <meta name="theme-color" content="#240309"/>
   <script>
     // Aplica o tema salvo ANTES de renderizar — evita flash do tema errado.
     (function () {
@@ -11,7 +11,7 @@
         if (localStorage.getItem('maestro_tema') === 'light') {
           document.documentElement.setAttribute('data-theme', 'light');
           var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute('content', '#FBF8F2');
+          if (m) m.setAttribute('content', '#E9E0CE');
         }
       } catch (e) {}
     })();
@@ -38,7 +38,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; padding: 0; height: 100%;
-      background: #35030E; overscroll-behavior: none; /* EXATO da logo (funde a img) */
+      background: #240309; overscroll-behavior: none; /* vinho profundo (logo é PNG transparente) */
     }
 
     /* ===================================================================
@@ -53,7 +53,7 @@
     }
     .bg-blob {
       position: absolute; border-radius: 50%;
-      filter: blur(120px); opacity: 0.28;      /* glow bem sutil (fundo uniforme p/ a logo) */
+      filter: blur(120px); opacity: 0.18;      /* glow bem sutil — vinho profundo, sem brilho forte */
       will-change: transform;
       mix-blend-mode: screen;                  /* sobre fundo escuro: clareia de leve */
     }
@@ -62,25 +62,25 @@
     .bg-blob-1 { /* vinho-vermelho */
       top: -12%; left: -15%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #7A1228 0%, transparent 70%);
+      background: radial-gradient(circle, #4D0C1A 0%, transparent 70%);
       animation: blob-orbit-1 28s ease-in-out infinite;
     }
     .bg-blob-2 { /* bordô */
       top: 35%; right: -22%;
       width: 60vmax; height: 60vmax;
-      background: radial-gradient(circle, #5B0A1A 0%, transparent 70%);
+      background: radial-gradient(circle, #390711 0%, transparent 70%);
       animation: blob-orbit-2 32s ease-in-out infinite;
     }
     .bg-blob-3 { /* dourado queimado (glow quente) */
       bottom: -18%; left: 25%;
       width: 55vmax; height: 55vmax;
-      background: radial-gradient(circle, #6E5418 0%, transparent 70%);
+      background: radial-gradient(circle, #463410 0%, transparent 70%);
       animation: blob-orbit-3 36s ease-in-out infinite;
     }
     .bg-blob-4 { /* vinho escuro */
       top: 15%; left: 25%;
       width: 50vmax; height: 50vmax;
-      background: radial-gradient(circle, #4A0511 0%, transparent 70%);
+      background: radial-gradient(circle, #2E040B 0%, transparent 70%);
       animation: blob-orbit-4 40s ease-in-out infinite;
     }
     @keyframes blob-orbit-1 {
@@ -103,7 +103,7 @@
     }
     /* Mobile: blur menor pra não cozinhar GPU */
     @media (max-width: 768px) {
-      .bg-blob { filter: blur(80px); opacity: 0.32; }
+      .bg-blob { filter: blur(80px); opacity: 0.22; }
     }
     /* Acessibilidade: usuário sensível a movimento → blobs estáticos */
     @media (prefers-reduced-motion: reduce) {
@@ -260,13 +260,13 @@
     /* Tela neutra da cor do fundo enquanto o Babel compila os .jsx (sem intro):
        cobre a tela e some assim que o React monta. */
     #boot {
-      position: fixed; inset: 0; z-index: 9999; background: #35030E;
+      position: fixed; inset: 0; z-index: 9999; background: #240309;
     }
 
     /* ============ TEMA CLARO (data-theme="light") ============
        Sobrescreve só o que é estático no CSS; as cores dos componentes vêm do
        objeto M (resolvido no load por localStorage). */
-    html[data-theme="light"], html[data-theme="light"] body { background: #FBF8F2; }
+    html[data-theme="light"], html[data-theme="light"] body { background: #E9E0CE; }
     html[data-theme="light"] body { color: #2A0309; }
     /* blobs claros e sutis (multiply escurece de leve sobre o creme) */
     html[data-theme="light"] .bg-blob { opacity: 0.16; mix-blend-mode: multiply; }
@@ -286,7 +286,7 @@
         box-shadow: 0 10px 28px rgba(53,3,14,0.12), inset 0 1px 0 rgba(255,255,255,0.7), 0 0 0 1px rgba(169,121,28,0.3);
       }
     }
-    html[data-theme="light"] #boot { background: #FBF8F2; }
+    html[data-theme="light"] #boot { background: #E9E0CE; }
   </style>
 </head>
 <body>

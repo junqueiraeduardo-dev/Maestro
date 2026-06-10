@@ -14,10 +14,10 @@
 // localStorage (maestro_tema); o botão ThemeToggle troca e recarrega. Nomes de
 // chave mantidos (compat ~200 refs); "amber" = dourado nos dois temas.
 const M_DARK = {
-  // FUNDO BASE (opaco) — vinho/bordô da logo.
-  bgSolid:   '#35030E',
+  // FUNDO BASE (opaco) — vinho profundo (mais escuro que a logo).
+  bgSolid:   '#240309',
 
-  bg:        'rgba(53, 3, 14, 0.6)',          // fundo de regiões: vinho translúcido
+  bg:        'rgba(36, 3, 9, 0.6)',           // fundo de regiões: vinho translúcido
   surface:   'rgba(192, 147, 51, 0.09)',      // cards: dourado suave (vidro) sobre o vinho
   surface2:  'rgba(192, 147, 51, 0.15)',      // segundo nível: dourado um pouco mais presente
   border:    'rgba(201, 152, 47, 0.18)',      // edge dourado sutil (vidro)
@@ -47,10 +47,10 @@ const M_DARK = {
 
 // TEMA CLARO — creme + dourado/bronze + texto vinho. Mesma identidade, clara.
 const M_LIGHT = {
-  bgSolid:   '#FBF8F2',
-  bg:        'rgba(251, 248, 242, 0.7)',
-  surface:   'rgba(247, 238, 214, 0.85)',     // cards: creme-dourado (papel) com leve tinta dourada
-  surface2:  'rgba(250, 244, 226, 0.95)',     // segundo nível: um pouco mais claro
+  bgSolid:   '#E9E0CE',
+  bg:        'rgba(233, 224, 206, 0.7)',
+  surface:   'rgba(243, 235, 215, 0.85)',     // cards: creme-dourado (papel) sobre o bege
+  surface2:  'rgba(247, 240, 222, 0.95)',     // segundo nível: um pouco mais claro
   border:    'rgba(53, 3, 14, 0.12)',
   borderHi:  'rgba(53, 3, 14, 0.20)',
   amber:     '#A9791C',      // dourado/bronze (contraste em fundo claro)
