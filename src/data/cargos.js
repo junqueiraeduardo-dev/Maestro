@@ -6,7 +6,8 @@
  *  COMO EDITAR
  *  - `cargos`: a carreira da Dra. Lara, em ordem. `xp` é quanto ela
  *    precisa acumular para chegar ao cargo. O primeiro precisa ser 0.
- *  - `emoji` aparece no crachá que gira como moeda na promoção.
+ *  - `icone` aparece no crachá que gira como moeda na promoção
+ *    ('estetoscopio', 'tubo', 'pata' ou 'coroa'; ver src/lib/ilustracoes.js).
  *  - `mensagem` aparece no modal de promoção.
  *  - `XP`: quantos pontos cada ação vale.
  *
@@ -15,10 +16,10 @@
  */
 
 export const cargos = [
-  { id: 'estagiaria', nome: 'Estagiária', xp: 0, emoji: '🩺', mensagem: 'Bem-vinda à clínica! Todo grande veterinário começa assim.' },
-  { id: 'residente', nome: 'Residente', xp: 150, emoji: '🧪', mensagem: 'Você já atende sozinha os primeiros pacientes. A equipe está orgulhosa!' },
-  { id: 'veterinaria', nome: 'Veterinária', xp: 400, emoji: '🐾', mensagem: 'Diploma na parede e jaleco com o seu nome bordado. Dra. Lara, oficialmente!' },
-  { id: 'chefe', nome: 'Veterinária-chefe', xp: 750, emoji: '👑', mensagem: 'A clínica inteira agora é sua. Os bichinhos de todo o Brasil agradecem!' },
+  { id: 'estagiaria', nome: 'Estagiária', xp: 0, icone: 'estetoscopio', mensagem: 'Bem-vinda à clínica! Todo grande veterinário começa assim.' },
+  { id: 'residente', nome: 'Residente', xp: 150, icone: 'tubo', mensagem: 'Você já atende sozinha os primeiros pacientes. A equipe está orgulhosa!' },
+  { id: 'veterinaria', nome: 'Veterinária', xp: 400, icone: 'pata', mensagem: 'Diploma na parede e jaleco com o seu nome bordado. Dra. Lara, oficialmente!' },
+  { id: 'chefe', nome: 'Veterinária-chefe', xp: 750, icone: 'coroa', mensagem: 'A clínica inteira agora é sua. Os bichinhos de todo o Brasil agradecem!' },
 ];
 
 export const XP = {

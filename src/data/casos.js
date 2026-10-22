@@ -15,7 +15,10 @@
  *  - id ........ identificador único (usado para salvar o progresso).
  *  - nome ...... nome do paciente.
  *  - especie ... ex.: 'Cachorro', 'Gata', 'Coelho'.
- *  - emoji ..... desenho do card (qualquer emoji serve).
+ *  - animal .... desenho do paciente: 'cachorro', 'gato', 'coelho',
+ *                'cavalo', 'ave', 'porquinho' ou 'vaca'
+ *                (os desenhos ficam em src/lib/ilustracoes.js).
+ *  - pelo ...... cor principal do desenho (formato '#rrggbb').
  *  - cor ....... cor de fundo do avatar (formato '#rrggbb').
  *  - tutor ..... quem trouxe o paciente.
  *  - queixa .... o que o tutor conta na recepção.
@@ -42,7 +45,8 @@ export const casos = [
     id: 'thor-vomito',
     nome: 'Thor',
     especie: 'Cachorro · Labrador, 3 anos',
-    emoji: '🐕',
+    animal: 'cachorro',
+    pelo: '#d9a35b',
     cor: '#f6d8a8',
     tutor: 'Seu Carlos',
     queixa: 'Thor vomitou três vezes desde ontem e quase não comeu. Ontem ele roeu um brinquedo de borracha no quintal.',
@@ -98,7 +102,8 @@ export const casos = [
     id: 'luna-gata-xixi',
     nome: 'Luna',
     especie: 'Gata · SRD, 5 anos',
-    emoji: '🐈',
+    animal: 'gato',
+    pelo: '#8f8a93',
     cor: '#e6d5f2',
     tutor: 'Dona Marta',
     queixa: 'A Luna vai à caixinha de areia várias vezes, faz força e sai quase nada de xixi. Às vezes mia ao tentar.',
@@ -154,7 +159,8 @@ export const casos = [
     id: 'pipoca-coelho',
     nome: 'Pipoca',
     especie: 'Coelho · Mini Lop, 2 anos',
-    emoji: '🐇',
+    animal: 'coelho',
+    pelo: '#f3ece2',
     cor: '#f8e1e7',
     tutor: 'Júlia',
     queixa: 'O Pipoca parou de comer feno desde ontem à noite e não fez bolinhas de cocô hoje. Está quietinho no canto.',
@@ -210,7 +216,8 @@ export const casos = [
     id: 'mel-gata-filhote',
     nome: 'Mel',
     especie: 'Gata · filhote, 2 meses',
-    emoji: '🐱',
+    animal: 'gato',
+    pelo: '#e9a35e',
     cor: '#fde2c4',
     tutor: 'Pedro',
     queixa: 'Acabei de adotar a Mel! Quero saber o que preciso fazer para ela crescer saudável.',
@@ -266,7 +273,8 @@ export const casos = [
     id: 'trovao-cavalo',
     nome: 'Trovão',
     especie: 'Cavalo · Mangalarga, 8 anos',
-    emoji: '🐴',
+    animal: 'cavalo',
+    pelo: '#9a6440',
     cor: '#e8d3bd',
     tutor: 'Sr. Antônio (haras)',
     queixa: 'O Trovão está olhando para a barriga, cavando o chão com a pata e tentando deitar e rolar. Comeu pouco hoje.',
@@ -322,7 +330,8 @@ export const casos = [
     id: 'kiwi-calopsita',
     nome: 'Kiwi',
     especie: 'Ave · Calopsita, 4 anos',
-    emoji: '🦜',
+    animal: 'ave',
+    pelo: '#f4d35e',
     cor: '#fff1a8',
     tutor: 'Beatriz',
     queixa: 'O Kiwi está todo arrepiado, dormindo muito durante o dia e parou de cantar.',
@@ -378,7 +387,8 @@ export const casos = [
     id: 'bolinha-porquinho',
     nome: 'Bolinha',
     especie: 'Porquinho-da-índia, 1 ano',
-    emoji: '🐹',
+    animal: 'porquinho',
+    pelo: '#c98a54',
     cor: '#d9ecd0',
     tutor: 'Rafa',
     queixa: 'A Bolinha está com as gengivas sangrando um pouco, mancando e comendo menos.',
@@ -434,7 +444,8 @@ export const casos = [
     id: 'mimosa-vaca',
     nome: 'Mimosa',
     especie: 'Vaca leiteira · Holandesa, 4 anos',
-    emoji: '🐄',
+    animal: 'vaca',
+    pelo: '#fbf7ef',
     cor: '#dfe9f5',
     tutor: 'Dona Cida (sítio)',
     queixa: 'Um dos quartos do úbere da Mimosa está quente e inchado, e o leite saiu com grumos.',

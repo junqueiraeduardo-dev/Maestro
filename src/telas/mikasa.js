@@ -200,7 +200,8 @@ function ronronar() {
   for (let i = 0; i < 7; i++) {
     const s = document.createElement('span');
     s.className = 'mikasa__ronrom';
-    s.textContent = i % 3 === 0 ? 'rrr' : '♥';
+    if (i % 3 === 0) s.textContent = 'rrr';
+    else s.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor"/></svg>';
     raiz.appendChild(s);
     gsap.fromTo(
       s,
@@ -394,7 +395,6 @@ export function iniciarMikasa() {
   gata.addEventListener('click', tocouNaGata);
 
   // Vigia sobreposição com botões: ao rolar, redimensionar e periodicamente
-  window.addEventListener('scroll', vigiar, { passive: true, capture: true });
   window.addEventListener('resize', vigiar, { passive: true });
   setInterval(vigiar, 700);
 

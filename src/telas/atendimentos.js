@@ -17,6 +17,7 @@ import { estouro } from '../lib/efeitos.js';
 import { falar, reagir } from './mikasa.js';
 import { pulsarCerta, tremerErrada } from './respostas.js';
 import { abrirFolha, fecharFolha } from './folhas.js';
+import { animal } from '../lib/ilustracoes.js';
 
 const lista = () => document.getElementById('lista-pacientes');
 const corpo = () => document.getElementById('pront-corpo');
@@ -29,17 +30,18 @@ function renderLista(animar) {
   const el = lista();
   gatilhos.forEach((t) => t.kill());
   el.innerHTML = '';
+  const proximo = casos.find((c) => !estado.casos[c.id]?.feito);
   casos.forEach((c) => {
     const feito = estado.casos[c.id]?.feito;
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'paciente';
+    b.className = c === proximo ? 'paciente paciente--proximo' : 'paciente';
     b.innerHTML = `
-      <span class="paciente__avatar" style="background:${c.cor}">${c.emoji}</span>
+      <span class="paciente__avatar" style="background:${c.cor}">${animal(c.animal, c.pelo)}</span>
       <p class="paciente__nome"></p>
       <p class="paciente__especie"></p>
       <p class="paciente__queixa"></p>
-      <span class="selo ${feito ? 'selo--ok' : ''}">${feito ? '✓ atendido' : 'aguardando'}</span>`;
+      <span class="selo ${feito ? 'selo--ok' : ''}">${feito ? 'Atendido' : 'Aguardando'}</span>`;
     b.querySelector('.paciente__nome').textContent = c.nome;
     b.querySelector('.paciente__especie').textContent = c.especie;
     b.querySelector('.paciente__queixa').textContent = c.queixa;
@@ -50,7 +52,7 @@ function renderLista(animar) {
 
   const feitos = casosFeitos();
   document.getElementById('sala-resumo').textContent =
-    feitos === casos.length ? 'Todos os pacientes foram atendidos! Pode rever qualquer caso.' : `${casos.length - feitos} pacientes aguardando atendimento.`;
+    feitos === casos.length ? 'Todos os pacientes foram atendidos. Pode rever qualquer caso.' : `${casos.length - feitos} de ${casos.length} aguardando. Próximo: ${proximo.nome}.`;
 
   if (animar) cascata();
 }
@@ -119,7 +121,7 @@ function abrirCaso(c) {
   tentativas = 0;
   acertos = 0;
   const av = document.getElementById('pront-avatar');
-  av.textContent = c.emoji;
+  av.innerHTML = animal(c.animal, c.pelo);
   av.style.background = c.cor;
   document.getElementById('pront-nome').textContent = c.nome;
   document.getElementById('pront-especie').textContent = `${c.especie} · tutor(a): ${c.tutor}`;
@@ -275,7 +277,7 @@ function finalizar() {
     moverFichas(() => {
       corpo().querySelector('.mesa').remove();
       const fim = document.createElement('section');
-      fim.className = 'cartao desfecho';
+      fim.className = 'bloco bloco--marca desfecho';
       fim.innerHTML = `
         <div class="desfecho__lottie" data-lottie="coracao"></div>
         <p class="rotulo">Atendimento concluído</p>

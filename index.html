@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Clínica da Dra. Lara</title>
     <meta name="description" content="Simulador de atendimentos veterinários e estudo de Biologia e Química para o ENEM, com a Mikasa." />
-    <meta name="theme-color" content="#2f7d6d" />
+    <meta name="theme-color" content="#007a56" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1f1b" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="/icones/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -16,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@400;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -42,7 +44,7 @@
           </span>
           <div>
             <p class="topo__titulo">Clínica da Dra. Lara</p>
-            <p class="topo__cargo"><span id="cargo-emoji">🩺</span> <span id="cargo-nome">Estagiária</span></p>
+            <p class="topo__cargo"><span id="cargo-icone" class="topo__icone"></span> <span id="cargo-nome">Estagiária</span></p>
           </div>
         </div>
         <div class="xp" aria-label="Experiência">
@@ -59,7 +61,7 @@
         <span class="abas__indicador" aria-hidden="true"></span>
         <button class="aba ativa" data-aba="inicio" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z" /></svg>
-          <span>Início</span>
+          <span>Plantão</span>
         </button>
         <button class="aba" data-aba="atendimentos" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-pata-mini" /></svg>
@@ -79,34 +81,46 @@
       <main class="telas">
         <!-- ---------- INÍCIO ---------- -->
         <section class="tela ativa" id="tela-inicio" data-tela="inicio">
-          <div class="cartao heroi anima-item">
-            <div class="heroi__lottie" data-lottie="estetoscopio" data-loop="true"></div>
+          <div class="bloco bloco--marca heroi anima-item">
             <div class="heroi__texto">
               <p class="rotulo">Plantão de hoje</p>
-              <h2 class="titulo-sec">Olá, Dra. Lara!</h2>
-              <p id="heroi-frase">Pacientes esperando, questões para treinar e cartas guardadas com carinho.</p>
+              <h2 class="titulo-display">Olá, Dra. Lara.</h2>
+              <p id="heroi-frase">Oito pacientes na sala de espera, trinta questões do ENEM e quatro cartas lacradas.</p>
               <div class="heroi__botoes">
-                <button class="btn btn--primario" data-ir="atendimentos" type="button">Atender pacientes</button>
-                <button class="btn btn--secundario" data-ir="estudo" type="button">Estudar ENEM</button>
+                <button class="btn btn--realce" data-ir="atendimentos" type="button">Atender pacientes</button>
+                <button class="btn btn--claro" data-ir="estudo" type="button">Estudar ENEM</button>
               </div>
+            </div>
+            <div class="heroi__palco" aria-hidden="true">
+              <div class="heroi__lottie" data-lottie="estetoscopio" data-loop="true"></div>
             </div>
           </div>
 
-          <div class="numeros anima-item">
-            <div class="numero cartao"><strong id="n-casos">0/0</strong><span>casos</span></div>
-            <div class="numero cartao"><strong id="n-questoes">0/0</strong><span>questões</span></div>
-            <div class="numero cartao"><strong id="n-cartas">0/0</strong><span>cartas</span></div>
+          <div class="placar anima-item">
+            <div class="bloco bloco--realce placar__grande">
+              <p class="rotulo">Pacientes atendidos</p>
+              <strong id="n-casos">0/0</strong>
+            </div>
+            <div class="bloco bloco--escuro placar__item">
+              <strong id="n-questoes">0/0</strong>
+              <span>questões certas</span>
+            </div>
+            <div class="bloco bloco--apoio placar__item">
+              <strong id="n-cartas">0/0</strong>
+              <span>cartas liberadas</span>
+            </div>
           </div>
 
           <div class="cartao anima-item">
             <p class="rotulo">Carreira</p>
+            <h2 class="titulo-sec">De Estagiária a Veterinária-chefe</h2>
             <ol class="carreira" id="carreira"></ol>
           </div>
 
-          <div class="cartao recomecar anima-item">
+          <div class="bloco bloco--escuro recomecar anima-item">
             <div>
               <p class="rotulo">Progresso salvo neste aparelho</p>
-              <p class="recomecar__texto">Quer zerar tudo e começar de novo como Estagiária?</p>
+              <p class="recomecar__texto">Zerar XP, casos, questões e cartas e voltar a ser Estagiária.</p>
             </div>
             <button class="btn btn--perigo" id="btn-recomecar" type="button">Recomeçar</button>
           </div>
@@ -114,7 +128,7 @@
 
         <!-- ---------- ATENDIMENTOS ---------- -->
         <section class="tela" id="tela-atendimentos" data-tela="atendimentos" hidden>
-          <div class="cartao sala anima-item">
+          <div class="bloco bloco--apoio sala anima-item">
             <div class="sala__bichos">
               <div class="sala__lottie" data-lottie="cachorro" data-loop="true"></div>
               <div class="sala__lottie" data-lottie="gato" data-loop="true"></div>
@@ -130,7 +144,7 @@
 
         <!-- ---------- ESTUDO ---------- -->
         <section class="tela" id="tela-estudo" data-tela="estudo" hidden>
-          <div class="cartao estudo-topo anima-item">
+          <div class="bloco bloco--marca estudo-topo anima-item">
             <div>
               <p class="rotulo">Treino ENEM</p>
               <h2 class="titulo-sec">Biologia &amp; Química</h2>
@@ -148,10 +162,10 @@
 
         <!-- ---------- CARTAS ---------- -->
         <section class="tela" id="tela-cartas" data-tela="cartas" hidden>
-          <div class="cartao anima-item">
+          <div class="bloco bloco--realce correio anima-item">
             <p class="rotulo">Correio da clínica</p>
             <h2 class="titulo-sec">Cartas para a Lara</h2>
-            <p>Cada conquista abre um envelope. A última guarda uma surpresa.</p>
+            <p>A carta 1 abre no primeiro atendimento; as outras, a cada promoção. A quarta guarda uma surpresa.</p>
           </div>
           <div class="envelopes" id="lista-cartas"></div>
         </section>
@@ -183,7 +197,7 @@
       <div class="carta-cena">
         <div class="envelope-grande" aria-hidden="true">
           <div class="envelope-grande__fundo"></div>
-          <div class="envelope-grande__aba"><div class="envelope-grande__selo">♥</div></div>
+          <div class="envelope-grande__aba"><div class="envelope-grande__selo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor"/></svg></div></div>
           <div class="envelope-grande__frente"></div>
         </div>
         <article class="carta-papel" id="carta-papel">
@@ -203,7 +217,7 @@
       <div class="surpresa__lottie" data-lottie="bolo" data-loop="true" data-manual="true"></div>
       <h2 class="surpresa__titulo">Feliz aniversário, Lara!</h2>
       <p class="surpresa__texto">A clínica inteira — e a Mikasa — comemoram com você.</p>
-      <button class="btn btn--primario" data-fechar type="button">Assoprar as velinhas 🎂</button>
+      <button class="btn btn--primario" data-fechar type="button">Assoprar as velinhas</button>
     </div>
 
     <!-- ============ PROMOÇÃO ============ -->
@@ -213,7 +227,7 @@
         <p class="rotulo">Promoção!</p>
         <div class="cracha" aria-hidden="true">
           <div class="cracha__moeda">
-            <div class="cracha__face cracha__face--frente"><span id="promo-emoji">🧪</span></div>
+            <div class="cracha__face cracha__face--frente"><span id="promo-icone"></span></div>
             <div class="cracha__face cracha__face--verso"><svg viewBox="0 0 64 64"><use href="#ico-pata" /></svg></div>
           </div>
         </div>
@@ -244,6 +258,7 @@
       <div class="mikasa__balao" id="mikasa-balao" aria-live="polite"><p id="mikasa-fala"></p></div>
       <button class="mikasa__gata" id="mikasa-gata" type="button" aria-label="Mikasa, a gatinha da clínica. Toque para uma dica.">
         <svg viewBox="0 0 120 132" aria-hidden="true">
+          <ellipse cx="60" cy="128" rx="34" ry="4" fill="#0f1f1b" opacity=".18" />
           <g id="mk-tudo">
             <path id="mk-cauda" d="M86 116 C108 114 116 92 108 74 C104 66 96 66 98 74" fill="none" stroke="#1d1a20" stroke-width="9" stroke-linecap="round" />
             <path id="mk-corpo" d="M30 122 C24 96 36 72 60 72 C84 72 96 96 90 122 Z" fill="#1d1a20" />

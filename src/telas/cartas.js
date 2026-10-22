@@ -11,6 +11,7 @@ import { estado, salvar, cartaLiberada, ouvir } from '../lib/estado.js';
 import { chuvaDeCoracoes, fogos } from '../lib/efeitos.js';
 import { tocar } from '../lib/lottie.js';
 import { falar, dancar, vigiar } from './mikasa.js';
+import { icone } from '../lib/ilustracoes.js';
 
 const $ = (s) => document.querySelector(s);
 let gatilhos = [];
@@ -40,7 +41,7 @@ function render(animar) {
     b.type = 'button';
     b.className = `envelope ${livre ? '' : 'trancado'} ${livre && !lida ? 'nova' : ''}`;
     b.innerHTML = `
-      <span class="envelope__selo">${livre ? (c.final ? '🎂' : '♥') : '🔒'}</span>
+      <span class="envelope__selo">${icone(livre ? (c.final ? 'bolo' : 'coracao') : 'cadeado')}</span>
       <p class="envelope__titulo"></p>
       <p class="envelope__info"></p>`;
     b.querySelector('.envelope__titulo').textContent = livre ? c.titulo : 'Carta lacrada';
@@ -80,7 +81,7 @@ let splitSurpresa;
 function montarFoto(c) {
   const caixa = $('#carta-foto');
   const reserva = () => {
-    caixa.innerHTML = `<div class="foto-reservada"><span>📷</span><div class="foto-reservada__legenda"></div><small></small></div>`;
+    caixa.innerHTML = `<div class="foto-reservada">${icone('camera', 'foto-reservada__icone')}<div class="foto-reservada__legenda"></div><small></small></div>`;
     caixa.querySelector('.foto-reservada__legenda').textContent = c.legenda || 'Espaço para uma foto';
     caixa.querySelector('.foto-reservada small').textContent = `Coloque ${c.foto.split('/').pop()} em public/fotos/`;
   };

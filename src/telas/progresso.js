@@ -10,6 +10,7 @@ import { confetePromocao, fogos } from '../lib/efeitos.js';
 import { avisar } from '../lib/avisos.js';
 import { falar, dancar, vigiar } from './mikasa.js';
 import { atualizarPonto } from './cartas.js';
+import { icone } from '../lib/ilustracoes.js';
 
 const $ = (s) => document.querySelector(s);
 const numero = { v: 0 };
@@ -25,7 +26,7 @@ function faixa(xp) {
 
 function escreverCargo(i) {
   $('#cargo-nome').textContent = cargos[i].nome;
-  $('#cargo-emoji').textContent = cargos[i].emoji;
+  $('#cargo-icone').innerHTML = icone(cargos[i].icone);
 }
 
 function contar(ate, duracao = 1.1) {
@@ -84,7 +85,7 @@ function promover(i) {
     const modal = $('#promocao');
     const caixa = modal.querySelector('.modal__caixa');
     const moeda = modal.querySelector('.cracha__moeda');
-    $('#promo-emoji').textContent = c.emoji;
+    $('#promo-icone').innerHTML = icone(c.icone, 'cracha__icone');
     $('#promo-cargo').textContent = c.nome;
     $('#promo-msg').textContent = c.mensagem;
     escreverCargo(i);
@@ -135,7 +136,7 @@ function promover(i) {
 function anunciarCartas() {
   const novas = novasCartas();
   if (!novas.length) return;
-  novas.forEach((c, n) => setTimeout(() => avisar(`💌 Nova carta: ${c.titulo}`, 'carta'), n * 900));
+  novas.forEach((c, n) => setTimeout(() => avisar(`Nova carta: ${c.titulo}`, 'carta'), n * 900));
   atualizarPonto();
   emitir('cartas-mudaram');
   falar('cartaNova');

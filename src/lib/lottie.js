@@ -11,16 +11,17 @@
  */
 import lottie from 'lottie-web/build/player/lottie_light';
 import { gsap, reduzido } from './anim.js';
+import { animal, icone } from './ilustracoes.js';
 
 const cache = new Map();
 
-// Desenho reserva para cada animação (emoji grande que "respira").
+// Desenho reserva para cada animação (ilustração que "respira").
 const reservas = {
-  cachorro: '🐶',
-  gato: '🐱',
-  coracao: '💗',
-  estetoscopio: '🩺',
-  bolo: '🎂',
+  cachorro: () => animal('cachorro', '#d9a35b'),
+  gato: () => animal('gato', '#e9a35e'),
+  coracao: () => icone('coracao', 'reserva-icone'),
+  estetoscopio: () => icone('estetoscopio', 'reserva-icone'),
+  bolo: () => icone('bolo', 'reserva-icone'),
 };
 
 function carregarJSON(nome) {
@@ -54,7 +55,7 @@ const observador =
 
 function montarReserva(el) {
   const nome = el.dataset.lottie;
-  el.innerHTML = `<span class="lottie-reserva" style="display:grid;place-items:center;width:100%;height:100%;font-size:min(4.5rem,30vw)">${reservas[nome] || '🐾'}</span>`;
+  el.innerHTML = `<span class="lottie-reserva" style="display:grid;place-items:center;width:100%;height:100%;padding:18%;color:var(--marca)">${(reservas[nome] || reservas.coracao)()}</span>`;
   if (!reduzido()) {
     gsap.to(el.firstChild, { scale: 1.08, y: -4, duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1 });
   }

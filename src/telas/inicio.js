@@ -11,6 +11,7 @@ import { estado, indiceCargo, casosFeitos, questoesCertas, cartaLiberada, ouvir,
 import { abrirModal, fecharModal } from './folhas.js';
 import { avisar } from '../lib/avisos.js';
 import { falar } from './mikasa.js';
+import { icone } from '../lib/ilustracoes.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -30,14 +31,21 @@ function render(animar) {
     gsap.to(n, { v, duration: 0.9, ease: 'power2.out', snap: { v: 1 }, delay: 0.2, onUpdate: () => (el.textContent = `${n.v}/${total}`) });
   });
 
+  const faltam = casos.length - casosFeitos();
+  const questoesFaltam = questoes.length - questoesCertas();
+  $('#heroi-frase').textContent =
+    faltam || questoesFaltam
+      ? `${faltam} ${faltam === 1 ? 'paciente' : 'pacientes'} na sala de espera e ${questoesFaltam} ${questoesFaltam === 1 ? 'questão' : 'questões'} do ENEM por acertar.`
+      : 'Todos os pacientes atendidos e todas as questões certas. A clínica é sua.';
+
   const atual = indiceCargo();
   $('#carreira').innerHTML = cargos
     .map(
       (c, i) => `
       <li class="${i < atual ? 'alcancado' : ''} ${i === atual ? 'atual' : ''}">
-        <span class="carreira__emoji">${c.emoji}</span>
+        <span class="carreira__icone">${icone(c.icone)}</span>
         <span>${c.nome}</span>
-        <span class="carreira__xp">${i <= atual ? (i === atual ? 'você está aqui' : '✓') : `${c.xp} XP`}</span>
+        <span class="carreira__xp">${i <= atual ? (i === atual ? 'Você está aqui' : 'Concluído') : `${c.xp} XP`}</span>
       </li>`,
     )
     .join('');
@@ -54,7 +62,7 @@ export function iniciarInicio() {
   $('#confirmar-sim').addEventListener('click', () => {
     recomecar();
     fecharModal(modal);
-    avisar('Tudo zerado. Boa sorte, Estagiária! 🩺');
+    avisar('Progresso zerado. De volta a Estagiária.');
     falar('boasVindas');
   });
 

@@ -37,7 +37,8 @@ no terminal (ex.: `http://192.168.0.10:5173`) e abra no celular conectado ao mes
 | Questões do ENEM                    | `src/data/questoes.js`          |
 | Cargos e quanto XP vale cada coisa  | `src/data/cargos.js`            |
 | Animações Lottie                    | `public/animacoes/*.json`       |
-| Cores e fontes                      | topo de `src/styles/main.css` (`:root`) |
+| Desenhos dos animais e ícones       | `src/lib/ilustracoes.js`        |
+| Cores (claro e escuro) e fontes     | topo de `src/styles/main.css` (`:root`) |
 
 Todos os arquivos de `src/data/` têm comentários em português no começo explicando
 cada campo e como adicionar itens novos.
@@ -75,6 +76,13 @@ das frases. As `secretas` aparecem quando a Lara toca **5 vezes seguidas** na Mi
 - **Confetes:** `src/lib/efeitos.js`.
 - **Movimento reduzido:** se o aparelho estiver com "Reduzir movimento" ligado, tudo vira
   fade simples automaticamente.
+
+### Visual
+- Fonte Manrope (sem serifa) em toda a interface; a letra manuscrita (Caveat) só nas cartas.
+- Paleta: verde-clínica, mel e rosa-coral em blocos de cor cheia; o tema escuro segue o
+  modo escuro do aparelho automaticamente.
+- Os pacientes são desenhos SVG próprios (campo `animal` em `src/data/casos.js`).
+- A barra do topo e as abas se escondem ao rolar para baixo e voltam ao rolar para cima.
 
 ### Progresso
 Fica salvo no próprio aparelho (localStorage). O botão **Recomeçar**, na aba Início,

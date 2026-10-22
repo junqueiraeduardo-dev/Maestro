@@ -73,6 +73,6 @@ export const cartas = [
     final: true,
     texto:
       'Veterinária-chefe! Você zerou a clínica — e eu nem fiquei surpreso.\n\nFeliz aniversário, Lara. Que este novo ano te leve até a faculdade dos seus sonhos, cheia de pacientes peludos, penudos e escamosos.\n\nE que eu continue do seu lado em cada plantão, cada prova e cada conquista.',
-    assinatura: 'Te amo. Feliz aniversário! 🎂',
+    assinatura: 'Te amo. Feliz aniversário!',
   },
 ];

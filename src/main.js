@@ -8,6 +8,7 @@ import { gsap, reduzido } from './lib/anim.js';
 import { montarLottie } from './lib/lottie.js';
 import { abertura } from './telas/abertura.js';
 import { iniciarAbas } from './telas/abas.js';
+import { iniciarTopo } from './telas/topo.js';
 import { iniciarMikasa, entrar, falar, vigiar } from './telas/mikasa.js';
 import { iniciarInicio } from './telas/inicio.js';
 import { iniciarAtendimentos } from './telas/atendimentos.js';
@@ -16,6 +17,7 @@ import { iniciarCartas } from './telas/cartas.js';
 import { iniciarProgresso } from './telas/progresso.js';
 
 iniciarMikasa();
+iniciarTopo();
 iniciarAbas();
 iniciarInicio();
 iniciarAtendimentos();
