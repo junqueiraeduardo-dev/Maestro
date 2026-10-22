@@ -1,0 +1,14 @@
+FOTOS DAS CARTAS
+================
+
+Coloque aqui as fotos com estes nomes exatos:
+
+  foto1.jpg  → Carta 1 (primeiro caso concluído)
+  foto2.jpg  → Carta 2 (promoção a Residente)
+  foto3.jpg  → Carta 3 (promoção a Veterinária)
+  foto4.jpg  → Carta 4 (Veterinária-chefe — surpresa final)
+
+Dicas:
+- Formato .jpg, até uns 1500 px de largura (fica leve no celular).
+- Se quiser usar .png ou .webp, mude o campo "foto" em src/data/cartas.js.
+- Enquanto a foto não existir, a carta mostra um espaço reservado tracejado.

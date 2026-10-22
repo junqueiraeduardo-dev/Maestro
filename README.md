@@ -1,107 +1,131 @@
-# Maestro — CMMS por voz · MVP Custo Zero
+# 🐾 Clínica da Dra. Lara
 
-Plataforma de manutenção (frotas e indústria) operada por voz. O primeiro
-módulo — **Almoxarifado por voz** — busca peças, dá baixa no estoque e
-sugere kits falando. **Infra de produção 100% gratuita.**
+Presente de aniversário para a Lara, futura veterinária: simulador de atendimentos
+veterinários + estudo de Biologia e Química para o ENEM, com XP, promoções de cargo
+(Estagiária → Residente → Veterinária → Veterinária-chefe), cartas desbloqueáveis e a
+**Mikasa**, a gatinha preta mascote.
 
-## Por que custa zero
+Feito com **Vite + JavaScript puro**, GSAP (SplitText, ScrollTrigger, Flip, MorphSVG),
+Lottie, canvas-confetti e Animate.css.
 
-| Camada        | Serviço                        | Custo                                   |
-|---------------|--------------------------------|-----------------------------------------|
-| Voz (STT/TTS) | Web Speech API (navegador)     | $0 — roda no dispositivo do operador    |
-| IA            | Gemini 2.0 Flash (AI Studio)   | $0 — Free Tier (~15 req/min, ~1500/dia) |
-| Banco         | Supabase Postgres              | $0 — Free Tier (500 MB)                 |
-| Hospedagem    | Render (Node)                  | $0 — Free Tier (server único)           |
+---
+
+## Rodar no computador
+
+Precisa do [Node.js](https://nodejs.org) 18 ou mais novo.
+
+```bash
+npm install      # instala tudo (só na primeira vez)
+npm run dev      # abre em http://localhost:5173
+npm run build    # gera a versão final em dist/
+npm run preview  # testa a versão final
+```
+
+Para testar no celular: rode `npm run dev`, veja o endereço "Network" que aparece
+no terminal (ex.: `http://192.168.0.10:5173`) e abra no celular conectado ao mesmo Wi-Fi.
+
+---
+
+## Onde editar cada coisa
+
+| Quero mudar…                        | Arquivo                         |
+|-------------------------------------|---------------------------------|
+| Textos das cartas                   | `src/data/cartas.js`            |
+| Fotos das cartas                    | `public/fotos/foto1.jpg` … `foto4.jpg` |
+| Falas da Mikasa                     | `src/data/mascote.js`           |
+| Casos clínicos                      | `src/data/casos.js`             |
+| Questões do ENEM                    | `src/data/questoes.js`          |
+| Cargos e quanto XP vale cada coisa  | `src/data/cargos.js`            |
+| Animações Lottie                    | `public/animacoes/*.json`       |
+| Cores e fontes                      | topo de `src/styles/main.css` (`:root`) |
+
+Todos os arquivos de `src/data/` têm comentários em português no começo explicando
+cada campo e como adicionar itens novos.
+
+### Cartas
+Abra `src/data/cartas.js` e troque `titulo`, `texto` e `assinatura`. No texto, `\n\n`
+começa um parágrafo novo. O campo `requisito` define quando a carta abre
+(depois de X casos, X questões ou ao chegar num cargo). A carta com `final: true`
+dispara a chuva de corações e, ao ser fechada, a surpresa com o bolo.
+
+### Fotos
+Coloque as fotos em `public/fotos/` com os nomes `foto1.jpg`, `foto2.jpg`, `foto3.jpg`
+e `foto4.jpg` (carta 1, 2, 3 e 4). Sem a foto, a carta mostra um espaço reservado
+tracejado. Para usar `.png`/`.webp`, mude o campo `foto` da carta.
+
+### Falas da Mikasa
+Em `src/data/mascote.js`, cada grupo (`dicas`, `acerto`, `erro`, `promocao`,
+`secretas`…) é uma lista de frases; ela sorteia uma. Use `{nome}` e `{cargo}` dentro
+das frases. As `secretas` aparecem quando a Lara toca **5 vezes seguidas** na Mikasa.
+
+### Animações
+- **Lottie:** troque os `.json` em `public/animacoes/` mantendo os nomes
+  (`estetoscopio`, `cachorro`, `gato`, `coracao`, `bolo`). Veja `public/animacoes/CREDITOS.md`.
+- **GSAP:** cada tela tem seu arquivo em `src/telas/` e as animações ficam juntas com
+  a lógica. Os números mais úteis para ajustar são `duration` (segundos), `stagger`
+  (atraso entre itens) e `ease` (o "jeito" do movimento — ex.: `elastic.out(1, 0.45)`
+  na barra de XP, em `src/telas/progresso.js`).
+  - Abertura (patinha + título): `src/telas/abertura.js`
+  - Troca de abas: `src/telas/abas.js`
+  - Cards, prontuário e Flip: `src/telas/atendimentos.js`
+  - Acerto/erro: `src/telas/respostas.js`
+  - XP e promoção: `src/telas/progresso.js`
+  - Envelopes e surpresa: `src/telas/cartas.js`
+  - Mikasa: `src/telas/mikasa.js`
+- **Confetes:** `src/lib/efeitos.js`.
+- **Movimento reduzido:** se o aparelho estiver com "Reduzir movimento" ligado, tudo vira
+  fade simples automaticamente.
+
+### Progresso
+Fica salvo no próprio aparelho (localStorage). O botão **Recomeçar**, na aba Início,
+apaga tudo depois de uma confirmação.
+
+---
+
+## Publicar na Vercel (passo a passo)
+
+1. **Suba o código no GitHub** (este repositório já está pronto).
+2. Crie uma conta grátis em <https://vercel.com> usando **Continue with GitHub**.
+3. No painel da Vercel, clique em **Add New… → Project**.
+4. Em **Import Git Repository**, escolha este repositório (se não aparecer, clique em
+   *Adjust GitHub App Permissions* e libere o acesso a ele).
+5. A Vercel detecta **Vite** sozinha (o `vercel.json` já define tudo):
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+6. Clique em **Deploy**. Em ~1 minuto o site fica no ar em algo como
+   `https://mikasa-vet.vercel.app`.
+7. A partir daí, **todo push na branch principal publica de novo** automaticamente;
+   outras branches ganham um link de prévia.
+
+### Domínio próprio (ex.: `clinicadralara.com.br`)
+1. Compre o domínio (Registro.br para `.com.br`, ou direto na Vercel em **Domains → Buy**).
+2. Na Vercel: abra o projeto → **Settings → Domains** → digite o domínio → **Add**.
+3. A Vercel mostra os registros DNS para configurar. No painel onde comprou o domínio:
+   - Domínio raiz (`clinicadralara.com.br`): registro **A** apontando para o IP que a Vercel indicar
+     (normalmente `76.76.21.21`).
+   - Subdomínio `www`: registro **CNAME** apontando para `cname.vercel-dns.com`.
+   - *Alternativa no Registro.br:* em "DNS", troque os servidores para os nameservers da Vercel
+     (`ns1.vercel-dns.com` e `ns2.vercel-dns.com`) — aí a Vercel cuida de tudo.
+4. Aguarde a propagação (de minutos até algumas horas). O HTTPS é ativado sozinho.
+
+### Instalar como app no celular
+- **Android (Chrome):** abra o site → menu ⋮ → **Instalar app** / **Adicionar à tela inicial**.
+- **iPhone (Safari):** abra o site → botão Compartilhar → **Adicionar à Tela de Início**.
+
+---
 
 ## Estrutura
 
-App único Node/TypeScript: o Express serve a API `/api/*` **e** os estáticos de
-`public/` (um só deploy gratuito). O frontend é React via Babel-standalone no
-navegador — sem etapa de build, fiel à filosofia custo-zero.
-
 ```
-src/index.ts              Express: CORS, JSON, /health, monta /api, serve public/, erro global
-src/config/supabase.ts    Cliente Supabase (service_role) + fail-fast de env
-src/services/aiService.ts System Prompt + fast-path regex + token bucket + Gemini 2.0 Flash (JSON)
-src/routes/voiceRoutes.ts POST /api/process-voice → intenção → RPC → { fala, intencao, dados }
-src/routes/osRoutes.ts    REST de Equipamentos + Ordens de Serviço (CRUD real)
-public/index.html         Shell mobile (fontes, splash do monograma, carrega React+Babel)
-public/ui.jsx             Tokens de design (M), ícones, componentes, Logo (monograma)
-public/screens.jsx        7 telas: Home, Almoxarifado, OS, Equipamentos, Dashboard, detalhes
-public/app.jsx            Navegação + voz REAL (Web Speech API → /api → TTS + card)
-public/api.js             Cliente HTTP do frontend (window.API)
-public/data.js            Mock restante (Almoxarifado: PARTS/MOVIMENTOS · Dashboard)
-public/favicon.svg        Monograma de 5 barras (waveform/"M")
-supabase/01_schema.sql    Tabelas estoque_pecas + historico_servicos
-supabase/02_rpc.sql       RPCs: buscar_peca (fuzzy) e dar_baixa_estoque (atômico)
-supabase/03_seed_mro_frota.sql  Coluna `segmento` no estoque (sem dados)
-supabase/04_os_equipamentos.sql equipamentos, ordens_servico, os_pecas, os_comentarios
-supabase/05_reset_dados.sql     Esvazia tudo (rodar 1x antes de entregar ao cliente)
-supabase/06_tutorial_inspecao.sql tutorial_url em peças + tabela inspecoes
-supabase/07_planos.sql          tabela trials (teste grátis por e-mail)
-supabase/08_auditoria.sql       tabela atividade (log "quem fez o quê")
-supabase/09_assinaturas.sql     assinaturas pagas (e-mail, HASH da chave, validade)
-supabase/10_marketplace.sql     ponto_reposicao em peças (alerta de estoque baixo)
-supabase/11_workspaces.sql      multi-workspace (workspace_id em todas as tabelas + RPCs)
-supabase/12_perfil.sql          coluna perfil em peças/equipamentos (filtro por profissão)
-supabase/13_senha_preco.sql     senha pessoal (hash scrypt) + preço unitário em peças
-src/workspace.ts                Resolução do workspace ativo por requisição (header)
-src/auth.ts                     Premium/Trial + papéis pai x filho + chave de assinatura
-src/audit.ts                    Log de atividade por ator (header X-Ator)
-src/pay.ts                      Mercado Pago Checkout Pro + webhook + chave por e-mail
+index.html              estrutura da página
+src/main.js             liga tudo
+src/data/               conteúdo editável (casos, questões, cartas, cargos, falas)
+src/telas/              cada parte da interface + suas animações
+src/lib/                GSAP, estado salvo, Lottie, confetes, avisos
+src/styles/main.css     visual
+public/animacoes/       arquivos Lottie (.json)
+public/fotos/           fotos das cartas
+public/icones/          ícones do app
+public/manifest.webmanifest, public/sw.js   app instalável
+vercel.json             configuração de publicação
 ```
-
-### Pagamento (segurança máxima)
-
-Cartão/Pix são digitados **no checkout hospedado do Mercado Pago** (PCI deles);
-o servidor **nunca** recebe nº de cartão/CVV. Fluxo: `/api/pay/checkout` cria a
-preferência (preço definido no servidor) → cliente paga no MP → MP chama
-`/api/pay/webhook` (rejeitado se a **assinatura HMAC** não bater) → geramos uma
-chave aleatória, guardamos só o **sha256** dela, e enviamos a chave **por e-mail**
-ao assinante. Login "Já sou Premium" valida a chave (por hash) e o token expira
-na data de renovação. Sem `MP_WEBHOOK_SECRET` o webhook é recusado (fail-closed).
-Env necessários: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `APP_URL`,
-`RESEND_API_KEY`, `MAIL_FROM` (só no ambiente — nunca no repositório).
-
-Papéis: `ACCESS_PASSWORD` = filhos (uso diário). `ACCESS_PASSWORD_ADMIN`
-(opcional) = pai/admin: só ele vê a **Gestão** (quem fez o quê) e pode
-**excluir** peça/equipamento/OS. Sem admin definido, quem tem
-`ACCESS_PASSWORD` é o dono (acesso total).
-
-> **Sem dados de exemplo.** As tabelas começam vazias — o cliente cadastra
-> peças (Almoxarifado +/voz), equipamentos (Equipamentos +) e abre OS pela UI.
-
-## O que é real vs. mock
-
-- **Real:** voz → `/api/process-voice` → Supabase (buscar/baixa/kit, a baixa
-  decrementa o estoque na hora). **Ordens de Serviço e Equipamentos** também:
-  abrir/fechar OS, registrar peça, comentar, listar/filtrar equipamentos e
-  ficha com timeline — tudo via `/api/os*` e `/api/equipamentos*`.
-- **Mock (`data.js`):** Dashboard (KPIs/gráfico), histórico de movimentações
-  e a busca textual do Almoxarifado. Próxima etapa: agregações do Dashboard.
-
-## Como rodar
-
-1. **Supabase:** crie um projeto → SQL Editor → rode na ordem `01_schema.sql`,
-   `02_rpc.sql`, `03_seed_mro_frota.sql`, `04_os_equipamentos.sql`,
-   `06_tutorial_inspecao.sql`, `07_planos.sql`, `08_auditoria.sql`,
-   `09_assinaturas.sql`, `10_marketplace.sql`, `11_workspaces.sql`. Para
-   zerar uma base com dados de teste, rode também `05_reset_dados.sql`.
-2. **App:** copie `.env.example` → `.env`, preencha as chaves **incluindo
-   `ACCESS_PASSWORD`** (sem ela o app nega tudo — fail-closed), `npm install`.
-   - Dev: `npm run dev` · Produção: `npm run build && npm start`.
-3. **Acesse** `http://localhost:3000` no Chrome/Edge/Android e toque no microfone.
-
-## 3 truques de economia (a melhor requisição é a que não se faz)
-
-1. **fast-path por regex** resolve "onde está", "tira 2 ..." sem chamar a IA.
-2. **busca fuzzy no Postgres** (pg_trgm) resolve "buscar" sem IA.
-3. **resposta por template** no backend → nunca há 2ª chamada de IA só pra escrever a frase.
-
-## Limites a respeitar (Free Tier)
-
-- Web Speech API: melhor no Chrome/Edge/Android; iOS Safari é instável.
-- Gemini grátis: token bucket local corta em 12 req/min; se estourar/cair, o
-  backend degrada para "buscar" (nunca trava o operador).
-- Render free "dorme" (cold start ~30s) → ping no `/health` (UptimeRobot) mantém acordado.
-- Supabase free pausa após 7 dias sem uso → um ping/dia mantém ativo.

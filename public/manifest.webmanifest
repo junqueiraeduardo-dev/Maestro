@@ -1,25 +1,17 @@
 {
-  "name": "Maestro — Manutenção por voz para oficina, frota e agro",
-  "short_name": "Maestro",
-  "description": "Manutenção por voz para oficina mecânica, frota e agro. Cadastra peça, dá baixa de estoque e abre OS falando. Quem está com a mão suja não digita planilha.",
-  "id": "/",
-  "start_url": "/?source=pwa",
+  "name": "Clínica da Dra. Lara",
+  "short_name": "Dra. Lara",
+  "description": "Atendimentos veterinários, estudo para o ENEM e cartas surpresa — com a Mikasa.",
+  "lang": "pt-BR",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#240309",
-  "theme_color": "#240309",
-  "lang": "pt-BR",
-  "dir": "ltr",
-  "categories": ["productivity", "business", "utilities"],
+  "background_color": "#fbf4ea",
+  "theme_color": "#2f7d6d",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
-  ],
-  "shortcuts": [
-    { "name": "Almoxarifado", "short_name": "Estoque", "url": "/?tab=almox" },
-    { "name": "Ordens de Serviço", "short_name": "OS", "url": "/?tab=os" }
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

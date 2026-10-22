@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Clínica da Dra. Lara</title>
+    <meta name="description" content="Simulador de atendimentos veterinários e estudo de Biologia e Química para o ENEM, com a Mikasa." />
+    <meta name="theme-color" content="#2f7d6d" />
+    <link rel="icon" href="/icones/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Dra. Lara" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- ============ ABERTURA (patinha + título letra por letra) ============ -->
+    <div id="abertura" class="abertura" role="dialog" aria-label="Abertura">
+      <div class="abertura__pegadas" aria-hidden="true"></div>
+      <div class="abertura__conteudo">
+        <p class="abertura__pre">bem-vinda à</p>
+        <h1 class="abertura__titulo">Clínica da Dra. Lara</h1>
+        <p class="abertura__sub">atendimentos · estudo · surpresas</p>
+        <button class="btn btn--primario abertura__entrar" type="button">Entrar na clínica</button>
+      </div>
+      <p class="abertura__pular">toque para pular</p>
+    </div>
+
+    <div class="app" id="app">
+      <!-- ============ TOPO: título, cargo e barra de XP ============ -->
+      <header class="topo">
+        <div class="topo__marca">
+          <span class="topo__logo" aria-hidden="true">
+            <svg viewBox="0 0 64 64"><use href="#ico-pata" /></svg>
+          </span>
+          <div>
+            <p class="topo__titulo">Clínica da Dra. Lara</p>
+            <p class="topo__cargo"><span id="cargo-emoji">🩺</span> <span id="cargo-nome">Estagiária</span></p>
+          </div>
+        </div>
+        <div class="xp" aria-label="Experiência">
+          <div class="xp__linha">
+            <span class="xp__rotulo">XP</span>
+            <span class="xp__numeros"><strong id="xp-valor">0</strong> <span id="xp-meta">/ 150</span></span>
+          </div>
+          <div class="xp__trilho"><div class="xp__barra" id="xp-barra"></div><div class="xp__brilho" id="xp-brilho"></div></div>
+        </div>
+      </header>
+
+      <!-- ============ ABAS (no celular viram a barra de baixo) ============ -->
+      <nav class="abas" aria-label="Seções">
+        <span class="abas__indicador" aria-hidden="true"></span>
+        <button class="aba ativa" data-aba="inicio" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z" /></svg>
+          <span>Início</span>
+        </button>
+        <button class="aba" data-aba="atendimentos" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-pata-mini" /></svg>
+          <span>Atender</span>
+        </button>
+        <button class="aba" data-aba="estudo" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6L5 18a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-9V3" /><path d="M7.5 14h9" /></svg>
+          <span>Estudar</span>
+        </button>
+        <button class="aba" data-aba="cartas" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+          <span>Cartas</span>
+          <i class="aba__ponto" id="cartas-ponto" hidden></i>
+        </button>
+      </nav>
+
+      <main class="telas">
+        <!-- ---------- INÍCIO ---------- -->
+        <section class="tela ativa" id="tela-inicio" data-tela="inicio">
+          <div class="cartao heroi anima-item">
+            <div class="heroi__lottie" data-lottie="estetoscopio" data-loop="true"></div>
+            <div class="heroi__texto">
+              <p class="rotulo">Plantão de hoje</p>
+              <h2 class="titulo-sec">Olá, Dra. Lara!</h2>
+              <p id="heroi-frase">Pacientes esperando, questões para treinar e cartas guardadas com carinho.</p>
+              <div class="heroi__botoes">
+                <button class="btn btn--primario" data-ir="atendimentos" type="button">Atender pacientes</button>
+                <button class="btn btn--secundario" data-ir="estudo" type="button">Estudar ENEM</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="numeros anima-item">
+            <div class="numero cartao"><strong id="n-casos">0/0</strong><span>casos</span></div>
+            <div class="numero cartao"><strong id="n-questoes">0/0</strong><span>questões</span></div>
+            <div class="numero cartao"><strong id="n-cartas">0/0</strong><span>cartas</span></div>
+          </div>
+
+          <div class="cartao anima-item">
+            <p class="rotulo">Carreira</p>
+            <ol class="carreira" id="carreira"></ol>
+          </div>
+
+          <div class="cartao recomecar anima-item">
+            <div>
+              <p class="rotulo">Progresso salvo neste aparelho</p>
+              <p class="recomecar__texto">Quer zerar tudo e começar de novo como Estagiária?</p>
+            </div>
+            <button class="btn btn--perigo" id="btn-recomecar" type="button">Recomeçar</button>
+          </div>
+        </section>
+
+        <!-- ---------- ATENDIMENTOS ---------- -->
+        <section class="tela" id="tela-atendimentos" data-tela="atendimentos" hidden>
+          <div class="cartao sala anima-item">
+            <div class="sala__bichos">
+              <div class="sala__lottie" data-lottie="cachorro" data-loop="true"></div>
+              <div class="sala__lottie" data-lottie="gato" data-loop="true"></div>
+            </div>
+            <div>
+              <p class="rotulo">Sala de espera</p>
+              <h2 class="titulo-sec">Quem é o próximo?</h2>
+              <p class="sala__resumo" id="sala-resumo"></p>
+            </div>
+          </div>
+          <div class="pacientes" id="lista-pacientes"></div>
+        </section>
+
+        <!-- ---------- ESTUDO ---------- -->
+        <section class="tela" id="tela-estudo" data-tela="estudo" hidden>
+          <div class="cartao estudo-topo anima-item">
+            <div>
+              <p class="rotulo">Treino ENEM</p>
+              <h2 class="titulo-sec">Biologia &amp; Química</h2>
+              <p id="estudo-placar" class="estudo-placar"></p>
+            </div>
+            <div class="filtros" role="tablist" aria-label="Matéria">
+              <span class="filtros__indicador" aria-hidden="true"></span>
+              <button class="filtro ativo" data-materia="todas" type="button">Todas</button>
+              <button class="filtro" data-materia="Biologia" type="button">Biologia</button>
+              <button class="filtro" data-materia="Química" type="button">Química</button>
+            </div>
+          </div>
+          <article class="cartao questao anima-item" id="questao"></article>
+        </section>
+
+        <!-- ---------- CARTAS ---------- -->
+        <section class="tela" id="tela-cartas" data-tela="cartas" hidden>
+          <div class="cartao anima-item">
+            <p class="rotulo">Correio da clínica</p>
+            <h2 class="titulo-sec">Cartas para a Lara</h2>
+            <p>Cada conquista abre um envelope. A última guarda uma surpresa.</p>
+          </div>
+          <div class="envelopes" id="lista-cartas"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ============ PRONTUÁRIO (atendimento aberto) ============ -->
+    <div class="folha" id="prontuario" hidden role="dialog" aria-modal="true" aria-labelledby="pront-nome">
+      <div class="folha__fundo" data-fechar></div>
+      <div class="folha__painel">
+        <header class="pront-topo">
+          <button class="btn-icone" data-fechar type="button" aria-label="Voltar para a sala de espera">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
+          </button>
+          <div class="pront-topo__avatar" id="pront-avatar"></div>
+          <div>
+            <p class="rotulo">Prontuário</p>
+            <h2 class="pront-topo__nome" id="pront-nome"></h2>
+            <p class="pront-topo__especie" id="pront-especie"></p>
+          </div>
+        </header>
+        <div class="pront-corpo" id="pront-corpo"></div>
+      </div>
+    </div>
+
+    <!-- ============ CARTA ABERTA (envelope) ============ -->
+    <div class="folha folha--carta" id="carta-aberta" hidden role="dialog" aria-modal="true" aria-label="Carta">
+      <div class="folha__fundo" data-fechar></div>
+      <div class="carta-cena">
+        <div class="envelope-grande" aria-hidden="true">
+          <div class="envelope-grande__fundo"></div>
+          <div class="envelope-grande__aba"><div class="envelope-grande__selo">♥</div></div>
+          <div class="envelope-grande__frente"></div>
+        </div>
+        <article class="carta-papel" id="carta-papel">
+          <button class="btn-icone carta-papel__fechar" data-fechar type="button" aria-label="Fechar carta">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+          <div class="carta-papel__foto" id="carta-foto"></div>
+          <h3 class="carta-papel__titulo" id="carta-titulo"></h3>
+          <div class="carta-papel__texto" id="carta-texto"></div>
+          <p class="carta-papel__assinatura" id="carta-assinatura"></p>
+        </article>
+      </div>
+    </div>
+
+    <!-- ============ SURPRESA FINAL (bolo) ============ -->
+    <div class="surpresa" id="surpresa" hidden role="dialog" aria-modal="true" aria-label="Surpresa de aniversário">
+      <div class="surpresa__lottie" data-lottie="bolo" data-loop="true" data-manual="true"></div>
+      <h2 class="surpresa__titulo">Feliz aniversário, Lara!</h2>
+      <p class="surpresa__texto">A clínica inteira — e a Mikasa — comemoram com você.</p>
+      <button class="btn btn--primario" data-fechar type="button">Assoprar as velinhas 🎂</button>
+    </div>
+
+    <!-- ============ PROMOÇÃO ============ -->
+    <div class="modal" id="promocao" hidden role="dialog" aria-modal="true" aria-labelledby="promo-cargo">
+      <div class="modal__fundo"></div>
+      <div class="modal__caixa promo">
+        <p class="rotulo">Promoção!</p>
+        <div class="cracha" aria-hidden="true">
+          <div class="cracha__moeda">
+            <div class="cracha__face cracha__face--frente"><span id="promo-emoji">🧪</span></div>
+            <div class="cracha__face cracha__face--verso"><svg viewBox="0 0 64 64"><use href="#ico-pata" /></svg></div>
+          </div>
+        </div>
+        <h2 class="promo__cargo" id="promo-cargo">Residente</h2>
+        <p class="promo__msg" id="promo-msg"></p>
+        <button class="btn btn--primario" data-fechar type="button">Vestir o jaleco novo</button>
+      </div>
+    </div>
+
+    <!-- ============ CONFIRMAÇÃO DE RECOMEÇAR ============ -->
+    <div class="modal" id="confirmar" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirmar-titulo">
+      <div class="modal__fundo" data-fechar></div>
+      <div class="modal__caixa">
+        <h2 class="titulo-sec" id="confirmar-titulo">Recomeçar do zero?</h2>
+        <p>Isso apaga XP, cargos, casos, questões e cartas abertas deste aparelho. Não dá para desfazer.</p>
+        <div class="modal__botoes">
+          <button class="btn btn--secundario" data-fechar type="button">Cancelar</button>
+          <button class="btn btn--perigo" id="confirmar-sim" type="button">Sim, recomeçar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ AVISOS (Animate.css) ============ -->
+    <div class="avisos" id="avisos" aria-live="polite"></div>
+
+    <!-- ============ MIKASA ============ -->
+    <div class="mikasa" id="mikasa">
+      <div class="mikasa__balao" id="mikasa-balao" aria-live="polite"><p id="mikasa-fala"></p></div>
+      <button class="mikasa__gata" id="mikasa-gata" type="button" aria-label="Mikasa, a gatinha da clínica. Toque para uma dica.">
+        <svg viewBox="0 0 120 132" aria-hidden="true">
+          <g id="mk-tudo">
+            <path id="mk-cauda" d="M86 116 C108 114 116 92 108 74 C104 66 96 66 98 74" fill="none" stroke="#1d1a20" stroke-width="9" stroke-linecap="round" />
+            <path id="mk-corpo" d="M30 122 C24 96 36 72 60 72 C84 72 96 96 90 122 Z" fill="#1d1a20" />
+            <g id="mk-patas">
+              <ellipse cx="47" cy="122" rx="10" ry="6" fill="#26222a" />
+              <ellipse cx="73" cy="122" rx="10" ry="6" fill="#26222a" />
+            </g>
+            <g id="mk-coleira">
+              <path d="M40 78 Q60 88 80 78" fill="none" stroke="#e8798a" stroke-width="5" stroke-linecap="round" />
+              <circle cx="60" cy="88" r="6" fill="#f2b84b" />
+              <path d="M60 85v6M57 88h6" stroke="#fffaf3" stroke-width="1.8" stroke-linecap="round" />
+            </g>
+            <g id="mk-cabeca">
+              <g id="mk-orelha-e"><path d="M28 46 L32 12 L56 32 Z" fill="#1d1a20" /><path d="M33 38 L35 21 L47 32 Z" fill="#e8a0ad" /></g>
+              <g id="mk-orelha-d"><path d="M92 46 L88 12 L64 32 Z" fill="#1d1a20" /><path d="M87 38 L85 21 L73 32 Z" fill="#e8a0ad" /></g>
+              <ellipse cx="60" cy="50" rx="34" ry="28" fill="#1d1a20" />
+              <ellipse id="mk-blush-e" cx="40" cy="60" rx="5" ry="3" fill="#e8798a" opacity="0" />
+              <ellipse id="mk-blush-d" cx="80" cy="60" rx="5" ry="3" fill="#e8798a" opacity="0" />
+              <path id="mk-olho-e" d="M38 48 C38 41 54 41 54 48 C54 55 38 55 38 48 Z" fill="#c4e35a" />
+              <path id="mk-olho-d" d="M66 48 C66 41 82 41 82 48 C82 55 66 55 66 48 Z" fill="#c4e35a" />
+              <ellipse id="mk-pupila-e" cx="46" cy="48" rx="2.4" ry="5.4" fill="#0d0b0e" />
+              <ellipse id="mk-pupila-d" cx="74" cy="48" rx="2.4" ry="5.4" fill="#0d0b0e" />
+              <circle id="mk-reflexo-e" cx="48.5" cy="45" r="1.4" fill="#fff" />
+              <circle id="mk-reflexo-d" cx="76.5" cy="45" r="1.4" fill="#fff" />
+              <path d="M57 57 L63 57 L60 61 Z" fill="#e8a0ad" />
+              <path id="mk-boca" d="M54 63 Q57 66 60 62 Q63 66 66 63" fill="none" stroke="#e8a0ad" stroke-width="1.6" stroke-linecap="round" />
+              <ellipse id="mk-boca-aberta" cx="60" cy="66" rx="5" ry="6" fill="#b4465a" />
+              <g stroke="#5a5560" stroke-width="1.1" stroke-linecap="round">
+                <path d="M30 56 L14 53M30 60 L14 62" />
+                <path d="M90 56 L106 53M90 60 L106 62" />
+              </g>
+            </g>
+          </g>
+          <g id="mk-zzz" opacity="0"><text x="92" y="20" font-size="14" fill="#2f7d6d" font-family="Nunito" font-weight="800">z</text></g>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Ícones reutilizados -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="ico-pata" viewBox="0 0 64 64">
+        <ellipse cx="32" cy="42" rx="14" ry="12" fill="currentColor" />
+        <ellipse cx="14" cy="28" rx="6" ry="8" transform="rotate(-20 14 28)" fill="currentColor" />
+        <ellipse cx="25" cy="17" rx="6" ry="8" transform="rotate(-6 25 17)" fill="currentColor" />
+        <ellipse cx="39" cy="17" rx="6" ry="8" transform="rotate(6 39 17)" fill="currentColor" />
+        <ellipse cx="50" cy="28" rx="6" ry="8" transform="rotate(20 50 28)" fill="currentColor" />
+      </symbol>
+      <symbol id="ico-pata-mini" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="16" rx="5" ry="4.2" />
+        <ellipse cx="5.5" cy="10.5" rx="2.1" ry="2.8" />
+        <ellipse cx="9.5" cy="6.5" rx="2.1" ry="2.8" />
+        <ellipse cx="14.5" cy="6.5" rx="2.1" ry="2.8" />
+        <ellipse cx="18.5" cy="10.5" rx="2.1" ry="2.8" />
+      </symbol>
+    </svg>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
