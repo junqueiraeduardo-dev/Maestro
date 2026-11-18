@@ -18,6 +18,6 @@ Mesmo assim, ficam aqui os créditos e as origens:
    "heart", "stethoscope", "birthday cake") e abra a animação gratuita que quiser.
 2. Clique em **Download** → **Lottie JSON**.
 3. Renomeie o arquivo para o mesmo nome da tabela acima (ex.: `gato.json`) e
-   substitua o arquivo nesta pasta (`public/animacoes/`).
+   substitua o arquivo nesta pasta (`src/assets/animacoes/`).
 
 Se um arquivo for apagado, o site mostra um emoji animado no lugar — nada quebra.

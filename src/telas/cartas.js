@@ -14,6 +14,13 @@ import { falar, dancar, vigiar, calar } from './mikasa.js';
 import { icone } from '../lib/ilustracoes.js';
 
 const $ = (s) => document.querySelector(s);
+
+// Fotos de src/assets/fotos/, empacotadas no build (funcionam offline).
+const fotos = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/fotos/*.{jpg,jpeg,png,webp}', { eager: true, import: 'default', query: '?url' })).map(
+    ([caminho, url]) => [caminho.split('/').pop(), url],
+  ),
+);
 let gatilhos = [];
 
 function infoRequisito(c) {
@@ -99,7 +106,9 @@ function montarFoto(c) {
     caixa.appendChild(img);
     if (!reduzido()) gsap.from(img, { opacity: 0, scale: 1.08, duration: 0.8 });
   };
-  img.src = c.foto;
+  const url = fotos[c.foto];
+  if (!url) return;
+  img.src = url;
 }
 
 function abrir(c) {

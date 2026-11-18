@@ -1,6 +1,14 @@
 /*
  * Ponto de entrada: carrega estilos, liga cada tela e roda a abertura.
  */
+// Fontes empacotadas no próprio app (funciona sem internet)
+import '@fontsource/manrope/latin-400.css';
+import '@fontsource/manrope/latin-500.css';
+import '@fontsource/manrope/latin-600.css';
+import '@fontsource/manrope/latin-700.css';
+import '@fontsource/manrope/latin-800.css';
+import '@fontsource/caveat/latin-500.css';
+import '@fontsource/caveat/latin-700.css';
 import 'animate.css';
 import './styles/main.css';
 
@@ -47,7 +55,8 @@ document.addEventListener('keydown', (e) => {
   topo?.querySelector('button[data-fechar]')?.click();
 });
 
-// App instalável: registra o service worker só na versão publicada.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// App instalável: registra o service worker só na versão publicada
+// (o arquivo único .html não usa).
+if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.MODE !== 'arquivo') {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }

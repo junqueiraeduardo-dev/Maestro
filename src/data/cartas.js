@@ -9,10 +9,10 @@
  *  - `assinatura` aparece no fim da carta.
  *
  *  COMO COLOCAR AS FOTOS
- *  - Salve as fotos em  public/fotos/  com os nomes
+ *  - Salve as fotos em  src/assets/fotos/  com os nomes
  *    foto1.jpg, foto2.jpg, foto3.jpg e foto4.jpg.
  *  - O campo `foto` abaixo diz qual arquivo cada carta usa.
- *    Pode trocar para .png ou .webp se preferir (ex.: '/fotos/foto1.png').
+ *    Pode trocar para .png ou .webp se preferir (ex.: 'foto1.png').
  *  - Se a foto não existir, a carta mostra o espaço reservado
  *    tracejado com a `legenda` — nada quebra.
  *  - Dica: fotos em pé (retrato), até ~1500 px de largura, ficam ótimas
@@ -33,18 +33,18 @@ export const cartas = [
   {
     id: 'carta-1',
     titulo: 'Para a minha futura veterinária',
-    foto: '/fotos/foto1.jpg',
+    foto: 'foto1.jpg',
     legenda: 'Nossa primeira foto juntos',
     requisito: { tipo: 'casos', valor: 1 },
     textoRequisito: 'Conclua seu primeiro atendimento',
     texto:
-      'Lara, você acabou de atender seu primeiro paciente!\n\nEu sempre soube que esse jeito carinhoso com os bichinhos ia virar profissão. Esta clínica é pequenininha, mas foi feita com muito amor — igual ao que você sente por eles.',
+      'Lara, você acabou de atender seu primeiro paciente!\n\nEu sempre soube que esse jeito carinhoso com os bichinhos ia virar profissão. Esta clínica é pequenininha, mas foi feita com muito amor, igual ao que você sente por eles.',
     assinatura: 'Com todo o meu amor',
   },
   {
     id: 'carta-2',
     titulo: 'Residente, quem diria!',
-    foto: '/fotos/foto2.jpg',
+    foto: 'foto2.jpg',
     legenda: 'Aquele dia que a gente riu até doer a barriga',
     requisito: { tipo: 'cargo', valor: 'residente' },
     textoRequisito: 'Seja promovida a Residente',
@@ -55,7 +55,7 @@ export const cartas = [
   {
     id: 'carta-3',
     titulo: 'Dra. Lara, Veterinária',
-    foto: '/fotos/foto3.jpg',
+    foto: 'foto3.jpg',
     legenda: 'Você + um bichinho = minha foto favorita',
     requisito: { tipo: 'cargo', valor: 'veterinaria' },
     textoRequisito: 'Chegue ao cargo de Veterinária',
@@ -66,13 +66,13 @@ export const cartas = [
   {
     id: 'carta-4',
     titulo: 'Feliz aniversário, meu amor',
-    foto: '/fotos/foto4.jpg',
+    foto: 'foto4.jpg',
     legenda: 'A gente, hoje e sempre',
     requisito: { tipo: 'cargo', valor: 'chefe' },
     textoRequisito: 'Torne-se Veterinária-chefe',
     final: true,
     texto:
-      'Veterinária-chefe! Você zerou a clínica — e eu nem fiquei surpreso.\n\nFeliz aniversário, Lara. Que este novo ano te leve até a faculdade dos seus sonhos, cheia de pacientes peludos, penudos e escamosos.\n\nE que eu continue do seu lado em cada plantão, cada prova e cada conquista.',
+      'Veterinária-chefe! Você zerou a clínica, e eu nem fiquei surpreso.\n\nFeliz aniversário, Lara. Que este novo ano te leve até a faculdade dos seus sonhos, cheia de pacientes peludos, penudos e escamosos.\n\nE que eu continue do seu lado em cada plantão, cada prova e cada conquista.',
     assinatura: 'Te amo. Feliz aniversário!',
   },
 ];

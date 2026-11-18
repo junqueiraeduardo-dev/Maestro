@@ -31,12 +31,12 @@ no terminal (ex.: `http://192.168.0.10:5173`) e abra no celular conectado ao mes
 | Quero mudar…                        | Arquivo                         |
 |-------------------------------------|---------------------------------|
 | Textos das cartas                   | `src/data/cartas.js`            |
-| Fotos das cartas                    | `public/fotos/foto1.jpg` … `foto4.jpg` |
+| Fotos das cartas                    | `src/assets/fotos/foto1.jpg` … `foto4.jpg` |
 | Falas da Mikasa                     | `src/data/mascote.js`           |
 | Casos clínicos                      | `src/data/casos.js`             |
 | Questões do ENEM                    | `src/data/questoes.js`          |
 | Cargos e quanto XP vale cada coisa  | `src/data/cargos.js`            |
-| Animações Lottie                    | `public/animacoes/*.json`       |
+| Animações Lottie                    | `src/assets/animacoes/*.json`   |
 | Desenhos dos animais e ícones       | `src/lib/ilustracoes.js`        |
 | Cores (claro e escuro) e fontes     | topo de `src/styles/main.css` (`:root`) |
 
@@ -50,7 +50,7 @@ começa um parágrafo novo. O campo `requisito` define quando a carta abre
 dispara a chuva de corações e, ao ser fechada, a surpresa com o bolo.
 
 ### Fotos
-Coloque as fotos em `public/fotos/` com os nomes `foto1.jpg`, `foto2.jpg`, `foto3.jpg`
+Coloque as fotos em `src/assets/fotos/` com os nomes `foto1.jpg`, `foto2.jpg`, `foto3.jpg`
 e `foto4.jpg` (carta 1, 2, 3 e 4). Sem a foto, a carta mostra um espaço reservado
 tracejado. Para usar `.png`/`.webp`, mude o campo `foto` da carta.
 
@@ -60,8 +60,8 @@ Em `src/data/mascote.js`, cada grupo (`dicas`, `acerto`, `erro`, `promocao`,
 das frases. As `secretas` aparecem quando a Lara toca **5 vezes seguidas** na Mikasa.
 
 ### Animações
-- **Lottie:** troque os `.json` em `public/animacoes/` mantendo os nomes
-  (`estetoscopio`, `cachorro`, `gato`, `coracao`, `bolo`). Veja `public/animacoes/CREDITOS.md`.
+- **Lottie:** troque os `.json` em `src/assets/animacoes/` mantendo os nomes
+  (`estetoscopio`, `cachorro`, `gato`, `coracao`, `bolo`). Veja `src/assets/animacoes/CREDITOS.md`.
 - **GSAP:** cada tela tem seu arquivo em `src/telas/` e as animações ficam juntas com
   a lógica. Os números mais úteis para ajustar são `duration` (segundos), `stagger`
   (atraso entre itens) e `ease` (o "jeito" do movimento — ex.: `elastic.out(1, 0.45)`
@@ -89,6 +89,16 @@ Fica salvo no próprio aparelho (localStorage). O botão **Recomeçar**, na aba 
 apaga tudo depois de uma confirmação.
 
 ---
+
+## Arquivo único (sem internet)
+
+```bash
+npm run arquivo
+```
+
+Gera `dist-arquivo/clinica-dra-lara.html`: um só arquivo (~2 MB) com fotos, animações,
+fontes e a Mikasa dentro. Abre sem internet e não publica nada na rede. Para trocar
+fotos ou textos, edite os arquivos de `src/` e rode o comando de novo.
 
 ## Publicar na Vercel (passo a passo)
 
@@ -131,8 +141,8 @@ src/data/               conteúdo editável (casos, questões, cartas, cargos, f
 src/telas/              cada parte da interface + suas animações
 src/lib/                GSAP, estado salvo, Lottie, confetes, avisos
 src/styles/main.css     visual
-public/animacoes/       arquivos Lottie (.json)
-public/fotos/           fotos das cartas
+src/assets/animacoes/   arquivos Lottie (.json)
+src/assets/fotos/       fotos das cartas
 public/icones/          ícones do app
 public/manifest.webmanifest, public/sw.js   app instalável
 vercel.json             configuração de publicação

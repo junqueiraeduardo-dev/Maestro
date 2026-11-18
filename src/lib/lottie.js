@@ -1,9 +1,12 @@
 /*
- * Animações Lottie (arquivos .json em public/animacoes/).
+ * Animações Lottie (arquivos .json em src/assets/animacoes/).
  *
  * Qualquer elemento com data-lottie="nome" vira uma animação:
  *   <div data-lottie="coracao" data-loop="true"></div>
- *   → carrega /animacoes/coracao.json
+ *   → usa src/assets/animacoes/coracao.json
+ *
+ * Os arquivos entram no próprio app na hora do build, então funcionam
+ * sem internet (inclusive no arquivo único .html).
  *
  * Se o arquivo não existir, aparece um desenho reserva animado
  * com GSAP, então o site nunca fica com buraco.
@@ -14,6 +17,7 @@ import { gsap, reduzido } from './anim.js';
 import { animal, icone } from './ilustracoes.js';
 
 const cache = new Map();
+const arquivos = import.meta.glob('../assets/animacoes/*.json', { import: 'default' });
 
 // Desenho reserva para cada animação (ilustração que "respira").
 const reservas = {
@@ -28,10 +32,11 @@ function carregarJSON(nome) {
   if (!cache.has(nome)) {
     cache.set(
       nome,
-      fetch(`/animacoes/${nome}.json`).then((r) => {
-        if (!r.ok) throw new Error(`Lottie ${nome} não encontrado`);
-        return r.json();
-      }),
+      (async () => {
+        const carregar = arquivos[`../assets/animacoes/${nome}.json`];
+        if (!carregar) throw new Error(`Lottie ${nome} não encontrado`);
+        return carregar();
+      })(),
     );
   }
   return cache.get(nome);
