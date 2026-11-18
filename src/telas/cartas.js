@@ -10,7 +10,7 @@ import { cargos } from '../data/cargos.js';
 import { estado, salvar, cartaLiberada, ouvir } from '../lib/estado.js';
 import { chuvaDeCoracoes, fogos } from '../lib/efeitos.js';
 import { tocar } from '../lib/lottie.js';
-import { falar, dancar, vigiar } from './mikasa.js';
+import { falar, dancar, vigiar, calar } from './mikasa.js';
 import { icone } from '../lib/ilustracoes.js';
 
 const $ = (s) => document.querySelector(s);
@@ -77,13 +77,16 @@ function balancar(b) {
 // ------------------------------------------------------------------
 let splitTexto;
 let splitSurpresa;
+let tlCarta;
+let fechando = false;
 
 function montarFoto(c) {
   const caixa = $('#carta-foto');
+  caixa.classList.remove('com-foto');
   const reserva = () => {
-    caixa.innerHTML = `<div class="foto-reservada">${icone('camera', 'foto-reservada__icone')}<div class="foto-reservada__legenda"></div><small></small></div>`;
-    caixa.querySelector('.foto-reservada__legenda').textContent = c.legenda || 'Espaço para uma foto';
-    caixa.querySelector('.foto-reservada small').textContent = `Coloque ${c.foto.split('/').pop()} em public/fotos/`;
+    // Sem foto (ou se ela não carregar): moldura com a legenda.
+    caixa.innerHTML = `<div class="foto-reservada">${icone('coracao', 'foto-reservada__icone')}<div class="foto-reservada__legenda"></div></div>`;
+    caixa.querySelector('.foto-reservada__legenda').textContent = c.legenda || 'Nós dois';
   };
   reserva();
   if (!c.foto) return;
@@ -92,6 +95,7 @@ function montarFoto(c) {
   img.decoding = 'async';
   img.onload = () => {
     caixa.innerHTML = '';
+    caixa.classList.add('com-foto');
     caixa.appendChild(img);
     if (!reduzido()) gsap.from(img, { opacity: 0, scale: 1.08, duration: 0.8 });
   };
@@ -120,6 +124,7 @@ function abrir(c) {
 
   cena.hidden = false;
   document.body.classList.add('travado');
+  calar();
   splitTexto?.revert();
 
   if (!estado.cartasLidas.includes(c.id)) {
@@ -137,7 +142,8 @@ function abrir(c) {
 
   splitTexto = SplitText.create(textoEl.querySelectorAll('p'), { type: 'lines', linesClass: 'linha' });
 
-  gsap
+  tlCarta?.kill();
+  tlCarta = gsap
     .timeline({ onComplete: vigiar })
     .set(papel, { opacity: 0, y: 60, scale: 0.55 })
     .set(aba, { rotationX: 0, zIndex: 4 })
@@ -162,10 +168,14 @@ function abrir(c) {
 }
 
 function fechar() {
+  if (fechando) return;
+  fechando = true;
+  tlCarta?.kill();
   const cena = $('#carta-aberta');
   const id = cena.dataset.carta;
   const final = cartas.find((c) => c.id === id)?.final;
   const fim = () => {
+    fechando = false;
     cena.hidden = true;
     gsap.set(cena.querySelectorAll('*'), { clearProps: 'opacity,transform,zIndex' });
     splitTexto?.revert();

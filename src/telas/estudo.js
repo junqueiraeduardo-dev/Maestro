@@ -100,7 +100,15 @@ function responder(i) {
   res.querySelector('p').textContent = q.explicacao;
   // Nota com microefeito do Animate.css
   efeito(res.querySelector('.explicacao'), acertou ? 'fadeInUp' : 'headShake');
-  res.querySelector('button').addEventListener('click', proxima);
+  const seguir = res.querySelector('button');
+  seguir.addEventListener(
+    'click',
+    () => {
+      seguir.disabled = true; // evita pular duas questões num toque duplo
+      proxima();
+    },
+    { once: true },
+  );
   atualizarPlacar();
 }
 

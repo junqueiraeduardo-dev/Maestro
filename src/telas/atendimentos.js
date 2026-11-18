@@ -224,7 +224,15 @@ function responder(botao, i) {
     <div class="questao__acoes"><button class="btn btn--primario" type="button">${ultima ? 'Finalizar atendimento' : 'Próxima etapa'}</button></div>`;
   res.querySelector('p').textContent = et.explicacao;
   efeito(res.querySelector('.explicacao'), 'fadeInUp');
-  res.querySelector('button').addEventListener('click', ultima ? finalizar : avancar);
+  const seguir = res.querySelector('button');
+  seguir.addEventListener(
+    'click',
+    () => {
+      seguir.disabled = true; // evita toque duplo (pularia etapa ou daria XP em dobro)
+      (ultima ? finalizar : avancar)();
+    },
+    { once: true },
+  );
   setTimeout(() => res.scrollIntoView({ block: 'nearest', behavior: reduzido() ? 'auto' : 'smooth' }), 120);
 }
 

@@ -80,6 +80,12 @@ export function dizer(texto, { segredo = false, duracao } = {}) {
     .to(balao, { opacity: 0, scale: 0.85, y: deCima ? -6 : 6, duration: 0.3, ease: 'power2.in' }, `+=${tempoLeitura}`);
 }
 
+/** Fecha o balão na hora (ex.: ao abrir uma carta, para não cobrir nada). */
+export function calar() {
+  tlFala?.kill();
+  if (balao) gsap.to(balao, { opacity: 0, duration: 0.15, overwrite: true });
+}
+
 /** Fala uma frase sorteada de um grupo de src/data/mascote.js. */
 export function falar(grupo, opcoes) {
   const lista = grupo.split('.').reduce((o, k) => o?.[k], falas);
