@@ -38,7 +38,7 @@ export const cartas = [
     requisito: { tipo: 'casos', valor: 1 },
     textoRequisito: 'Conclua seu primeiro atendimento',
     texto:
-      'Lara, você acabou de atender seu primeiro paciente!\n\nEu sempre soube que esse jeito carinhoso com os bichinhos ia virar profissão. Esta clínica é pequenininha, mas foi feita com muito amor, igual ao que você sente por eles.',
+      'Meu amor, você acabou de atender seu primeiro paciente!\n\nEu sempre soube que esse jeito carinhoso com os bichinhos ia virar profissão. Esta clínica é pequenininha, mas foi feita com muito amor, igual ao que você sente por eles.',
     assinatura: 'Com todo o meu amor',
   },
   {
@@ -54,7 +54,7 @@ export const cartas = [
   },
   {
     id: 'carta-3',
-    titulo: 'Dra. Lara, Veterinária',
+    titulo: 'Veterinária, amor da minha vida',
     foto: 'foto3.jpg',
     legenda: 'Você + um bichinho = minha foto favorita',
     requisito: { tipo: 'cargo', valor: 'veterinaria' },
@@ -72,7 +72,7 @@ export const cartas = [
     textoRequisito: 'Torne-se Veterinária-chefe',
     final: true,
     texto:
-      'Veterinária-chefe! Você zerou a clínica, e eu nem fiquei surpreso.\n\nFeliz aniversário, Lara. Que este novo ano te leve até a faculdade dos seus sonhos, cheia de pacientes peludos, penudos e escamosos.\n\nE que eu continue do seu lado em cada plantão, cada prova e cada conquista.',
+      'Veterinária-chefe! Você zerou a clínica, e eu nem fiquei surpreso.\n\nFeliz aniversário, amor da minha vida. Que este novo ano te leve até a faculdade dos seus sonhos, cheia de pacientes peludos, penudos e escamosos.\n\nE que eu continue do seu lado em cada plantão, cada prova e cada conquista.',
     assinatura: 'Te amo. Feliz aniversário!',
   },
 ];

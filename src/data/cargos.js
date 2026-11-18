@@ -18,7 +18,7 @@
 export const cargos = [
   { id: 'estagiaria', nome: 'Estagiária', xp: 0, icone: 'estetoscopio', mensagem: 'Bem-vinda à clínica! Todo grande veterinário começa assim.' },
   { id: 'residente', nome: 'Residente', xp: 150, icone: 'tubo', mensagem: 'Você já atende sozinha os primeiros pacientes. A equipe está orgulhosa!' },
-  { id: 'veterinaria', nome: 'Veterinária', xp: 400, icone: 'pata', mensagem: 'Diploma na parede e jaleco com o seu nome bordado. Dra. Lara, oficialmente!' },
+  { id: 'veterinaria', nome: 'Veterinária', xp: 400, icone: 'pata', mensagem: 'Diploma na parede e jaleco com o seu nome bordado. Doutora oficialmente, meu amor!' },
   { id: 'chefe', nome: 'Veterinária-chefe', xp: 750, icone: 'coroa', mensagem: 'A clínica inteira agora é sua. Os bichinhos de todo o Brasil agradecem!' },
 ];
 

@@ -10,7 +10,7 @@
  *    com vírgula no final. Ex.:  'Miau! Nova fala aqui',
  *  - Para tirar uma fala, apague a linha inteira.
  *  - Frases curtas ficam melhores no balão (até ~110 caracteres).
- *  - Use {nome} para inserir o nome da Lara e {cargo} para o cargo atual.
+ *  - Use {nome} para inserir o apelido (NOME, logo abaixo) e {cargo} para o cargo atual.
  *
  *  GRUPOS
  *  - boasVindas ... quando o site abre.
@@ -26,7 +26,7 @@
  *                   na Mikasa (a gatinha ronrona).
  */
 
-export const NOME = 'Lara';
+export const NOME = 'meu amor'; // como a Mikasa chama a aniversariante
 
 export const falas = {
   boasVindas: [
