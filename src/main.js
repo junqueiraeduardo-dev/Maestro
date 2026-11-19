@@ -23,6 +23,7 @@ import { iniciarAtendimentos } from './telas/atendimentos.js';
 import { iniciarEstudo } from './telas/estudo.js';
 import { iniciarCartas } from './telas/cartas.js';
 import { iniciarProgresso } from './telas/progresso.js';
+import { iniciarInstalar } from './telas/instalar.js';
 
 iniciarMikasa();
 iniciarTopo();
@@ -45,6 +46,7 @@ abertura().then(async () => {
   await entrar();
   falar('boasVindas');
   vigiar();
+  iniciarInstalar();
 });
 
 // Tecla Esc fecha a janela que estiver por cima

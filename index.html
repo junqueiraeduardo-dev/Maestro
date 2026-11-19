@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#007a56" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0f1f1b" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Site particular: buscadores não devem listar -->
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex" />
     <link rel="icon" href="/icones/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -246,6 +248,18 @@
 
     <!-- ============ AVISOS (Animate.css) ============ -->
     <div class="avisos" id="avisos" aria-live="polite"></div>
+
+    <!-- ============ DICA DE INSTALAÇÃO (só no Safari do iPhone) ============ -->
+    <div class="instalar" id="instalar" hidden role="dialog" aria-labelledby="instalar-titulo">
+      <p class="rotulo">Transforme em app</p>
+      <h2 class="instalar__titulo" id="instalar-titulo">Coloque a clínica na Tela de Início</h2>
+      <ol class="instalar__passos">
+        <li>Toque no botão <strong>Compartilhar</strong> do Safari <span class="instalar__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></span></li>
+        <li>Escolha <strong>Adicionar à Tela de Início</strong></li>
+        <li>Abra sempre pelo ícone: é lá que o progresso fica salvo, mesmo sem internet</li>
+      </ol>
+      <button class="btn btn--primario btn--largo" id="instalar-ok" type="button">Entendi</button>
+    </div>
 
     <!-- ============ MIKASA ============ -->
     <div class="mikasa" id="mikasa">
